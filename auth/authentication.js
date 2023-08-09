@@ -176,7 +176,85 @@ function sendTokenEmail(email, token) {
       });
     });
   }
+
+  // Login function
+  function login(req, res) {
+    const { Username, Password } = req.body;
+  
+    // Check if the user exists in the database
+    const query = 'SELECT * FROM ems_user WHERE username = $1';
+    db.query(query, [Username], (error, result) => {
+      try {
+        if (error) {
+          throw new Error('Error during login');
+        }
+  
+        const user = result.rows[0]; // Accessing the first row
+  
+        if (!user) {
+          return res.status(401).json({ message: 'User does not exist!' });
+        }
+  
+        if (user.verified === 0) { // Using lowercase 'verified' based on the response structure you provided
+          return res.status(401).json({ message: 'User is not verified. Please verify your account.' });
+        }
+  
+        // Compare the provided password with the hashed password in the database
+        bcrypt.compare(Password, user.password, (error, isPasswordValid) => {
+          try {
+            if (error) {
+              throw new Error('Error during password comparison');
+            }
+  
+            if (!isPasswordValid) {
+              return res.status(401).json({ message: 'Invalid credentials' });
+            }
+  
+            // Generate a JWT token
+            const token = jwtUtils.generateToken({ Username: user.username });
+            res.json({ token });
+          } catch (error) {
+            console.error(error);
+            res.status(500).json({ message: 'Internal server error' });
+          }
+        });
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Internal server error' });
+      }
+    });
+  }
+  
+  
+
+
+  function getUserData(req, res) {
+    try {
+      const userId = req.params.userId;
+  
+      const userDetailsQuery = 'SELECT * FROM ems_user WHERE username = $1';
+      db.query(userDetailsQuery, [userId], (error, result) => {
+        if (error) {
+          console.error('Error fetching User:', error);
+          return res.status(500).json({ message: 'Internal server error' });
+        }
+  
+        const userDetail = result.rows[0]; // Accessing the first row
+  
+        if (!userDetail) {
+          return res.status(404).json({ message: 'User details not found' });
+        }
+  
+        res.status(200).json(userDetail);
+      });
+    } catch (error) {
+      console.error('An error occurred:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  }
   
   module.exports = {
-    register
+    login,
+    register,
+    getUserData
   }

@@ -13,12 +13,12 @@ const registerLimitter = limitter({
 // Registration route
 router.post('/register',registerLimitter, authentication.register);
 
-// const loginLimit = limitter({
-//     windowMS : 1*60*1000,
-//     max: 5,
-// })
-// // Login route
-// router.post('/login', loginLimit,authentication.login);
+const loginLimit = limitter({
+    windowMS : 1*60*1000,
+    max: 5,
+})
+// Login route
+router.post('/login', loginLimit,authentication.login);
 // router.post('/register-dashboard', authentication.register_dashboard);
 // router.get('/user', authentication.getUserDetails);
 // router.get('/users', authentication.getUserDetail);
@@ -32,7 +32,7 @@ router.post('/register',registerLimitter, authentication.register);
 // router.get('/userdevices/:companyEmail', dashboard.userDevices);
 // router.put('/editDevice/:deviceId', dashboard.editDevice);
 // router.put('/companyDetails/:UserId', dashboard.companyDetails);
-// router.put('/personalDetails/:UserId', dashboard.personalDetails);
+// router.put('/personalDetails/:UserId', authentication.personalDetails);
 // router.put('/updatePassword/:UserId', dashboard.updatePassword);
 // router.put('/editDeviceTrigger/:deviceId', dashboard.editDeviceTrigger);
 // router.get('/device-trigger/:deviceId', dashboard.fetchDeviceTrigger);
@@ -43,7 +43,7 @@ router.post('/register',registerLimitter, authentication.register);
 // router.get('/dataStatus/:deviceId', dashboard.getDataByCustomDateStatus);
 // router.get('/live-device-detail/:deviceId', dashboard.getDeviceDetails);
 // router.get('/live-device-status/:deviceId', dashboard.getLiveStatusDetails);
-// router.get('/user-data/:userId', dashboard.getUserData);
+router.get('/userdata/:userId', authentication.getUserData);
 // router.post('/new-message', dashboard.insertNewMessage);
 // router.put('/mark-read-message/:messageId', dashboard.markMessageAsRead);
 // router.delete('/delete-message/:messageId', dashboard.deleteMessage);
