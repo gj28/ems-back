@@ -23,7 +23,7 @@ function register(req, res) {
     } = req.body;
   
     // Check if the company email is already registered
-    const emailCheckQuery = 'SELECT * FROM ems_user WHERE CompanyEmail = $1';
+    const emailCheckQuery = 'SELECT * FROM ems.ems_users WHERE CompanyEmail = $1';
     db.query(emailCheckQuery, [companyEmail], (error, emailCheckResult) => {
       if (error) {
         console.error('Error during email check:', error);
@@ -37,7 +37,7 @@ function register(req, res) {
         }
   
         // Check if the username (company email) is already registered
-        const personalEmailCheckQuery = 'SELECT * FROM ems_user WHERE personalemail = $1';
+        const personalEmailCheckQuery = 'SELECT * FROM ems.ems_users WHERE personalemail = $1';
         db.query(personalEmailCheckQuery, [personalEmail], (error, personalEmailCheckResult) => {
           if (error) {
             console.error('Error during username check:', error);
@@ -66,7 +66,7 @@ function register(req, res) {
   
                 // Insert the user into the database
                 const insertQuery =
-                  'INSERT INTO ems_user (UserId, Username, FirstName, LastName, CompanyName, CompanyEmail, ContactNo, Location, UserType, personalemail, Password, Designation, VerificationToken, verified) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)';
+                  'INSERT INTO ems.ems_users (UserId, Username, FirstName, LastName, CompanyName, CompanyEmail, ContactNo, Location, UserType, personalemail, Password, Designation, VerificationToken, verified) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)';
                 db.query(
                   insertQuery,
                   [
@@ -182,7 +182,7 @@ function sendTokenEmail(email, token) {
     const { Username, Password } = req.body;
   
     // Check if the user exists in the database
-    const query = 'SELECT * FROM ems_user WHERE username = $1';
+    const query = 'SELECT * FROM ems.ems_users WHERE username = $1';
     db.query(query, [Username], (error, result) => {
       try {
         if (error) {
@@ -225,14 +225,11 @@ function sendTokenEmail(email, token) {
     });
   }
   
-  
-
-
   function getUserData(req, res) {
     try {
       const userId = req.params.userId;
   
-      const userDetailsQuery = 'SELECT * FROM ems_user WHERE username = $1';
+      const userDetailsQuery = 'SELECT * FROM ems.ems_users WHERE username = $1';
       db.query(userDetailsQuery, [userId], (error, result) => {
         if (error) {
           console.error('Error fetching User:', error);
