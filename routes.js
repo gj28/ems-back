@@ -19,16 +19,16 @@ const loginLimit = limitter({
 })
 // Login route
 router.post('/login', loginLimit,authentication.login);
-// router.post('/register-dashboard', authentication.register_dashboard);
-// router.get('/user', authentication.getUserDetails);
-// router.get('/users', authentication.getUserDetail);
-// router.post('/verify', authentication.verifyToken);
-// router.post('/re-verify-mail', authentication.resendToken);
-// router.post('/forgot', authentication.forgotPassword);
-// router.post('/resend-forgot', authentication.resendResetToken);
-// router.post('/reset-password', authentication.resetPassword);
-
-// //Dashboard
+//router.post('/register-dashboard', authentication.register_dashboard);
+router.get('/user', authentication.getUserDetails);
+router.post('/verify', authentication.verifyToken);
+router.post('/re-verify-mail', authentication.resendToken);
+router.post('/forgot', authentication.forgotPassword);
+router.post('/resend-forgot', authentication.resendResetToken);
+router.post('/reset-password', authentication.resetPassword);
+// router.put('/setUserOnline/:UserId', authentication.setUserOnline);
+// router.put('/setUserOffline/:UserId', authentication.setUserOffline);
+// // //Dashboard
 // router.get('/userdevices/:companyEmail', dashboard.userDevices);
 // router.put('/editDevice/:deviceId', dashboard.editDevice);
 // router.put('/companyDetails/:UserId', dashboard.companyDetails);
@@ -43,7 +43,7 @@ router.post('/login', loginLimit,authentication.login);
 // router.get('/dataStatus/:deviceId', dashboard.getDataByCustomDateStatus);
 // router.get('/live-device-detail/:deviceId', dashboard.getDeviceDetails);
 // router.get('/live-device-status/:deviceId', dashboard.getLiveStatusDetails);
-router.get('/userdata/:userId', authentication.getUserData);
+//router.get('/userdata/:userId', authentication.getUserData);
 // router.post('/new-message', dashboard.insertNewMessage);
 // router.put('/mark-read-message/:messageId', dashboard.markMessageAsRead);
 // router.delete('/delete-message/:messageId', dashboard.deleteMessage);
