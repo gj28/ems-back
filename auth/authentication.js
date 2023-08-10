@@ -225,9 +225,6 @@ function sendTokenEmail(email, token) {
     });
   }
   
-  
-
-
   function getUserData(req, res) {
     try {
       const userId = req.params.userId;
@@ -239,7 +236,7 @@ function sendTokenEmail(email, token) {
           return res.status(500).json({ message: 'Internal server error' });
         }
   
-        const userDetail = result.rows[0]; // Accessing the first row
+        //const userDetail = result.rows[0]; // Accessing the first row
   
         if (!userDetail) {
           return res.status(404).json({ message: 'User details not found' });
@@ -253,8 +250,330 @@ function sendTokenEmail(email, token) {
     }
   }
   
+
+ // Forgot password
+ function forgotPassword(req, res) {
+  const { personalEmail } = req.body;
+
+  // Check if the email exists in the database
+  const query = 'SELECT * FROM ems_users WHERE personalEmail = $1';
+  db.query(query, [personalEmail], (error, rows) => {
+    try {
+      if (error) {
+        throw new Error('Error during forgot password');
+      }
+
+      if (rows.length === 0) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      // Generate a reset token
+      const resetToken = jwtUtils.generateToken({ personalEmail: personalEmail });
+
+      // Save the reset token in the database
+      const userId = rows[0].UserId;
+      const insertQuery = 'INSERT INTO ems_reset_tokens (UserId, token) VALUES ($1, $2)';
+      db.query(insertQuery, [userId, resetToken], (error, insertResult) => {
+        try {
+          if (error) {
+            throw new Error('Error saving reset token');
+          }
+
+          // Send the reset token to the user's email
+          sendResetTokenEmail(personalEmail, resetToken);
+
+          res.json({ message: 'Reset token sent to your email' });
+        } catch (error) {
+          console.error(error);
+          res.status(500).json({ message: 'Internal server error' });
+        }
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+}
+
+function resendResetToken(req, res) {
+  const { personalEmail } = req.body;
+
+  // Check if the user is available
+  const checkUserQuery = 'SELECT * FROM ems_user WHERE PersonalEmail = $1';
+  db.query(checkUserQuery, [personalEmail], (error, userResult) => {
+    if (error) {
+      console.error('Error checking user availability:', error);
+      return res.status(500).json({ message: 'Internal server error' });
+    }
+
+    // If no user found, send an error response
+    if (userResult.length === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Generate a new verification token
+    const userId = userResult[0].UserId;
+    const verificationToken = jwtUtils.generateToken({ personalEmail: personalEmail });
+
+    // Update the user's verification token in the database
+    const updateQuery = 'UPDATE ems_reset_tokens SET token = $1 WHERE UserId = $2';
+    db.query(updateQuery, [verificationToken, userId], (error, updateResult) => {
+      if (error) {
+        console.error('Error updating Resend link:', error);
+        return res.status(500).json({ message: 'Internal server error' });
+      }
+
+      try {
+        // Send the new verification token to the user's email
+        sendResetTokenEmail(personalEmail, verificationToken);
+
+        console.log('Resend link resent');
+        res.json({ message: 'Resend link resent. Check your email for the new token.' });
+      } catch (error) {
+        console.error('Error sending verification token:', error);
+        res.status(500).json({ message: 'Internal server error' });
+      }
+    });
+  });
+}
+
+function resetPassword(req, res) {
+  const { token, password } = req.body;
+
+  // Check if the email and reset token match in the database
+  const query = 'SELECT * FROM ems_reset_tokens WHERE token = $1';
+  db.query(query, [token], (error, rows) => {
+    try {
+      if (error) {
+        throw new Error('Error during reset password');
+      }
+
+      if (rows.length === 0) {
+        return res.status(401).json({ message: 'Invalid token' });
+      }
+
+      const userId = rows[0].UserId;
+
+      // Hash the new password
+      bcrypt.hash(password, 10, (error, hashedPassword) => {
+        try {
+          if (error) {
+            throw new Error('Error during password hashing');
+          }
+
+          // Update the password in the database
+          const updateQuery = 'UPDATE ems_user SET Password = $1 WHERE UserId = $2';
+          db.query(updateQuery, [hashedPassword, userId], (error, updateResult) => {
+            try {
+              if (error) {
+                throw new Error('Error updating password');
+              }
+
+              // Delete the reset token from the reset_tokens table
+              const deleteQuery = 'DELETE FROM ems_reset_tokens WHERE token = $!';
+              db.query(deleteQuery, [token], (error, deleteResult) => {
+                if (error) {
+                  console.error('Error deleting reset token:', error);
+                }
+
+                res.json({ message: 'Password reset successful' });
+              });
+            } catch (error) {
+              console.error(error);
+              res.status(500).json({ message: 'Internal server error' });
+            }
+          });
+        } catch (error) {
+          console.error(error);
+          res.status(500).json({ message: 'Internal server error' });
+        }
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+}
+
+// Function to send an email with the token
+function sendTokenEmail(email, token) {
+  const transporter = nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
+    auth: {
+      user: 'kpohekar19@gmail.com',
+      pass: 'woptjevenzhqmrpp',
+    },
+  });
+
+  // Read the email template file
+  const templatePath = path.join(__dirname, '../mail-body/email-template.ejs');
+  fs.readFile(templatePath, 'utf8', (err, templateData) => {
+    if (err) {
+      console.error('Error reading email template:', err);
+      return;
+    }
+
+    // Compile the email template with EJS
+    const compiledTemplate = ejs.compile(templateData);
+
+    // Render the template with the token
+    const html = compiledTemplate({ token });
+
+    const mailOptions = {
+      from: 'your-email@example.com',
+      to: email,
+      subject: 'Registration Token',
+      html: html,
+    };
+
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.error('Error sending email:', error);
+      } else {
+        console.log('Email sent:', info.response);
+      }
+    });
+  });
+}
+
+function sendResetTokenEmail(personalEmail, resetToken) {
+  const transporter = nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
+    auth: {
+      user: 'kpohekar19@gmail.com',
+      pass: 'woptjevenzhqmrpp',
+    },
+  });
+
+  // Read the email template file
+  const templatePath = path.join(__dirname, '../mail-body/email-template-forgot-password.ejs');
+  fs.readFile(templatePath, 'utf8', (err, templateData) => {
+    if (err) {
+      console.error('Error reading email template:', err);
+      return;
+    }
+
+    // Compile the email template with EJS
+    const compiledTemplate = ejs.compile(templateData);
+
+    // Render the template with the token
+    const html = compiledTemplate({ resetToken });
+
+    const mailOptions = {
+      from: 'kpohekar19@gmail.com',
+      to: personalEmail,
+      subject: 'Reset Password Link',
+      html: html,
+    };
+
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.error('Error sending email:', error);
+      } else {
+        console.log('Email sent:', info.response);
+      }
+    });
+  });
+}
+
+// Function to handle token verification
+function verifyToken(req, res) {
+  const { token } = req.body;
+
+  // Check if the token matches the one stored in the database
+  const tokenCheckQuery = 'SELECT * FROM ems_users WHERE VerificationToken = $1';
+  db.query(tokenCheckQuery, [token], (error, tokenCheckResult) => {
+    if (error) {
+      console.error('Error during token verification:', error);
+      return res.status(500).json({ message: 'Internal server error' });
+    }
+
+    try {
+      if (tokenCheckResult.length === 0) {
+        console.log('Token verification failed');
+        return res.status(400).json({ message: 'Token verification failed' });
+      }
+
+      // Token matches, update the user's status as verified
+      const updateQuery = 'UPDATE ems_users SET Verified = $1 WHERE VerificationToken = $2';
+      db.query(updateQuery, [true, token], (error, updateResult) => {
+        if (error) {
+          console.error('Error updating user verification status:', error);
+          return res.status(500).json({ message: 'Internal server error' });
+        }
+
+        console.log('Token verification successful');
+        res.json({ message: 'Token verification successful. You can now log in.' });
+      });
+    } catch (error) {
+      console.error('Error during token verification:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+}
+
+// Function to resend the verification token
+
+function resendToken(req, res) {
+  const { personalEmail } = req.body;
+
+  // Check if the user is available
+  const checkUserQuery = 'SELECT * FROM ems_users WHERE PersonalEmail = $1';
+  db.query(checkUserQuery, [personalEmail], (error, userResult) => {
+    if (error) {
+      console.error('Error checking user availability:', error);
+      return res.status(500).json({ message: 'Internal server error' });
+    }
+
+    // If no user found, send an error response
+    if (userResult.length === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // If user is already verified, send a bad request error response
+    if (userResult[0].Verified === '1') {
+      return res.status(400).json({ message: 'User already verified' });
+    } else {
+      // Generate a new verification token
+      const verificationToken = jwtUtils.generateToken({ personalEmail: personalEmail });
+
+      // Update the user's verification token in the database
+      const updateQuery = 'UPDATE ems_users SET VerificationToken = $1 WHERE PersonalEmail = $2';
+      db.query(updateQuery, [verificationToken, personalEmail], (error, updateResult) => {
+        if (error) {
+          console.error('Error updating verification token:', error);
+          return res.status(500).json({ message: 'Internal server error' });
+        }
+
+        try {
+          // Send the new verification token to the user's email
+          sendTokenEmail(personalEmail, verificationToken);
+
+          console.log('Verification token resent');
+          res.json({ message: 'Verification token resent. Check your email for the new token.' });
+        } catch (error) {
+          console.error('Error sending verification token:', error);
+          res.status(500).json({ message: 'Internal server error' });
+        }
+      });
+    }
+  });
+}
+
   module.exports = {
-    login,
     register,
-    getUserData
+    generateUserId,
+    login,
+    getUserData,
+    forgotPassword,
+    resendResetToken,
+    resetPassword,
+    sendTokenEmail,
+    sendResetTokenEmail,
+    verifyToken,
+    resendToken
   }
