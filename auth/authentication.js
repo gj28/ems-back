@@ -251,37 +251,6 @@ function sendTokenEmail(email, token) {
   //     res.status(500).json({ message: 'Internal server error' });
   //   }
   // }
-
-  // function getUserDetails(req, res) {
-  //   try {
-  //     const token = req.headers.authorization.split(' ')[1]; // Extract the token from the Authorization header
-  
-  //     // Verify the token using jwtUtils.verifyToken (replace with actual function call)
-  //     const decodedToken = jwtUtils.verifyToken(token);
-  //     if (!decodedToken) {
-  //       return res.status(401).json({ message: 'Invalid token' });
-  //     }
-  
-  //     // Fetch user details from the database using the decoded token information
-  //     const query = 'SELECT * FROM ems.ems_users WHERE username = $1';
-  //     db.query(query, [decodedToken.Username], (error, rows) => {
-  //       if (error) {
-  //         console.error(error);
-  //         return res.status(500).json({ message: 'Internal server error' });
-  //       }
-  
-  //       if (rows.length === 0) {
-  //         return res.status(404).json({ message: 'User not found' });
-  //       }
-  
-  //       const user = rows[0];
-  //       res.json(user);
-  //     });
-  //   } catch (error) {
-  //     console.error(error);
-  //     res.status(500).json({ message: 'Internal server error' });
-  //   }
-  // }
   
   // User details endpoint
   function getUserDetails(req, res) {
