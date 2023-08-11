@@ -13,13 +13,13 @@ const registerLimitter = limitter({
 // Registration route
 router.post('/register',registerLimitter, authentication.register);
 
-const loginLimit = limitter({
-    windowMS : 1*60*1000,
-    max: 5,
-})
+// const loginLimit = limitter({
+//     windowMS : 1*60*1000,
+//     max: 5,
+// })
 // Login route
-router.post('/login', loginLimit,authentication.login);
-//router.post('/register-dashboard', authentication.register_dashboard);
+router.post('/login',authentication.login);
+router.post('/register-dashboard', authentication.register_dashboard);
 router.get('/user', authentication.getUserDetails);
 router.post('/verify', authentication.verifyToken);
 router.post('/re-verify-mail', authentication.resendToken);
