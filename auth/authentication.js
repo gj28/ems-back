@@ -23,7 +23,7 @@ function register(req, res) {
     } = req.body;
   
     // Check if the company email is already registered
-    const emailCheckQuery = 'SELECT * FROM ems.ems_users WHERE CompanyEmail = $1';
+    const emailCheckQuery = 'SELECT * FROM ems.ems.ems_users WHERE CompanyEmail = $1';
     db.query(emailCheckQuery, [companyEmail], (error, emailCheckResult) => {
       if (error) {
         console.error('Error during email check:', error);
@@ -37,7 +37,7 @@ function register(req, res) {
         }
   
         // Check if the username (company email) is already registered
-        const personalEmailCheckQuery = 'SELECT * FROM ems.ems_users WHERE personalemail = $1';
+        const personalEmailCheckQuery = 'SELECT * FROM ems.ems.ems_users WHERE personalemail = $1';
         db.query(personalEmailCheckQuery, [personalEmail], (error, personalEmailCheckResult) => {
           if (error) {
             console.error('Error during username check:', error);
@@ -66,7 +66,7 @@ function register(req, res) {
   
                 // Insert the user into the database
                 const insertQuery =
-                  'INSERT INTO ems.ems_users (UserId, Username, FirstName, LastName, CompanyName, CompanyEmail, ContactNo, Location, UserType, personalemail, Password, Designation, VerificationToken, verified) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)';
+                  'INSERT INTO ems.ems.ems_users (UserId, Username, FirstName, LastName, CompanyName, CompanyEmail, ContactNo, Location, UserType, personalemail, Password, Designation, VerificationToken, verified) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)';
                 db.query(
                   insertQuery,
                   [
@@ -182,7 +182,7 @@ function sendTokenEmail(email, token) {
     const { Username, Password } = req.body;
   
     // Check if the user exists in the database
-    const query = 'SELECT * FROM ems.ems_users WHERE username = $1';
+    const query = 'SELECT * FROM ems.ems.ems_users WHERE username = $1';
     db.query(query, [Username], (error, result) => {
       try {
         if (error) {
@@ -231,7 +231,7 @@ function sendTokenEmail(email, token) {
   //   try {
   //     const userId = req.params.userId;
   
-  //     const userDetailsQuery = 'SELECT * FROM ems.ems_users WHERE username = $1';
+  //     const userDetailsQuery = 'SELECT * FROM ems.ems.ems_users WHERE username = $1';
   //     db.query(userDetailsQuery, [userId], (error, result) => {
   //       if (error) {
   //         console.error('Error fetching User:', error);
@@ -263,7 +263,7 @@ function sendTokenEmail(email, token) {
   //     }
   
   //     // Fetch user details from the database using the decoded token information
-  //     const query = 'SELECT * FROM ems.ems_users WHERE username = $1';
+  //     const query = 'SELECT * FROM ems.ems.ems_users WHERE username = $1';
   //     db.query(query, [decodedToken.Username], (error, rows) => {
   //       if (error) {
   //         console.error(error);
@@ -294,7 +294,7 @@ function getUserDetails(req, res) {
   }
 
   // Fetch user details from the database using the decoded token information
-  const query = 'SELECT * FROM tms_users WHERE Username = ?';
+  const query = 'SELECT * FROM ems.ems_users WHERE Username = $1';
   db.query(query, [decodedToken.Username], (error, rows) => {
     if (error) {
       console.error(error);
@@ -317,7 +317,7 @@ function getUserDetails(req, res) {
   const { personalEmail } = req.body;
 
   // Check if the email exists in the database
-  const query = 'SELECT * FROM ems_users WHERE personalEmail = $1';
+  const query = 'SELECT * FROM ems.ems.ems_users WHERE personalEmail = $1';
   db.query(query, [personalEmail], (error, rows) => {
     try {
       if (error) {
@@ -333,7 +333,7 @@ function getUserDetails(req, res) {
 
       // Save the reset token in the database
       const userId = rows[0].UserId;
-      const insertQuery = 'INSERT INTO ems_reset_tokens (UserId, token) VALUES ($1, $2)';
+      const insertQuery = 'INSERT INTO ems.ems_reset_tokens (UserId, token) VALUES ($1, $2)';
       db.query(insertQuery, [userId, resetToken], (error, insertResult) => {
         try {
           if (error) {
@@ -360,7 +360,7 @@ function resendResetToken(req, res) {
   const { personalEmail } = req.body;
 
   // Check if the user is available
-  const checkUserQuery = 'SELECT * FROM ems_user WHERE PersonalEmail = $1';
+  const checkUserQuery = 'SELECT * FROM ems.ems_user WHERE PersonalEmail = $1';
   db.query(checkUserQuery, [personalEmail], (error, userResult) => {
     if (error) {
       console.error('Error checking user availability:', error);
@@ -377,7 +377,7 @@ function resendResetToken(req, res) {
     const verificationToken = jwtUtils.generateToken({ personalEmail: personalEmail });
 
     // Update the user's verification token in the database
-    const updateQuery = 'UPDATE ems_reset_tokens SET token = $1 WHERE UserId = $2';
+    const updateQuery = 'UPDATE ems.ems_reset_tokens SET token = $1 WHERE UserId = $2';
     db.query(updateQuery, [verificationToken, userId], (error, updateResult) => {
       if (error) {
         console.error('Error updating Resend link:', error);
@@ -402,7 +402,7 @@ function resetPassword(req, res) {
   const { token, password } = req.body;
 
   // Check if the email and reset token match in the database
-  const query = 'SELECT * FROM ems_reset_tokens WHERE token = $1';
+  const query = 'SELECT * FROM ems.ems_reset_tokens WHERE token = $1';
   db.query(query, [token], (error, rows) => {
     try {
       if (error) {
@@ -423,7 +423,7 @@ function resetPassword(req, res) {
           }
 
           // Update the password in the database
-          const updateQuery = 'UPDATE ems_user SET Password = $1 WHERE UserId = $2';
+          const updateQuery = 'UPDATE ems.ems_user SET Password = $1 WHERE UserId = $2';
           db.query(updateQuery, [hashedPassword, userId], (error, updateResult) => {
             try {
               if (error) {
@@ -431,7 +431,7 @@ function resetPassword(req, res) {
               }
 
               // Delete the reset token from the reset_tokens table
-              const deleteQuery = 'DELETE FROM ems_reset_tokens WHERE token = $!';
+              const deleteQuery = 'DELETE FROM ems.ems_reset_tokens WHERE token = $!';
               db.query(deleteQuery, [token], (error, deleteResult) => {
                 if (error) {
                   console.error('Error deleting reset token:', error);
@@ -546,7 +546,7 @@ function verifyToken(req, res) {
   const { token } = req.body;
 
   // Check if the token matches the one stored in the database
-  const tokenCheckQuery = 'SELECT * FROM ems_users WHERE VerificationToken = $1';
+  const tokenCheckQuery = 'SELECT * FROM ems.ems.ems_users WHERE VerificationToken = $1';
   db.query(tokenCheckQuery, [token], (error, tokenCheckResult) => {
     if (error) {
       console.error('Error during token verification:', error);
@@ -560,7 +560,7 @@ function verifyToken(req, res) {
       }
 
       // Token matches, update the user's status as verified
-      const updateQuery = 'UPDATE ems_users SET Verified = $1 WHERE VerificationToken = $2';
+      const updateQuery = 'UPDATE ems.ems.ems_users SET Verified = $1 WHERE VerificationToken = $2';
       db.query(updateQuery, [true, token], (error, updateResult) => {
         if (error) {
           console.error('Error updating user verification status:', error);
@@ -583,7 +583,7 @@ function resendToken(req, res) {
   const { personalEmail } = req.body;
 
   // Check if the user is available
-  const checkUserQuery = 'SELECT * FROM ems_users WHERE PersonalEmail = $1';
+  const checkUserQuery = 'SELECT * FROM ems.ems.ems_users WHERE PersonalEmail = $1';
   db.query(checkUserQuery, [personalEmail], (error, userResult) => {
     if (error) {
       console.error('Error checking user availability:', error);
@@ -603,7 +603,7 @@ function resendToken(req, res) {
       const verificationToken = jwtUtils.generateToken({ personalEmail: personalEmail });
 
       // Update the user's verification token in the database
-      const updateQuery = 'UPDATE ems_users SET VerificationToken = $1 WHERE PersonalEmail = $2';
+      const updateQuery = 'UPDATE ems.ems.ems_users SET VerificationToken = $1 WHERE PersonalEmail = $2';
       db.query(updateQuery, [verificationToken, personalEmail], (error, updateResult) => {
         if (error) {
           console.error('Error updating verification token:', error);
@@ -640,7 +640,7 @@ function register_dashboard(req, res) {
   } = req.body;
 
   // Check if the username (company email) is already registered
-  const personalEmailCheckQuery = 'SELECT * FROM ems_users WHERE PersonalEmail = $1';
+  const personalEmailCheckQuery = 'SELECT * FROM ems.ems.ems_users WHERE PersonalEmail = $1';
   db.query(personalEmailCheckQuery, [personalEmail], (error, personalEmailCheckResult) => {
     if (error) {
       console.error('Error during username check:', error);
@@ -733,7 +733,7 @@ function register_dashboard(req, res) {
   } = req.body;
 
   // Check if the username (company email) is already registered
-  const personalEmailCheckQuery = 'SELECT * FROM ems_users WHERE PersonalEmail = $1';
+  const personalEmailCheckQuery = 'SELECT * FROM ems.ems.ems_users WHERE PersonalEmail = $1';
   db.query(personalEmailCheckQuery, [personalEmail], (error, personalEmailCheckResult) => {
     if (error) {
       console.error('Error during username check:', error);
@@ -762,7 +762,7 @@ function register_dashboard(req, res) {
 
           // Insert the user into the database
           const insertQuery =
-            'INSERT INTO ems_users (UserId, Username, FirstName, LastName, CompanyName, CompanyEmail, ContactNo, Location, UserType, PersonalEmail, Password, Designation, VerificationToken, Verified) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)';
+            'INSERT INTO ems.ems.ems_users (UserId, Username, FirstName, LastName, CompanyName, CompanyEmail, ContactNo, Location, UserType, PersonalEmail, Password, Designation, VerificationToken, Verified) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)';
           db.query(
             insertQuery,
             [
