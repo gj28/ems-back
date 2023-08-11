@@ -285,57 +285,43 @@ function sendTokenEmail(email, token) {
       res.json(userDetail);
     });
   }
-  
-
  // Forgot password
  function forgotPassword(req, res) {
   const { personalEmail } = req.body;
 
-  // Check if the email exists in the database
-  const query = 'SELECT * FROM ems.ems_users WHERE personalEmail = $1';
-  db.query(query, [personalEmail], (error, rows) => {
-    try {
-      if (error) {
-        throw new Error('Error during forgot password');
-      }
-
-      if (rows.length === 0) {
-        return res.status(404).json({ message: 'User not found' });
-      }
-
-      // Generate a reset token
-      const resetToken = jwtUtils.generateToken({ personalEmail: personalEmail });
-
-      // Save the reset token in the database
-      const userId = rows[0].UserId;
-      const insertQuery = 'INSERT INTO ems.ems_reset_tokens (UserId, token) VALUES ($1, $2)';
-      db.query(insertQuery, [userId, resetToken], (error, insertResult) => {
-        try {
-          if (error) {
-            throw new Error('Error saving reset token');
-          }
-
-          // Send the reset token to the user's email
-          sendResetTokenEmail(personalEmail, resetToken);
-
-          res.json({ message: 'Reset token sent to your email' });
-        } catch (error) {
-          console.error(error);
-          res.status(500).json({ message: 'Internal server error' });
-        }
-      });
-    } catch (error) {
+  const query = 'SELECT * FROM ems.ems_users WHERE personalemail = $1';
+  db.query(query, [personalEmail], (error, result) => {
+    if (error) {
       console.error(error);
-      res.status(500).json({ message: 'Internal server error' });
+      return res.status(500).json({ message: 'Internal server error' });
     }
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const resetToken = jwtUtils.generateToken({ personalEmail });
+
+    const userId = result.rows[0].userid; 
+    const insertQuery = 'INSERT INTO ems.ems_reset_tokens (userid, token) VALUES ($1, $2)';
+    db.query(insertQuery, [userId, resetToken], (insertError) => {
+      if (insertError) {
+        console.error(insertError);
+        return res.status(500).json({ message: 'Error saving reset token' });
+      }
+      sendResetTokenEmail(personalEmail, resetToken);
+
+      res.json({ message: 'Reset token sent to your email' });
+    });
   });
 }
+
 
 function resendResetToken(req, res) {
   const { personalEmail } = req.body;
 
   // Check if the user is available
-  const checkUserQuery = 'SELECT * FROM ems.ems_user WHERE PersonalEmail = $1';
+  const checkUserQuery = 'SELECT * FROM ems.ems_user WHERE personalemail = $1';
   db.query(checkUserQuery, [personalEmail], (error, userResult) => {
     if (error) {
       console.error('Error checking user availability:', error);
@@ -352,7 +338,7 @@ function resendResetToken(req, res) {
     const verificationToken = jwtUtils.generateToken({ personalEmail: personalEmail });
 
     // Update the user's verification token in the database
-    const updateQuery = 'UPDATE ems.ems_reset_tokens SET token = $1 WHERE UserId = $2';
+    const updateQuery = 'UPDATE ems.ems_reset_tokens SET token = $1 WHERE userid = $2';
     db.query(updateQuery, [verificationToken, userId], (error, updateResult) => {
       if (error) {
         console.error('Error updating Resend link:', error);
@@ -708,7 +694,7 @@ function register_dashboard(req, res) {
   } = req.body;
 
   // Check if the username (company email) is already registered
-  const personalEmailCheckQuery = 'SELECT * FROM ems.ems_users WHERE PersonalEmail = $1';
+  const personalEmailCheckQuery = 'SELECT * FROM ems.ems_users WHERE personalemail = $1';
   db.query(personalEmailCheckQuery, [personalEmail], (error, personalEmailCheckResult) => {
     if (error) {
       console.error('Error during username check:', error);
