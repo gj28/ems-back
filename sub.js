@@ -19,7 +19,7 @@ const pgClient = new Client(pgConfig);
 // Connect to the PostgreSQL database
 pgClient.connect()
   .then(() => {
-    console.log('Connected to PostgreSQL database');
+    //console.log('Connected to PostgreSQL database');
   })
   .catch(error => {
     console.error('Error connecting to PostgreSQL:', error);
@@ -39,7 +39,7 @@ mqttClient.on('connect', () => {
       if (error) {
         console.error(`Error subscribing to ${topic}:`, error);
       } else {
-        console.log(`Subscribed to ${topic}`);
+        //console.log(`Subscribed to ${topic}`);
       }
     });
   }
@@ -58,7 +58,7 @@ mqttClient.on('connect', () => {
 
 mqttClient.on('message', async (topic, message) => {
   try {
-    console.log(`Received message on topic '${topic}': ${message.toString()}`);
+    //console.log(`Received message on topic '${topic}': ${message.toString()}`);
   
     const data = JSON.parse(message);
   
@@ -77,7 +77,7 @@ mqttClient.on('message', async (topic, message) => {
       data.Timestamp,
     ];
     await pgClient.query(insertQuery, insertValues);
-    console.log('Data inserted into PostgreSQL');
+    //console.log('Data inserted into PostgreSQL');
   } catch (error) {
     console.error('Error processing message:', error);
   }
