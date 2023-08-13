@@ -194,7 +194,7 @@ function updatePassword(req, res) {
 
  function fetchDeviceTrigger(req, res){
    const deviceId = req.params.deviceId;
-   const deviceTriggerQuery = 'select * from tms_trigger where DeviceUID = ?';
+   const deviceTriggerQuery = 'select * from tms_trigger where DeviceUID = $1';
      try {
        db.query(deviceTriggerQuery, [deviceId], (error, devicetriggerkResult) => {
          if (error) {
@@ -212,7 +212,7 @@ function updatePassword(req, res) {
 
 function fetchAllDeviceTrigger(req, res){
   const CompanyEmail = req.params.CompanyEmail;
-  const deviceTriggerQuery = 'select * from tms_trigger where CompanyEmail = ?';
+  const deviceTriggerQuery = 'select * from tms_trigger where CompanyEmail = $1';
 
     try {
       db.query(deviceTriggerQuery, [CompanyEmail], (error, triggers) => {
@@ -232,7 +232,7 @@ function fetchAllDeviceTrigger(req, res){
 function editDeviceTrigger(req, res) {
   const deviceId = req.params.deviceId;
   const { TriggerValue, CompanyEmail } = req.body;
-  const deviceCheckQuery = 'SELECT * FROM tms_trigger WHERE DeviceUID = ?';
+  const deviceCheckQuery = 'SELECT * FROM tms_trigger WHERE DeviceUID = $1';
 
   db.query(deviceCheckQuery, [deviceId], (error, deviceCheckResult) => {
     if (error) {
@@ -242,7 +242,7 @@ function editDeviceTrigger(req, res) {
 
     try {
       if (deviceCheckResult.length === 0) {
-        const insertTriggerQuery = 'INSERT INTO tms_trigger (DeviceUID, TriggerValue, CompanyEmail) VALUES (?,?,?)';
+        const insertTriggerQuery = 'INSERT INTO tms_trigger (DeviceUID, TriggerValue, CompanyEmail) VALUES ($1,$2,$3)';
 
         db.query(insertTriggerQuery, [deviceId, TriggerValue, CompanyEmail], (error, insertResult) => {
           if (error) {
@@ -253,7 +253,7 @@ function editDeviceTrigger(req, res) {
           return res.json({ message: 'Device added successfully!' });
         });
       } else {
-        const updateDeviceTriggerQuery = 'UPDATE tms_trigger SET TriggerValue = ?, CompanyEmail = ? WHERE DeviceUID = ?';
+        const updateDeviceTriggerQuery = 'UPDATE tms_trigger SET TriggerValue = $1, CompanyEmail = $2 WHERE DeviceUID = $3';
 
         db.query(updateDeviceTriggerQuery, [TriggerValue, CompanyEmail, deviceId], (error, updateResult) => {
           if (error) {
@@ -326,7 +326,7 @@ function getDataByTimeInterval(req, res) {
         return res.status(400).json({ message: 'Invalid time interval' });
     }
 
-    const sql = `SELECT * FROM actual_data WHERE DeviceUID = ? AND TimeStamp >= DATE_SUB(NOW(), ${duration})`;
+    const sql = `SELECT * FROM actual_data WHERE DeviceUID = $1 AND TimeStamp >= DATE_SUB(NOW(), ${duration})`;
     db.query(sql, [deviceId], (error, results) => {
       if (error) {
         console.error('Error fetching data:', error);
@@ -392,7 +392,7 @@ function getDataByTimeIntervalStatus(req, res) {
       return res.status(400).json({ message: 'Invalid time interval' });
   }
 
-  const sql = `SELECT Status, COUNT(*) as count FROM tms_trigger_logs WHERE DeviceUID = ? AND TimeStamp >= DATE_SUB(NOW(), ${duration}) GROUP BY Status`;
+  const sql = `SELECT Status, COUNT(*) as count FROM tms_trigger_logs WHERE DeviceUID = $1 AND TimeStamp >= DATE_SUB(NOW(), ${duration}) GROUP BY Status`;
   db.query(sql, [deviceId], (error, results) => {
     if (error) {
       console.error('Error fetching data:', error);
@@ -429,7 +429,7 @@ function getDataByCustomDate(req, res) {
       return res.status(400).json({ message: 'Invalid parameters' });
     }
 
-    const sql = `SELECT * FROM actual_data WHERE DeviceUID = ? AND TimeStamp >= ? AND TimeStamp <= ?`;
+    const sql = `SELECT * FROM actual_data WHERE DeviceUID = $1 AND TimeStamp >= $2 AND TimeStamp <= $3`;
     db.query(sql, [deviceId, startDate + 'T00:00:00.000Z', endDate + 'T23:59:59.999Z'], (error, results) => {
       if (error) {
         console.error('Error fetching data:', error);
@@ -454,7 +454,7 @@ function getDataByCustomDateStatus(req, res) {
       return res.status(400).json({ message: 'Invalid parameters' });
     }
 
-    const sql = `SELECT Status, COUNT(*) as count FROM tms_trigger_logs WHERE DeviceUID = ? AND TimeStamp >= ? AND TimeStamp <= ? GROUP BY Status`;
+    const sql = `SELECT Status, COUNT(*) as count FROM tms_trigger_logs WHERE DeviceUID = $1 AND TimeStamp >= $2 AND TimeStamp <= $3 GROUP BY Status`;
     db.query(sql, [deviceId, startDate + 'T00:00:00.000Z', endDate + 'T23:59:59.999Z'], (error, results) => {
       if (error) {
         console.error('Error fetching data:', error);
@@ -486,7 +486,7 @@ function getDeviceDetails(req, res) {
 
     // Validate the deviceId parameter if necessary
 
-    const deviceDetailsQuery = 'SELECT * FROM tms_devices WHERE DeviceUID = ?';
+    const deviceDetailsQuery = 'SELECT * FROM tms_devices WHERE DeviceUID = $1';
     db.query(deviceDetailsQuery, [deviceId], (error, deviceDetail) => {
       if (error) {
         console.error('Error fetching data:', error);
@@ -513,7 +513,7 @@ function getLiveStatusDetails(req, res) {
 
     // Validate the deviceId parameter if necessary
 
-    const liveStatusQuery = 'SELECT * FROM tms_trigger_logs WHERE DeviceUID = ? ORDER BY TimeStamp DESC LIMIT 1';
+    const liveStatusQuery = 'SELECT * FROM tms_trigger_logs WHERE DeviceUID = $1 ORDER BY TimeStamp DESC LIMIT 1';
     db.query(liveStatusQuery, [deviceId], (error, liveStatus) => {
       if (error) {
         console.error('Error fetching data:', error);
@@ -539,7 +539,7 @@ function getUserData(req, res) {
 
     // Validate the deviceId parameter if necessary
 
-    const userDetailsQuery = 'SELECT * FROM tms_users WHERE UserId = ?';
+    const userDetailsQuery = 'SELECT * FROM tms_users WHERE UserId = $1';
     db.query(userDetailsQuery, [userId], (error, userDetail) => {
       if (error) {
         console.error('Error fetching User:', error);
@@ -566,7 +566,7 @@ function insertNewMessage(req, res) {
     const timestamp = new Date().toISOString();
     const isRead = 0; // Assuming the initial value for isRead is 0 (false)
 
-    const insertQuery = 'INSERT INTO tms_notifications (sender, receiver, message, timestamp, isRead) VALUES (?, ?, ?, ?, ?)';
+    const insertQuery = 'INSERT INTO tms_notifications (sender, receiver, message, timestamp, isRead) VALUES ($1, $2, $3, $4, $5)';
     db.query(insertQuery, [sender, receiver, message, timestamp, isRead], (error, result) => {
       if (error) {
         console.error('Error inserting new message:', error);
@@ -681,7 +681,7 @@ function getUserMessages(req, res) {
 function fetchCompanyUser(req, res) {
   const CompanyEmail = req.params.CompanyEmail;
   try {
-    const query = 'SELECT * FROM tms_users where CompanyEmail = ?';
+    const query = 'SELECT * FROM tms_users where CompanyEmail = $1';
     db.query(query, [CompanyEmail], (error, users) => {
       if (error) {
         throw new Error('Error fetching users');
@@ -699,7 +699,7 @@ function fetchCompanyUser(req, res) {
 function addDeviceTrigger(req, res) {
   const { DeviceUID, TriggerValue, CompanyEmail } = req.body;
     try {
-        const insertTriggerQuery = 'INSERT INTO tms_trigger (DeviceUID, TriggerValue, CompanyEmail) VALUES (?,?,?)';
+        const insertTriggerQuery = 'INSERT INTO tms_trigger (DeviceUID, TriggerValue, CompanyEmail) VALUES ($1,$2,$3)';
 
         db.query(insertTriggerQuery, [DeviceUID, TriggerValue, CompanyEmail], (error, insertResult) => {
           if (error) {
@@ -720,7 +720,7 @@ function addDevice(req, res) {
   const { DeviceUID, DeviceLocation, DeviceName, CompanyEmail, CompanyName } = req.body;
   try {
     const checkDeviceQuery = 'SELECT * FROM tms_devices WHERE DeviceUID = $1';
-    const insertDeviceQuery = 'INSERT INTO tms_devices (DeviceUID, DeviceLocation, DeviceName, CompanyEmail, CompanyName) VALUES (?,?,?,?,?)';
+    const insertDeviceQuery = 'INSERT INTO tms_devices (DeviceUID, DeviceLocation, DeviceName, CompanyEmail, CompanyName) VALUES ($1,$2,$3,$4,$5)';
 
     db.query(checkDeviceQuery, [DeviceUID], (error, checkResult) => {
       if (error) {
