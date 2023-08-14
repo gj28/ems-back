@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const authentication = require('./auth/authentication');
-// const dashboard = require('./dash/dashboard.js');
+const dashboard = require('./dash/dashboard.js');
 const limitter = require('express-rate-limit');
 
 
@@ -29,7 +29,7 @@ router.post('/reset-password', authentication.resetPassword);
 // router.put('/setUserOnline/:UserId', authentication.setUserOnline);
 // router.put('/setUserOffline/:UserId', authentication.setUserOffline);
 // // //Dashboard
-// router.get('/userdevices/:companyEmail', dashboard.userDevices);
+router.get('/userdevices/:companyEmail', dashboard.userDevices);
 // router.put('/editDevice/:deviceId', dashboard.editDevice);
 // router.put('/companyDetails/:UserId', dashboard.companyDetails);
 // router.put('/personalDetails/:UserId', authentication.personalDetails);

@@ -141,8 +141,8 @@ function sendTokenEmail(email, token) {
     port: 465,
     secure: true,
     auth: {
-      user: 'kpohekar19@gmail.com',
-      pass: 'woptjevenzhqmrpp',
+      user: "kpohekar19@gmail.com",
+      pass: "woptjevenzhqmrpp"
     },
   });
   
@@ -161,7 +161,7 @@ function sendTokenEmail(email, token) {
       const html = compiledTemplate({ token });
   
       const mailOptions = {
-        from: 'your-email@example.com',
+        from: 'kpohekar19@gmail.com',
         to: email,
         subject: 'Registration Token',
         html: html,
@@ -630,7 +630,7 @@ function register_dashboard(req, res) {
 
           // Insert the user into the database
           const insertQuery =
-            'INSERT INTO tms_users (UserId, Username, FirstName, LastName, CompanyName, CompanyEmail, ContactNo, Location, UserType, PersonalEmail, Password, Designation, VerificationToken, Verified) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)';
+            'INSERT INTO ems.ems_users (UserId, Username, FirstName, LastName, CompanyName, CompanyEmail, ContactNo, Location, UserType, PersonalEmail, Password, Designation, VerificationToken, Verified) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)';
           db.query(
             insertQuery,
             [

@@ -12,7 +12,7 @@ const ejs = require('ejs');
 
 function userDevices(req, res) {
   const companyEmail = req.params.companyEmail;
-  const userCheckQuery = 'SELECT * FROM tms_users WHERE CompanyEmail = $1';
+  const userCheckQuery = 'SELECT * FROM ems.ems_users WHERE CompanyEmail = $1';
 
   db.query(userCheckQuery, [companyEmail], (error, userCheckResult) => {
     if (error) {
@@ -26,13 +26,15 @@ function userDevices(req, res) {
         return res.status(400).json({ message: 'User not found!' });
       }
 
-      const devicesQuery = 'SELECT * from tms_devices WHERE CompanyEmail = ?';
+      const devicesQuery = 'SELECT * from ems.ems_devices WHERE CompanyEmail = $1';
 
-      db.query(devicesQuery, [companyEmail], (error, devices) => {
+      db.query(devicesQuery, [companyEmail], (error, devicesResult) => {
         if (error) {
           console.error('Error fetching devices:', error);
           return res.status(500).json({ message: 'Internal server error' });
         }
+
+        const devices = devicesResult.rows; // Extract the devices array
 
         res.json({ devices });
         console.log(devices);
@@ -48,7 +50,7 @@ function userDevices(req, res) {
 function editDevice(req, res) {
   const deviceId = req.params.deviceId;
   const { DeviceLocation, DeviceName}  = req.body; 
-  const deviceCheckQuery = 'SELECT * FROM tms_devices WHERE DeviceUID = $1';
+  const deviceCheckQuery = 'SELECT * FROM ems.ems_devices WHERE DeviceUID = $1';
 
   db.query(deviceCheckQuery, [deviceId], (error, deivceCheckResult) => {
     if (error) {
@@ -62,13 +64,14 @@ function editDevice(req, res) {
         return res.status(400).json({ message: 'Device not found!' });
       }
 
-      const devicesQuery = 'UPDATE tms_devices SET DeviceLocation = $1, DeviceName = $2 WHERE DeviceUID = $3';
+      const devicesQuery = 'UPDATE ems.ems_devices SET DeviceLocation = $1, DeviceName = $2 WHERE DeviceUID = $3';
 
       db.query(devicesQuery, [DeviceLocation, DeviceName, deviceId], (error, devices) => {
         if (error) {
           console.error('Error fetching devices:', error);
           return res.status(500).json({ message: 'Internal server error' });
         }
+
 
         res.json({ message: 'Device Updated SuccessFully' });
         console.log(devices);
@@ -83,7 +86,7 @@ function editDevice(req, res) {
 function companyDetails(req, res) {
   const UserId = req.params.UserId;
   const { Designation, ContactNo, Location}  = req.body; 
-  const userCheckQuery = 'SELECT * FROM tms_users WHERE UserId = $1';
+  const userCheckQuery = 'SELECT * FROM ems.ems_users WHERE UserId = $1';
 
   db.query(userCheckQuery, [UserId], (error, useridCheckResult) => {
     if (error) {
@@ -97,7 +100,7 @@ function companyDetails(req, res) {
         return res.status(400).json({ message: 'User not found!' });
       }
 
-      const userQuery = 'UPDATE tms_users SET Designation = $1, ContactNo = $2, Location = $3 WHERE UserId = $4';
+      const userQuery = 'UPDATE ems.ems_users SET Designation = $1, ContactNo = $2, Location = $3 WHERE UserId = $4';
 
       db.query(userQuery, [Designation, ContactNo, Location, UserId],(error, details) => {
         if (error) {
@@ -119,7 +122,7 @@ function companyDetails(req, res) {
 function personalDetails(req, res) {
   const UserId = req.params.UserId;
   const {FirstName, LastName}  = req.body; 
-  const userCheckQuery = 'SELECT * FROM tms_users WHERE UserId = $1';
+  const userCheckQuery = 'SELECT * FROM ems.ems_users WHERE UserId = $1';
 
   db.query(userCheckQuery, [UserId], (error, useridCheckResult) => {
     if (error) {
@@ -133,7 +136,7 @@ function personalDetails(req, res) {
         return res.status(400).json({ message: 'User not found!' });
       }
 
-      const userdetailQuery = 'UPDATE tms_users SET FirstName = $1, LastName = $2 WHERE UserId = $3';
+      const userdetailQuery = 'UPDATE ems.ems_users SET FirstName = $1, LastName = $2 WHERE UserId = $3';
 
       db.query(userdetailQuery, [FirstName, LastName, UserId],(error, details) => {
         if (error) {
@@ -157,7 +160,7 @@ function updatePassword(req, res) {
   const { Password } = req.body;
 
   // Check if the user exists in the database
-  const userCheckQuery = 'SELECT * FROM tms_users WHERE UserId = $1';
+  const userCheckQuery = 'SELECT * FROM ems.ems_users WHERE UserId = $1';
   db.query(userCheckQuery, [UserId], (error, useridCheckResult) => {
     try {
       if (error) {
@@ -174,7 +177,7 @@ function updatePassword(req, res) {
       const hashedPassword = bcrypt.hashSync(Password, 10);
 
       // Update the user's password in the database
-      const updatePasswordQuery = 'UPDATE tms_users SET Password = $1 WHERE UserId = $2';
+      const updatePasswordQuery = 'UPDATE ems.ems_users SET Password = $1 WHERE UserId = $2';
       db.query(updatePasswordQuery, [hashedPassword, UserId], (error, result) => {
         if (error) {
           console.error('Error updating password:', error);
@@ -486,7 +489,7 @@ function getDeviceDetails(req, res) {
 
     // Validate the deviceId parameter if necessary
 
-    const deviceDetailsQuery = 'SELECT * FROM tms_devices WHERE DeviceUID = $1';
+    const deviceDetailsQuery = 'SELECT * FROM ems.ems_devices WHERE DeviceUID = $1';
     db.query(deviceDetailsQuery, [deviceId], (error, deviceDetail) => {
       if (error) {
         console.error('Error fetching data:', error);
@@ -539,7 +542,7 @@ function getUserData(req, res) {
 
     // Validate the deviceId parameter if necessary
 
-    const userDetailsQuery = 'SELECT * FROM tms_users WHERE UserId = $1';
+    const userDetailsQuery = 'SELECT * FROM ems.ems_users WHERE UserId = $1';
     db.query(userDetailsQuery, [userId], (error, userDetail) => {
       if (error) {
         console.error('Error fetching User:', error);
@@ -681,7 +684,7 @@ function getUserMessages(req, res) {
 function fetchCompanyUser(req, res) {
   const CompanyEmail = req.params.CompanyEmail;
   try {
-    const query = 'SELECT * FROM tms_users where CompanyEmail = $1';
+    const query = 'SELECT * FROM ems.ems_users where CompanyEmail = $1';
     db.query(query, [CompanyEmail], (error, users) => {
       if (error) {
         throw new Error('Error fetching users');
@@ -719,8 +722,8 @@ function addDeviceTrigger(req, res) {
 function addDevice(req, res) {
   const { DeviceUID, DeviceLocation, DeviceName, CompanyEmail, CompanyName } = req.body;
   try {
-    const checkDeviceQuery = 'SELECT * FROM tms_devices WHERE DeviceUID = $1';
-    const insertDeviceQuery = 'INSERT INTO tms_devices (DeviceUID, DeviceLocation, DeviceName, CompanyEmail, CompanyName) VALUES ($1,$2,$3,$4,$5)';
+    const checkDeviceQuery = 'SELECT * FROM ems.ems_devices WHERE DeviceUID = $1';
+    const insertDeviceQuery = 'INSERT INTO ems.ems_devices (DeviceUID, DeviceLocation, DeviceName, CompanyEmail, CompanyName) VALUES ($1,$2,$3,$4,$5)';
 
     db.query(checkDeviceQuery, [DeviceUID], (error, checkResult) => {
       if (error) {

@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    /* Add your custom CSS styles here */
+  </style>
+</head>
+<body>
+  <div style="text-align: center;">
+    <h1>Welcome to our Application!</h1>
+    <p>Your registration token is: <%= token %></p>
+    <p>Please click the button below to verify your email:</p>
+    <a href="http://localhost:4200/login/verify-user?token=<%= token %>">
+      <button style="background-color: #4CAF50; color: white; padding: 10px 15px; border: none; cursor: pointer;">
+        Verify Email
+      </button>
+    </a>
+  </div>
+</body>
+</html>
