@@ -3,7 +3,7 @@ const cors = require('cors');
 const router = require('./routes');
 const limitter = require('express-rate-limit');
 //const mqtt_pub = require('./pub');
-const mqtt_sub = require('./sub');
+//const mqtt_sub = require('./sub');
 
 
 const app = express();
