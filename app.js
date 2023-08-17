@@ -4,8 +4,8 @@ const router = require('./routes');
 const limitter = require('express-rate-limit');
 //const mqtt_pub = require('./pub');
 //const mqtt_sub = require('./sub');
-const MinuteData = require('./dash/month');
-const MonthsData = require('./dash/Interval');
+// const MinuteData = require('./dash/month');
+// const MonthsData = require('./dash/Interval');
 
 const app = express();
 const port = 3000;

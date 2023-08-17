@@ -50,7 +50,7 @@ function userDevices(req, res) {
 function editDevice(req, res) {
   const deviceId = req.params.deviceId;
   const { DeviceLocation, DeviceName}  = req.body; 
-  const deviceCheckQuery = 'SELECT * FROM ems.ems_devices WHERE DeviceUID = $1';
+  const deviceCheckQuery = 'SELECT * FROM ems.ems_devices WHERE deviceuid = $1';
 
   db.query(deviceCheckQuery, [deviceId], (error, deivceCheckResult) => {
     if (error) {
@@ -64,7 +64,7 @@ function editDevice(req, res) {
         return res.status(400).json({ message: 'Device not found!' });
       }
 
-      const devicesQuery = 'UPDATE ems.ems_devices SET DeviceLocation = $1, DeviceName = $2 WHERE DeviceUID = $3';
+      const devicesQuery = 'UPDATE ems.ems_devices SET DeviceLocation = $1, DeviceName = $2 WHERE deviceuid = $3';
 
       db.query(devicesQuery, [DeviceLocation, DeviceName, deviceId], (error, devices) => {
         if (error) {
