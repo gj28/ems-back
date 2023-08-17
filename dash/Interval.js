@@ -70,7 +70,7 @@ function MinuteData() {
           });
         });
 
-        console.log(`Inserted ${rows.length} rows of data into 1_minute table.`);
+        console.log(`Inserted ${rows.length} rows of data into 1_minute.`);
       } else {
         console.log('No data found for the last 1 minute.');
       }

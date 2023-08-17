@@ -70,7 +70,7 @@ function MonthsData() {
           });
         });
 
-        console.log(`Inserted ${rows.length} rows of data into 1_month_data table.`);
+        console.log(`Inserted ${rows.length} rows of data into 1_month_data`);
       } else {
         console.log('No data found for the last 1 months.');
       }
