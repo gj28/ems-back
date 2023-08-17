@@ -14,7 +14,7 @@ const pgClient = new Client(pgConfig);
 
 pgClient.connect();
 
-function fetchAndInsertOneMinuteData() {
+function MinuteData() {
   const currentTimestamp = moment().tz('Asia/Kolkata').format('YYYY-MM-DDTHH:mm:ss');
   const startOfLastMinute = moment().tz('Asia/Kolkata').subtract(1, 'minutes').format('YYYY-MM-DDTHH:mm:ss');
 
@@ -79,5 +79,5 @@ function fetchAndInsertOneMinuteData() {
 }
 
 // Call the function immediately
-fetchAndInsertOneMinuteData();
-setInterval(fetchAndInsertOneMinuteData, 60000); // 1 minute in MS
+MinuteData();
+setInterval(MinuteData, 60000); // 1 minute in MS

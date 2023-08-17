@@ -14,9 +14,9 @@ const db = new Client(pgConfig);
 
 db.connect();
 
-function fetchAndInsertFourMonthsData() {
+function MonthsData() {
   const currentTimestamp = moment().tz('Asia/Kolkata').format('YYYY-MM-DDTHH:mm:ss');
-  const startOfFourMonthsAgo = moment().tz('Asia/Kolkata').subtract(4, 'months').format('YYYY-MM-DDTHH:mm:ss');
+  const startOfFourMonthsAgo = moment().tz('Asia/Kolkata').subtract(1, 'months').format('YYYY-MM-DDTHH:mm:ss');
 
   const selectQuery = `
     SELECT "deviceuid", "voltage", "current", "kva", "kw", "pf", "freq", "timestamp"
@@ -70,14 +70,14 @@ function fetchAndInsertFourMonthsData() {
           });
         });
 
-        console.log(`Inserted ${rows.length} rows of data into 4_month_data table.`);
+        console.log(`Inserted ${rows.length} rows of data into 1_month_data table.`);
       } else {
-        console.log('No data found for the last 4 months.');
+        console.log('No data found for the last 1 months.');
       }
     });
   });
 }
 
 // Call the function immediately
-fetchAndInsertFourMonthsData();
-setInterval(fetchAndInsertFourMonthsData, 24 * 60 * 60 * 1000); // 24 hours in MS
+MonthsData();
+setInterval(MonthsData, 24 * 60 * 60 * 1000); // 24 hours in MS
