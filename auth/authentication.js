@@ -364,58 +364,48 @@ function resetPassword(req, res) {
 
   // Check if the email and reset token match in the database
   const query = 'SELECT * FROM ems.ems_reset_tokens WHERE token = $1';
-  db.query(query, [token], (error, rows) => {
-    try {
+  db.query(query, [token], (error, result) => {
+    if (error) {
+      console.error('Error during reset password query:', error);
+      return res.status(500).json({ message: 'Internal server error' });
+    }
+
+    if (result.rowCount === 0) {
+      return res.status(401).json({ message: 'Invalid token' });
+    }
+
+    const tokenData = result.rows[0];
+    const userId = tokenData.userid;
+
+    // Hash the new password
+    bcrypt.hash(password, 10, (error, hashedPassword) => {
       if (error) {
-        throw new Error('Error during reset password');
+        console.error('Error during password hashing:', error);
+        return res.status(500).json({ message: 'Internal server error' });
       }
 
-      if (rows.length === 0) {
-        return res.status(401).json({ message: 'Invalid token' });
-      }
+      // Update the password in the database
+      const updateQuery = 'UPDATE ems.ems_users SET Password = $1 WHERE UserId = $2';
+      db.query(updateQuery, [hashedPassword, userId], (error, updateResult) => {
+        if (error) {
+          console.error('Error updating password:', error);
+          return res.status(500).json({ message: 'Internal server error' });
+        }
 
-      const userId = rows[0].UserId;
-
-      // Hash the new password
-      bcrypt.hash(password, 10, (error, hashedPassword) => {
-        try {
+        // Delete the reset token from the reset_tokens table
+        const deleteQuery = 'DELETE FROM ems.ems_reset_tokens WHERE token = $1';
+        db.query(deleteQuery, [token], (error, deleteResult) => {
           if (error) {
-            throw new Error('Error during password hashing');
+            console.error('Error deleting reset token:', error);
           }
 
-          // Update the password in the database
-          const updateQuery = 'UPDATE ems.ems_user SET Password = $1 WHERE UserId = $2';
-          db.query(updateQuery, [hashedPassword, userId], (error, updateResult) => {
-            try {
-              if (error) {
-                throw new Error('Error updating password');
-              }
-
-              // Delete the reset token from the reset_tokens table
-              const deleteQuery = 'DELETE FROM ems.ems_reset_tokens WHERE token = $!';
-              db.query(deleteQuery, [token], (error, deleteResult) => {
-                if (error) {
-                  console.error('Error deleting reset token:', error);
-                }
-
-                res.json({ message: 'Password reset successful' });
-              });
-            } catch (error) {
-              console.error(error);
-              res.status(500).json({ message: 'Internal server error' });
-            }
-          });
-        } catch (error) {
-          console.error(error);
-          res.status(500).json({ message: 'Internal server error' });
-        }
+          res.json({ message: 'Password reset successful' });
+        });
       });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: 'Internal server error' });
-    }
+    });
   });
 }
+
 
 // Function to send an email with the token
 function sendTokenEmail(email, token) {
