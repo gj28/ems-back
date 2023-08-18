@@ -10,13 +10,13 @@ const pgConfig = {
   port: 5432,
 };
 
-const pgClient = new Client(pgConfig);
+const db = new Client(pgConfig);
 
-pgClient.connect();
+db.connect();
 
-function MinuteData() {
-  const currentTimestamp = moment().tz('Asia/Kolkata').format('YYYY-MM-DDTHH:mm:ss');
-  const startOfLastMinute = moment().tz('Asia/Kolkata').subtract(1, 'minutes').format('YYYY-MM-DDTHH:mm:ss');
+function DayData() {
+  const currentDate = moment().tz('Asia/Kolkata').format('YYYY-MM-DD');
+  const startOfPreviousDay = moment().tz('Asia/Kolkata').subtract(1, 'days').format('YYYY-MM-DD');
 
   const selectQuery = `
     SELECT "deviceuid", "voltage", "current", "kva", "kw", "pf", "freq", "timestamp"
@@ -26,18 +26,18 @@ function MinuteData() {
   `;
 
   const deleteQuery = `
-    DELETE FROM ems."1_minute"
+    DELETE FROM ems.interval_day
     WHERE "timestamp" < $1
   `;
 
-  pgClient.query(deleteQuery, [startOfLastMinute], (error, deleteResult) => {
+  db.query(deleteQuery, [startOfPreviousDay], (error, deleteResult) => {
     if (error) {
       console.error('Error deleting old data: ', error);
     } else {
-      console.log(`Deleted ${deleteResult.rowCount} rows of old data from 1_minute table.`);
+      console.log(`Deleted ${deleteResult.rowCount} rows of old data.`);
     }
 
-    pgClient.query(selectQuery, [startOfLastMinute, currentTimestamp], (error, result) => {
+    db.query(selectQuery, [startOfPreviousDay, currentDate], (error, result) => {
       if (error) {
         console.error('Error fetching data: ', error);
         return;
@@ -47,7 +47,7 @@ function MinuteData() {
 
       if (rows.length > 0) {
         const insertQuery = `
-          INSERT INTO ems."1_minute" ("deviceuid", "voltage", "current", "kva", "kw", "pf", "freq", "timestamp")
+          INSERT INTO ems."interval_day" ("deviceuid", "voltage", "current", "kva", "kw", "pf", "freq", "timestamp")
           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         `;
 
@@ -63,21 +63,21 @@ function MinuteData() {
             row.timestamp,
           ];
 
-          pgClient.query(insertQuery, values, (error) => {
+          db.query(insertQuery, values, (error) => {
             if (error) {
               console.error('Error inserting data: ', error);
             }
           });
         });
 
-        console.log(`Inserted ${rows.length} rows of data into 1_minute.`);
+        console.log(`Inserted ${rows.length} rows of data into 1_day_data`);
       } else {
-        console.log('No data found for the last 1 minute.');
+        console.log('No data found for the previous day.');
       }
     });
   });
 }
 
 // Call the function immediately
-MinuteData();
-setInterval(MinuteData, 60000); // 1 minute in MS
+DayData();
+setInterval(DayData, 24 * 60 * 60 * 1000); // 24 hours in MS

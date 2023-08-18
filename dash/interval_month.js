@@ -26,7 +26,7 @@ function MonthsData() {
   `;
 
   const deleteQuery = `
-    DELETE FROM ems.ems_actual_data
+    DELETE FROM ems.interval_month
     WHERE "timestamp" < $1
   `;
 
@@ -47,7 +47,7 @@ function MonthsData() {
 
       if (rows.length > 0) {
         const insertQuery = `
-          INSERT INTO ems."1_hour" ("deviceuid", "voltage", "current", "kva", "kw", "pf", "freq", "timestamp")
+          INSERT INTO ems."interval_month" ("deviceuid", "voltage", "current", "kva", "kw", "pf", "freq", "timestamp")
           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         `;
 
