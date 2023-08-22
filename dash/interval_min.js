@@ -26,7 +26,7 @@ function MinuteData() {
   `;
 
   const deleteQuery = `
-    DELETE FROM ems."1_minute"
+    DELETE FROM ems."interval_min"
     WHERE "timestamp" < $1
   `;
 
@@ -47,7 +47,7 @@ function MinuteData() {
 
       if (rows.length > 0) {
         const insertQuery = `
-          INSERT INTO ems."1_minute" ("deviceuid", "voltage", "current", "kva", "kw", "pf", "freq", "timestamp")
+          INSERT INTO ems."interval_min" ("deviceuid", "voltage", "current", "kva", "kw", "pf", "freq", "timestamp")
           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         `;
 

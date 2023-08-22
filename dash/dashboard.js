@@ -274,8 +274,6 @@ function editDeviceTrigger(req, res) {
   });
 }
 
-
-
 function getDataByTimeInterval(req, res) {
   try {
     const deviceId = req.params.deviceId;
@@ -285,51 +283,66 @@ function getDataByTimeInterval(req, res) {
     }
 
     let duration;
+    let tableName;
+
     switch (timeInterval) {
-      case '30sec':
-        duration = 'INTERVAL 30 SECOND';
-        break;
-      case '1min':
-        duration = 'INTERVAL 1 MINUTE';
-        break;
-      case '2min':
-        duration = 'INTERVAL 2 MINUTE';
-        break;
-      case '5min':
-        duration = 'INTERVAL 5 MINUTE';
-        break;
-      case '10min':
-        duration = 'INTERVAL 10 MINUTE';
-        break;
-      case '30min':
-        duration = 'INTERVAL 30 MINUTE';
-        break;
-      case '1hour':
-        duration = 'INTERVAL 1 HOUR';
-        break;
-      case '2hour':
-        duration = 'INTERVAL 2 HOUR';
-        break;
-      case '10hour':
-        duration = 'INTERVAL 10 HOUR';
-        break;
-      case '12hour':
-        duration = 'INTERVAL 12 HOUR';
-        break;
-      case '1day':
-        duration = 'INTERVAL 1 DAY';
-        break;
-      case '7day':
-        duration = 'INTERVAL 7 DAY';
-        break;
-      case '30day':
-        duration = 'INTERVAL 30 DAY';
-        break;
+        case '30sec':
+          duration = 'INTERVAL 30 SECOND';
+          tableName = 'interval_min';
+          break;
+        case '1min':
+          duration = 'INTERVAL 1 MINUTE';
+          tableName = 'interval_min';
+          break;
+        case '2min':
+          duration = 'INTERVAL 2 MINUTE';
+          tableName = 'interval_hour';
+          break;
+        case '5min':
+          duration = 'INTERVAL 5 MINUTE';
+          tableName = 'interval_hour';
+          break;
+        case '10min':
+          duration = 'INTERVAL 10 MINUTE';
+          tableName = 'interval_hour';
+          break;
+        case '30min':
+          duration = 'INTERVAL 30 MINUTE';
+          tableName = 'interval_hour';
+          break;
+        case '1hour':
+          duration = 'INTERVAL 1 HOUR';
+          tableName = 'interval_hour';
+          break;
+        case '2hour':
+          duration = 'INTERVAL 2 HOUR';
+          tableName = 'interval_day';
+          break;
+        case '10hour':
+          duration = 'INTERVAL 10 HOUR';
+          tableName = 'interval_day';
+          break;
+        case '12hour':
+          duration = 'INTERVAL 12 HOUR';
+          tableName = 'interval_day';
+          break;
+        case '1day':
+          duration = 'INTERVAL 1 DAY';
+          tableName = 'interval_day';
+          break;
+        case '7day':
+          duration = 'INTERVAL 7 DAY';
+          tableName = 'interval_week';
+          break;
+        case '30day':
+          duration = 'INTERVAL 30 DAY';
+          tableName = 'interval_month';
+          break;
       default:
         return res.status(400).json({ message: 'Invalid time interval' });
     }
 
-    const sql = `SELECT * FROM actual_data WHERE DeviceUID = $1 AND TimeStamp >= DATE_SUB(NOW(), ${duration})`;
+    const sql = `SELECT * FROM ${tableName} WHERE DeviceUID = $1 AND TimeStamp >= DATE_SUB(NOW(), ${duration})`;
     db.query(sql, [deviceId], (error, results) => {
       if (error) {
         console.error('Error fetching data:', error);
