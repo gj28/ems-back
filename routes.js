@@ -37,7 +37,7 @@ router.put('/updatePassword/:UserId', dashboard.updatePassword);
 router.put('/editDeviceTrigger/:deviceId', dashboard.editDeviceTrigger);
 router.get('/device-trigger/:deviceId', dashboard.fetchDeviceTrigger);
 router.get('/user-devices-trigger/:CompanyEmail', dashboard.fetchAllDeviceTrigger);
-router.get('/data/:deviceId/intervals', dashboard.getDataByTimeInterval);
+router.get('/data/:deviceuid/intervals', dashboard.getDataByTimeInterval);
 router.get('/data/:deviceId', dashboard.getDataByCustomDate);
 router.get('/dataStatus/:deviceId/intervals', dashboard.getDataByTimeIntervalStatus);
 router.get('/dataStatus/:deviceId', dashboard.getDataByCustomDateStatus);

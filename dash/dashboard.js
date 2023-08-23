@@ -8,6 +8,7 @@ const nodemailer = require('nodemailer');
 const fs = require('fs');
 const path = require('path');
 const ejs = require('ejs');
+const moment = require('moment-timezone');
 
 
 function userDevices(req, res) {
@@ -273,11 +274,11 @@ function editDeviceTrigger(req, res) {
     }
   });
 }
-
 function getDataByTimeInterval(req, res) {
   try {
-    const deviceId = req.params.deviceId;
+    const deviceId = req.params.deviceuid;
     const timeInterval = req.query.interval;
+
     if (!timeInterval) {
       return res.status(400).json({ message: 'Invalid time interval' });
     }
@@ -286,76 +287,87 @@ function getDataByTimeInterval(req, res) {
     let tableName;
 
     switch (timeInterval) {
-        case '30sec':
-          duration = 'INTERVAL 30 SECOND';
-          tableName = 'interval_min';
-          break;
-        case '1min':
-          duration = 'INTERVAL 1 MINUTE';
-          tableName = 'interval_min';
-          break;
-        case '2min':
-          duration = 'INTERVAL 2 MINUTE';
-          tableName = 'interval_hour';
-          break;
-        case '5min':
-          duration = 'INTERVAL 5 MINUTE';
-          tableName = 'interval_hour';
-          break;
-        case '10min':
-          duration = 'INTERVAL 10 MINUTE';
-          tableName = 'interval_hour';
-          break;
-        case '30min':
-          duration = 'INTERVAL 30 MINUTE';
-          tableName = 'interval_hour';
-          break;
-        case '1hour':
-          duration = 'INTERVAL 1 HOUR';
-          tableName = 'interval_hour';
-          break;
-        case '2hour':
-          duration = 'INTERVAL 2 HOUR';
-          tableName = 'interval_day';
-          break;
-        case '10hour':
-          duration = 'INTERVAL 10 HOUR';
-          tableName = 'interval_day';
-          break;
-        case '12hour':
-          duration = 'INTERVAL 12 HOUR';
-          tableName = 'interval_day';
-          break;
-        case '1day':
-          duration = 'INTERVAL 1 DAY';
-          tableName = 'interval_day';
-          break;
-        case '7day':
-          duration = 'INTERVAL 7 DAY';
-          tableName = 'interval_week';
-          break;
-        case '30day':
-          duration = 'INTERVAL 30 DAY';
-          tableName = 'interval_month';
-          break;
+      case '30sec':
+        duration = 30 * 1000;
+        tableName = 'interval_min';
+        break;
+      case '1min':
+        duration = 60 * 1000;
+        tableName = 'interval_min';
+        break;
+      case '2min':
+        duration = 2 * 60 * 1000;
+        tableName = 'interval_hour';
+        break;
+      case '5min':
+        duration = 5 * 60 * 1000;
+        tableName = 'interval_hour';
+        break;
+      case '10min':
+        duration = 10 * 60 * 1000;
+        tableName = 'interval_hour';
+        break;
+      case '30min':
+        duration = 30 * 60 * 1000;
+        tableName = 'interval_hour';
+        break;
+      case '1hour':
+        duration = 60 * 60 * 1000;
+        tableName = 'interval_hour';
+        break;
+      case '2hour':
+        duration = 2 * 60 * 60 * 1000;
+        tableName = 'interval_day';
+        
+        break;
+      case '10hour':
+        duration = 10 * 60 * 60 * 1000;
+        tableName = 'interval_day';
+        break;
+      case '12hour':
+        duration = 12 * 60 * 60 * 1000;
+        tableName = 'interval_day';
+        break;
+      case '1day':
+        duration = 24 * 60 * 60 * 1000;
+        tableName = 'interval_day';
+        break;
+      case '7day':
+        duration = 7 * 24 * 60 * 60 * 1000;
+        tableName = 'interval_week';
+        break;
+      case '30day':
+        duration = 30 * 24 * 60 * 60 * 1000;
+        tableName = 'interval_month';
+        break;
       default:
         return res.status(400).json({ message: 'Invalid time interval' });
     }
 
-    const sql = `SELECT * FROM ${tableName} WHERE DeviceUID = $1 AND TimeStamp >= DATE_SUB(NOW(), ${duration})`;
-    db.query(sql, [deviceId], (error, results) => {
-      if (error) {
-        console.error('Error fetching data:', error);
-        return res.status(500).json({ message: 'Internal server error' });
-      }
-      res.json({ data: results });
-    });
+    const now = new Date();
+    const startTime = new Date(now - duration);
+
+    console.log('Received interval:', timeInterval);
+    console.log('Start time:', startTime);
+
+const sql = `SELECT * FROM ems.${tableName} WHERE deviceuid = $1 AND "timestamp" >= $2`;
+db.query(sql, [deviceId, startTime.toISOString()], (error, results) => {
+  if (error) {
+    console.error('Error fetching data:', error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+
+  const responseData = {
+    data: results.rows,
+  };
+
+  res.json(responseData);
+});
   } catch (error) {
     console.error('An error occurred:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 }
-
 function getDataByTimeIntervalStatus(req, res) {
   const deviceId = req.params.deviceId;
   const timeInterval = req.query.interval;
