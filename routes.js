@@ -17,6 +17,7 @@ router.post('/register',registerLimitter, authentication.register);
 //     windowMS : 1*60*1000,
 //     max: 5,
 // })
+  
 // Login route
 router.post('/login',authentication.login);
 router.post('/register-dashboard', authentication.register_dashboard);

@@ -274,10 +274,12 @@ function editDeviceTrigger(req, res) {
     }
   });
 }
+
 function getDataByTimeInterval(req, res) {
   try {
     const deviceId = req.params.deviceuid;
     const timeInterval = req.query.interval;
+    const averageField = req.query.averageField;
 
     if (!timeInterval) {
       return res.status(400).json({ message: 'Invalid time interval' });
@@ -347,27 +349,62 @@ function getDataByTimeInterval(req, res) {
     const now = new Date();
     const startTime = new Date(now - duration);
 
-    console.log('Received interval:', timeInterval);
-    console.log('Start time:', startTime);
+    const sql = `SELECT * FROM ems.${tableName} WHERE deviceuid = $1 AND "timestamp" >= $2`;
+    db.query(sql, [deviceId, startTime.toISOString()], (error, results) => {
+      if (error) {
+        console.error('Error fetching data:', error);
+        return res.status(500).json({ message: 'Internal server error' });
+      }
 
-const sql = `SELECT * FROM ems.${tableName} WHERE deviceuid = $1 AND "timestamp" >= $2`;
-db.query(sql, [deviceId, startTime.toISOString()], (error, results) => {
-  if (error) {
-    console.error('Error fetching data:', error);
-    return res.status(500).json({ message: 'Internal server error' });
-  }
+      const dataRows = results.rows;
 
-  const responseData = {
-    data: results.rows,
-  };
+      if (averageField) {
+        const aggregatedData = {};
+        const intervalMilliseconds = duration; // Using the same duration as the interval
 
-  res.json(responseData);
-});
+        dataRows.forEach(row => {
+          const timestamp = new Date(row.timestamp).getTime();
+          const intervalStart = Math.floor(timestamp / intervalMilliseconds) * intervalMilliseconds;
+          const intervalEnd = intervalStart + intervalMilliseconds;
+
+          if (!aggregatedData[intervalStart]) {
+            aggregatedData[intervalStart] = {
+              count: 0,
+              totalValue: 0,
+            };
+          }
+
+          if (timestamp >= intervalStart && timestamp < intervalEnd) {
+            aggregatedData[intervalStart].count++;
+            aggregatedData[intervalStart].totalValue += row[averageField];
+          }
+        });
+
+        const aggregatedResponseData = [];
+        for (const intervalStart in aggregatedData) {
+          const intervalAverage = aggregatedData[intervalStart].totalValue / aggregatedData[intervalStart].count;
+          aggregatedResponseData.push({
+            intervalStart: new Date(parseInt(intervalStart)).toISOString(),
+            average: intervalAverage,
+          });
+        }
+
+        res.json(aggregatedResponseData);
+      } else {
+        const responseData = {
+          data: dataRows,
+        };
+
+        res.json(responseData);
+      }
+    });
   } catch (error) {
     console.error('An error occurred:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 }
+       
+
 function getDataByTimeIntervalStatus(req, res) {
   const deviceId = req.params.deviceId;
   const timeInterval = req.query.interval;

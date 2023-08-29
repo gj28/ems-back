@@ -13,7 +13,7 @@ const db = new Client(pgConfig);
 
 db.connect();
 
-function fetchAverageEntryTime() {
+function fetchMinMaxAvgEntryTime() {
   const currentDate = moment().tz('Asia/Kolkata').format('YYYY-MM-DD');
   const startOfPreviousDay = moment().tz('Asia/Kolkata').subtract(1, 'days').format('YYYY-MM-DD');
 
@@ -34,7 +34,7 @@ function fetchAverageEntryTime() {
       console.error('Error deleting old data: ', deleteError);
       return;
     }
-    
+
     console.log(`Deleted ${deleteResult.rowCount} rows of old data.`);
 
     db.query(selectQuery, [startOfPreviousDay, currentDate], (error, result) => {
@@ -46,10 +46,12 @@ function fetchAverageEntryTime() {
       const rows = result.rows;
 
       if (rows.length > 0) {
-        let entryCountPerInterval = {};
+        let entryStatsPerInterval = {};
         let previousTimestamp = moment(rows[0].timestamp);
         let entryCount = 0;
         let totalEntryTime = 0;
+        let minEntryTime = Number.MAX_SAFE_INTEGER;
+        let maxEntryTime = Number.MIN_SAFE_INTEGER;
 
         rows.forEach((row) => {
           const currentTimestamp = moment(row.timestamp);
@@ -57,21 +59,29 @@ function fetchAverageEntryTime() {
 
           if (timeDiff >= 1200000) { // If 20 minutes or more have passed
             if (entryCount > 0) {
-              entryCountPerInterval[previousTimestamp.format('HH:mm')] = totalEntryTime / entryCount;
+              entryStatsPerInterval[previousTimestamp.format('HH:mm')] = {
+                average: totalEntryTime / entryCount,
+                min: minEntryTime,
+                max: maxEntryTime
+              };
             }
 
             previousTimestamp = currentTimestamp;
             entryCount = 0;
             totalEntryTime = 0;
+            minEntryTime = Number.MAX_SAFE_INTEGER;
+            maxEntryTime = Number.MIN_SAFE_INTEGER;
           } else {
             entryCount++;
             totalEntryTime += timeDiff;
+            minEntryTime = Math.min(minEntryTime, timeDiff);
+            maxEntryTime = Math.max(maxEntryTime, timeDiff);
           }
         });
 
-        // Insert average entry times into interval_day table
-        for (const interval in entryCountPerInterval) {
-          const averageEntryTime = entryCountPerInterval[interval];
+        // Insert statistics into interval_day table
+        for (const interval in entryStatsPerInterval) {
+          const stats = entryStatsPerInterval[interval];
           const insertQuery = `
             INSERT INTO ems.interval_day (deviceuid, "timestamp", voltage, "current", kva, kw, pf, freq)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -79,12 +89,12 @@ function fetchAverageEntryTime() {
           const values = [
             interval,
             moment().tz('Asia/Kolkata').format('YYYY-MM-DD HH:mm:ss'),
-            averageEntryTime,
-            averageEntryTime,
-            averageEntryTime,
-            averageEntryTime,
-            averageEntryTime,
-            averageEntryTime
+            stats.average,
+            stats.min,
+            stats.max,
+            stats.average, // Placeholder value, replace with actual value
+            stats.average, // Placeholder value, replace with actual value
+            stats.average  // Placeholder value, replace with actual value
           ];
 
           db.query(insertQuery, values, (insertError) => {
@@ -94,7 +104,7 @@ function fetchAverageEntryTime() {
           });
         }
 
-        console.log('Inserted average entry times into interval_day table.');
+        console.log('Inserted entry time statistics into interval_day table.');
       } else {
         console.log('No data found for the specified time range.');
       }
@@ -103,5 +113,6 @@ function fetchAverageEntryTime() {
 }
 
 // Call the function immediately
-fetchAverageEntryTime();
-setInterval(fetchAverageEntryTime, 24 * 60 * 60 * 1000);
+fetchMinMaxAvgEntryTime();
+setInterval(fetchMinMaxAvgEntryTime, 24 * 60 * 60 * 1000);
+
