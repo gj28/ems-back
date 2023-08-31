@@ -27,19 +27,19 @@ function log(req, res, next) {
 }
 
 function fetchLogs(req, res) {
-  try {
-    const query = 'SELECT * FROM logs';
-    db.query(query, (error, rows) => {
-      if (error) {
-        throw new Error('Error fetching logs');
-      }
-      res.json({ devices: rows });
-      console.log(rows);
-    });
-  } catch (error) {
-    console.error('Error fetching logs:', error);
-    res.status(500).json({ message: 'Internal server error' });
-  }
+  const query = 'SELECT * FROM ems.logs';
+  
+  db.query(query, (error, result) => {
+    if (error) {
+      console.error('Error fetching logs:', error);
+      return res.status(500).json({ message: 'Internal server error' });
+    }
+
+    const rows = result.rows; 
+
+    res.json(rows);
+  });
 }
+
 
 module.exports = {log,fetchLogs};
