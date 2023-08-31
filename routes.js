@@ -3,7 +3,7 @@ const router = express.Router();
 const authentication = require('./auth/authentication');
 const dashboard = require('./dash/dashboard.js');
 const limitter = require('express-rate-limit');
-
+const logs = require('./audit_logs');
 
 const registerLimitter = limitter({
     windowMS : 5*60*1000,
@@ -53,5 +53,6 @@ router.get('/messages/:receiver', dashboard.getUserMessages);
 router.get('/Company-users/:CompanyEmail', dashboard.fetchCompanyUser);
 router.post('/addDeviceTrigger', dashboard.addDeviceTrigger)
 router.post('/addDevice', dashboard.addDevice);
+router.get('/logs', logs.fetchLogs);
 
 module.exports = router;
