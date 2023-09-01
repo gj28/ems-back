@@ -7,118 +7,124 @@ const nodemailer = require('nodemailer');
 const fs = require('fs');
 const path = require('path');
 const ejs = require('ejs');
+const { logExecution } = require('../api_usage');
+const { v4: uuidv4 } = require('uuid');
 
 // Function to handle user registration
 function register(req, res) {
-    const {
-      companyName,
-      companyEmail,
-      contact,
-      location,
-      firstName,
-      lastName,
-      personalEmail,
-      designation,
-      password,
-    } = req.body;
-  
-    // Check if the company email is already registered
-    const emailCheckQuery = 'SELECT * FROM ems.ems_users WHERE CompanyEmail = $1';
-    db.query(emailCheckQuery, [companyEmail], (error, emailCheckResult) => {
-      if (error) {
-        console.error('Error during email check:', error);
-        return res.status(500).json({ message: 'Internal server error' });
+  const {
+    companyName,
+    companyEmail,
+    contact,
+    location,
+    firstName,
+    lastName,
+    personalEmail,
+    designation,
+    password,
+  } = req.body;
+
+  // Check if the company email is already registered
+  const emailCheckQuery = 'SELECT * FROM ems.ems_users WHERE CompanyEmail = $1';
+  db.query(emailCheckQuery, [companyEmail], (error, emailCheckResult) => {
+    if (error) {
+      console.error('Error during email check:', error);
+      return res.status(500).json({ message: 'Internal server error' });
+    }
+
+    try {
+      if (emailCheckResult.length > 0) {
+        console.log('Company email already exists');
+        return res.status(400).json({ message: 'Company email already exists' });
       }
-  
-      try {
-        if (emailCheckResult.length > 0) {
-          console.log('Company email already exists');
-          return res.status(400).json({ message: 'Company email already exists' });
+
+      // Check if the username (company email) is already registered
+      const personalEmailCheckQuery = 'SELECT * FROM ems.ems_users WHERE personalemail = $1';
+      db.query(personalEmailCheckQuery, [personalEmail], (error, personalEmailCheckResult) => {
+        if (error) {
+          console.error('Error during username check:', error);
+          return res.status(500).json({ message: 'Internal server error' });
         }
-  
-        // Check if the username (company email) is already registered
-        const personalEmailCheckQuery = 'SELECT * FROM ems.ems_users WHERE personalemail = $1';
-        db.query(personalEmailCheckQuery, [personalEmail], (error, personalEmailCheckResult) => {
-          if (error) {
-            console.error('Error during username check:', error);
-            return res.status(500).json({ message: 'Internal server error' });
+
+        try {
+          if (personalEmailCheckResult.length > 0) {
+            console.log('Username already exists');
+            return res.status(400).json({ message: 'User already exists' });
           }
-  
-          try {
-            if (personalEmailCheckResult.length > 0) {
-              console.log('Username already exists');
-              return res.status(400).json({ message: 'User already exists' });
+
+          // Generate a unique 10-digit user ID
+          const userId = generateUserId();
+
+          // Hash the password
+          bcrypt.hash(password, 10, (error, hashedPassword) => {
+            if (error) {
+              console.error('Error during password hashing:', error);
+              return res.status(500).json({ message: 'Internal server error' });
             }
-  
-            // Generate a unique 10-digit user ID
-            const userId = generateUserId();
-  
-            // Hash the password
-            bcrypt.hash(password, 10, (error, hashedPassword) => {
-              if (error) {
-                console.error('Error during password hashing:', error);
-                return res.status(500).json({ message: 'Internal server error' });
-              }
-  
-              try {
-                // Generate a verification token
-                const verificationToken = jwtUtils.generateToken({ personalEmail: personalEmail });
-  
-                // Insert the user into the database
-                const insertQuery =
-                  'INSERT INTO ems.ems_users (UserId, Username, FirstName, LastName, CompanyName, CompanyEmail, ContactNo, Location, UserType, personalemail, Password, Designation, VerificationToken, verified) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)';
-                db.query(
-                  insertQuery,
-                  [
-                    userId,
-                    personalEmail,
-                    firstName,
-                    lastName,
-                    companyName,
-                    companyEmail,
-                    contact,
-                    location,
-                    'Admin',
-                    personalEmail,
-                    hashedPassword,
-                    designation,
-                    verificationToken,
-                    '0'
-                  ],
-                  (error, insertResult) => {
-                    if (error) {
-                      console.error('Error during user insertion:', error);
-                      return res.status(500).json({ message: 'Internal server error' });
-                    }
-  
-                    try {
-                      // Send the verification token to the user's email
-                      sendTokenEmail(personalEmail, verificationToken);
-  
-                      console.log('User registered successfully');
-                      res.json({ message: 'Registration successful. Check your email for the verification token.' });
-                    } catch (error) {
-                      console.error('Error sending verification token:', error);
-                      res.status(500).json({ message: 'Internal server error' });
-                    }
+
+            try {
+              // Generate a verification token
+              const verificationToken = jwtUtils.generateToken({ personalEmail: personalEmail });
+
+              // Insert the user into the database
+              const insertQuery =
+                'INSERT INTO ems.ems_users (UserId, Username, FirstName, LastName, CompanyName, CompanyEmail, ContactNo, Location, UserType, personalemail, Password, Designation, VerificationToken, verified) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)';
+              db.query(
+                insertQuery,
+                [
+                  userId,
+                  personalEmail,
+                  firstName,
+                  lastName,
+                  companyName,
+                  companyEmail,
+                  contact,
+                  location,
+                  'Admin',
+                  personalEmail,
+                  hashedPassword,
+                  designation,
+                  verificationToken,
+                  '0',
+                ],
+                (error, insertResult) => {
+                  if (error) {
+                    console.error('Error during user insertion:', error);
+                    return res.status(500).json({ message: 'Internal server error' });
                   }
-                );
-              } catch (error) {
-                console.error('Error during registration:', error);
-                res.status(500).json({ message: 'Internal server error' });
-              }
-            });
-          } catch (error) {
-            console.error('Error during registration:', error);
-            res.status(500).json({ message: 'Internal server error' });
-          }
-        });
-      } catch (error) {
-        console.error('Error during registration:', error);
-        res.status(500).json({ message: 'Internal server error' });
-      }
-    });
-  }
+
+                  // Log the execution
+                  logExecution('register', '60ca6460-46ac-11ee-91bb-c7905c3b6796');
+
+                  try {
+                    // Send the verification token to the user's email
+                    sendTokenEmail(personalEmail, verificationToken);
+
+                    console.log('User registered successfully');
+                    res.json({ message: 'Registration successful. Check your email for the verification token.' });
+                  } catch (error) {
+                    console.error('Error sending verification token:', error);
+                    res.status(500).json({ message: 'Internal server error' });
+                  }
+                }
+              );
+            } catch (error) {
+              console.error('Error during registration:', error);
+              res.status(500).json({ message: 'Internal server error' });
+            }
+          });
+        } catch (error) {
+          console.error('Error during registration:', error);
+          res.status(500).json({ message: 'Internal server error' });
+        }
+      });
+    } catch (error) {
+      console.error('Error during registration:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+}
+
 
   // Helper function to generate a unique 10-digit user ID
 function generateUserId() {
@@ -181,6 +187,10 @@ function sendTokenEmail(email, token) {
   function login(req, res) {
     const { Username, Password } = req.body;
   
+    // Generate a UUID for tenant_id
+    const tenantId = uuidv4();
+    let errorOccurred = false;
+  
     // Check if the user exists in the database
     const query = 'SELECT * FROM ems.ems_users WHERE username = $1';
     db.query(query, [Username], (error, result) => {
@@ -188,14 +198,22 @@ function sendTokenEmail(email, token) {
         if (error) {
           throw new Error('Error during login');
         }
-  
-        const user = result.rows[0]; // Accessing the first row
-  
+        const user = result.rows[0];
         if (!user) {
+          // Log the error and response
+          console.error('User does not exist!');
+          logExecution('login', tenantId, 'ERROR', 'User does not exist!');
+          errorOccurred = true;
+  
           return res.status(401).json({ message: 'User does not exist!' });
         }
   
-        if (user.verified === 0) { // Using lowercase 'verified' based on the response structure you provided
+        if (user.verified === 0) {
+          // Log the error and response
+          console.error('User is not verified. Please verify your account.');
+          logExecution('login', tenantId, 'ERROR', 'User is not verified. Please verify your account.');
+          errorOccurred = true; 
+  
           return res.status(401).json({ message: 'User is not verified. Please verify your account.' });
         }
   
@@ -207,24 +225,41 @@ function sendTokenEmail(email, token) {
             }
   
             if (!isPasswordValid) {
+              // Log the error and response
+              console.error('Invalid credentials');
+              logExecution('login', tenantId, 'ERROR', 'Invalid credentials'); 
+              errorOccurred = true; 
+  
               return res.status(401).json({ message: 'Invalid credentials' });
             }
   
             // Generate a JWT token
             const token = jwtUtils.generateToken({ Username: user.username });
+  
+            // Log the success and token generation if no error occurred
+            if (!errorOccurred) {
+              logExecution('login', tenantId, 'SUCCESS', 'Login successful');
+            }
+  
             res.json({ token });
           } catch (error) {
+            // Log the error and response
             console.error(error);
+            logExecution('login', tenantId, 'ERROR', 'Internal server error');
+  
             res.status(500).json({ message: 'Internal server error' });
           }
         });
       } catch (error) {
+        // Log the error and response
         console.error(error);
+        logExecution('login', tenantId, 'ERROR', 'Internal server error'); 
+  
         res.status(500).json({ message: 'Internal server error' });
       }
     });
   }
-
+  
   //working for specific user 
 
   // function getUserData(req, res) {
