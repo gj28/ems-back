@@ -13,17 +13,28 @@ const moment = require('moment-timezone');
 
 function userDevices(req, res) {
   const companyEmail = req.params.companyEmail;
+  
+  // Generate a UUID for tenant_id
+  const tenantId = uuidv4();
+  
+  // Log the start of the function execution
+  logExecution('userDevices', tenantId, 'INFO', `Fetching devices for ${companyEmail}`);
+
   const userCheckQuery = 'SELECT * FROM ems.ems_users WHERE CompanyEmail = $1';
 
   db.query(userCheckQuery, [companyEmail], (error, userCheckResult) => {
     if (error) {
       console.error('Error during user check:', error);
+      // Log the error
+      logExecution('userDevices', tenantId, 'ERROR', 'Error during user check');
       return res.status(500).json({ message: 'Internal server error' });
     }
 
     try {
       if (userCheckResult.length === 0) {
         console.log('User not found!');
+        // Log the end of the function execution with an error message
+        logExecution('userDevices', tenantId, 'ERROR', 'User not found');
         return res.status(400).json({ message: 'User not found!' });
       }
 
@@ -32,36 +43,55 @@ function userDevices(req, res) {
       db.query(devicesQuery, [companyEmail], (error, devicesResult) => {
         if (error) {
           console.error('Error fetching devices:', error);
+          // Log the error
+          logExecution('userDevices', tenantId, 'ERROR', 'Error fetching devices');
           return res.status(500).json({ message: 'Internal server error' });
         }
 
         const devices = devicesResult.rows; // Extract the devices array
 
+        // Log the end of the function execution with a success message
+        logExecution('userDevices', tenantId, 'INFO', `Devices fetched successfully for ${companyEmail}`);
+        
         res.json({ devices });
         console.log(devices);
       });
     } catch (error) {
       console.error('Error fetching user:', error);
+      // Log the error
+      logExecution('userDevices', tenantId, 'ERROR', 'Error fetching user');
       res.status(500).json({ message: 'Internal server error' });
     }
   });
 }
 
 
+
 function editDevice(req, res) {
   const deviceId = req.params.deviceId;
-  const { DeviceLocation, DeviceName}  = req.body; 
+  const { DeviceLocation, DeviceName } = req.body;
+  
+  // Generate a UUID for tenant_id
+  const tenantId = uuidv4();
+  
+  // Log the start of the function execution
+  logExecution('editDevice', tenantId, 'INFO', `Editing device ${deviceId}`);
+
   const deviceCheckQuery = 'SELECT * FROM ems.ems_devices WHERE deviceuid = $1';
 
-  db.query(deviceCheckQuery, [deviceId], (error, deivceCheckResult) => {
+  db.query(deviceCheckQuery, [deviceId], (error, deviceCheckResult) => {
     if (error) {
       console.error('Error during device check:', error);
+      // Log the error
+      logExecution('editDevice', tenantId, 'ERROR', 'Error during device check');
       return res.status(500).json({ message: 'Internal server error' });
     }
 
     try {
-      if (deivceCheckResult.length === 0) {
-        console.log('User not found!');
+      if (deviceCheckResult.length === 0) {
+        console.log('Device not found!');
+        // Log the end of the function execution with an error message
+        logExecution('editDevice', tenantId, 'ERROR', 'Device not found');
         return res.status(400).json({ message: 'Device not found!' });
       }
 
@@ -69,96 +99,147 @@ function editDevice(req, res) {
 
       db.query(devicesQuery, [DeviceLocation, DeviceName, deviceId], (error, devices) => {
         if (error) {
-          console.error('Error fetching devices:', error);
+          console.error('Error updating device:', error);
+          // Log the error
+          logExecution('editDevice', tenantId, 'ERROR', 'Error updating device');
           return res.status(500).json({ message: 'Internal server error' });
         }
 
-
-        res.json({ message: 'Device Updated SuccessFully' });
+        // Log the end of the function execution with a success message
+        logExecution('editDevice', tenantId, 'INFO', `Device ${deviceId} updated successfully`);
+        
+        res.json({ message: 'Device Updated Successfully' });
         console.log(devices);
       });
     } catch (error) {
-      console.error('Error fetching user:', error);
+      console.error('Error updating device:', error);
+      // Log the error
+      logExecution('editDevice', tenantId, 'ERROR', 'Error updating device');
       res.status(500).json({ message: 'Internal server error' });
     }
   });
 }
 
+
 function companyDetails(req, res) {
   const UserId = req.params.UserId;
-  const { Designation, ContactNo, Location}  = req.body; 
+  const { Designation, ContactNo, Location } = req.body;
+
+  // Generate a UUID for tenant_id
+  const tenantId = uuidv4();
+
+  // Log the start of the function execution
+  logExecution('companyDetails', tenantId, 'INFO', `Updating company details for user ${UserId}`);
+
   const userCheckQuery = 'SELECT * FROM ems.ems_users WHERE UserId = $1';
 
   db.query(userCheckQuery, [UserId], (error, useridCheckResult) => {
     if (error) {
       console.error('Error during UserId check:', error);
+      // Log the error
+      logExecution('companyDetails', tenantId, 'ERROR', 'Error during UserId check');
       return res.status(500).json({ message: 'Internal server error' });
     }
 
     try {
       if (useridCheckResult.length === 0) {
         console.log('User not found!');
+        // Log the end of the function execution with an error message
+        logExecution('companyDetails', tenantId, 'ERROR', 'User not found');
         return res.status(400).json({ message: 'User not found!' });
       }
 
       const userQuery = 'UPDATE ems.ems_users SET Designation = $1, ContactNo = $2, Location = $3 WHERE UserId = $4';
 
-      db.query(userQuery, [Designation, ContactNo, Location, UserId],(error, details) => {
+      db.query(userQuery, [Designation, ContactNo, Location, UserId], (error, details) => {
         if (error) {
-          console.error('Error fetching company details:', error);
+          console.error('Error updating company details:', error);
+          // Log the error
+          logExecution('companyDetails', tenantId, 'ERROR', 'Error updating company details');
           return res.status(500).json({ message: 'Internal server error' });
         }
 
-        res.json({ message: 'Company details Updated SuccessFully' });
+        // Log the end of the function execution with a success message
+        logExecution('companyDetails', tenantId, 'INFO', `Company details updated successfully for user ${UserId}`);
+
+        res.json({ message: 'Company Details Updated Successfully' });
         console.log(details);
       });
     } catch (error) {
-      console.error('Error fetching user:', error);
+      console.error('Error updating company details:', error);
+      // Log the error
+      logExecution('companyDetails', tenantId, 'ERROR', 'Error updating company details');
       res.status(500).json({ message: 'Internal server error' });
     }
   });
 }
 
 
+
 function personalDetails(req, res) {
   const UserId = req.params.UserId;
-  const {FirstName, LastName}  = req.body; 
+  const { FirstName, LastName } = req.body;
+
+  // Generate a UUID for tenant_id
+  const tenantId = uuidv4();
+
+  // Log the start of the function execution
+  logExecution('personalDetails', tenantId, 'INFO', `Updating personal details for user ${UserId}`);
+
   const userCheckQuery = 'SELECT * FROM ems.ems_users WHERE UserId = $1';
 
   db.query(userCheckQuery, [UserId], (error, useridCheckResult) => {
     if (error) {
       console.error('Error during UserId check:', error);
+      // Log the error
+      logExecution('personalDetails', tenantId, 'ERROR', 'Error during UserId check');
       return res.status(500).json({ message: 'Internal server error' });
     }
 
     try {
       if (useridCheckResult.length === 0) {
         console.log('User not found!');
+        // Log the end of the function execution with an error message
+        logExecution('personalDetails', tenantId, 'ERROR', 'User not found');
         return res.status(400).json({ message: 'User not found!' });
       }
 
       const userdetailQuery = 'UPDATE ems.ems_users SET FirstName = $1, LastName = $2 WHERE UserId = $3';
 
-      db.query(userdetailQuery, [FirstName, LastName, UserId],(error, details) => {
+      db.query(userdetailQuery, [FirstName, LastName, UserId], (error, details) => {
         if (error) {
-          console.error('Error fetching devices:', error);
+          console.error('Error updating personal details:', error);
+          // Log the error
+          logExecution('personalDetails', tenantId, 'ERROR', 'Error updating personal details');
           return res.status(500).json({ message: 'Internal server error' });
         }
 
-        res.json({ message: 'Personal details Updated SuccessFully' });
+        // Log the end of the function execution with a success message
+        logExecution('personalDetails', tenantId, 'INFO', `Personal details updated successfully for user ${UserId}`);
+
+        res.json({ message: 'Personal Details Updated Successfully' });
         console.log(details);
       });
     } catch (error) {
-      console.error('Error fetching user:', error);
+      console.error('Error updating personal details:', error);
+      // Log the error
+      logExecution('personalDetails', tenantId, 'ERROR', 'Error updating personal details');
       res.status(500).json({ message: 'Internal server error' });
     }
   });
 }
 
 
+
 function updatePassword(req, res) {
   const UserId = req.params.UserId;
   const { Password } = req.body;
+
+  // Generate a UUID for tenant_id
+  const tenantId = uuidv4();
+
+  // Log the start of the function execution
+  logExecution('updatePassword', tenantId, 'INFO', `Updating password for user ${UserId}`);
 
   // Check if the user exists in the database
   const userCheckQuery = 'SELECT * FROM ems.ems_users WHERE UserId = $1';
@@ -166,11 +247,15 @@ function updatePassword(req, res) {
     try {
       if (error) {
         console.error('Error during UserId check:', error);
+        // Log the error
+        logExecution('updatePassword', tenantId, 'ERROR', 'Error during UserId check');
         return res.status(500).json({ message: 'Internal server error' });
       }
 
       if (useridCheckResult.length === 0) {
         console.log('User not found!');
+        // Log the end of the function execution with an error message
+        logExecution('updatePassword', tenantId, 'ERROR', 'User not found');
         return res.status(400).json({ message: 'User not found!' });
       }
 
@@ -182,65 +267,113 @@ function updatePassword(req, res) {
       db.query(updatePasswordQuery, [hashedPassword, UserId], (error, result) => {
         if (error) {
           console.error('Error updating password:', error);
+          // Log the error
+          logExecution('updatePassword', tenantId, 'ERROR', 'Error updating password');
           return res.status(500).json({ message: 'Internal server error' });
         }
+
+        // Log the end of the function execution with a success message
+        logExecution('updatePassword', tenantId, 'INFO', `Password updated successfully for user ${UserId}`);
 
         res.json({ message: 'Password updated successfully' });
         console.log(result);
       });
     } catch (error) {
       console.error('Error updating password:', error);
+      // Log the error
+      logExecution('updatePassword', tenantId, 'ERROR', 'Error updating password');
       res.status(500).json({ message: 'Internal server error' });
     }
   });
 }
 
 
- function fetchDeviceTrigger(req, res){
-   const deviceId = req.params.deviceId;
-   const deviceTriggerQuery = 'select * from tms_trigger where DeviceUID = $1';
-     try {
-       db.query(deviceTriggerQuery, [deviceId], (error, devicetriggerkResult) => {
-         if (error) {
-           console.error('Error during device check:', error);
-           return res.status(500).json({ message: 'Internal server error' });
-         }
 
-         res.status(200).json(devicetriggerkResult);
-       });
-     } catch (error) {
-       console.error('Error in device check:', error);
-       res.status(500).json({ message: 'Internal server error' });
-     }
- }
+function fetchDeviceTrigger(req, res) {
+  const deviceId = req.params.deviceId;
 
-function fetchAllDeviceTrigger(req, res){
-  const CompanyEmail = req.params.CompanyEmail;
-  const deviceTriggerQuery = 'select * from tms_trigger where CompanyEmail = $1';
+  // Generate a UUID for tenant_id
+  const tenantId = uuidv4();
 
-    try {
-      db.query(deviceTriggerQuery, [CompanyEmail], (error, triggers) => {
-        if (error) {
-          console.error('Error during device check:', error);
-          return res.status(500).json({ message: 'Internal server error' });
-        }
+  // Log the start of the function execution
+  logExecution('fetchDeviceTrigger', tenantId, 'INFO', `Fetching triggers for device ${deviceId}`);
 
-        res.status(200).json({triggers});
-      });
-    } catch (error) {
-      console.error('Error in device check:', error);
-      res.status(500).json({ message: 'Internal server error' });
-    }
+  const deviceTriggerQuery = 'SELECT * FROM tms_trigger WHERE DeviceUID = $1';
+
+  try {
+    db.query(deviceTriggerQuery, [deviceId], (error, deviceTriggerResult) => {
+      if (error) {
+        console.error('Error during device check:', error);
+        // Log the error
+        logExecution('fetchDeviceTrigger', tenantId, 'ERROR', 'Error during device check');
+        return res.status(500).json({ message: 'Internal server error' });
+      }
+
+      // Log the end of the function execution
+      logExecution('fetchDeviceTrigger', tenantId, 'INFO', `Fetched triggers for device ${deviceId}`);
+
+      res.status(200).json(deviceTriggerResult);
+    });
+  } catch (error) {
+    console.error('Error in device check:', error);
+    // Log the error
+    logExecution('fetchDeviceTrigger', tenantId, 'ERROR', 'Error in device check');
+    res.status(500).json({ message: 'Internal server error' });
+  }
 }
+
+
+function fetchAllDeviceTrigger(req, res) {
+  const CompanyEmail = req.params.CompanyEmail;
+
+  // Generate a UUID for tenant_id
+  const tenantId = uuidv4();
+
+  // Log the start of the function execution
+  logExecution('fetchAllDeviceTrigger', tenantId, 'INFO', `Fetching all triggers for CompanyEmail ${CompanyEmail}`);
+
+  const deviceTriggerQuery = 'SELECT * FROM tms_trigger WHERE CompanyEmail = $1';
+
+  try {
+    db.query(deviceTriggerQuery, [CompanyEmail], (error, triggers) => {
+      if (error) {
+        console.error('Error during device check:', error);
+        // Log the error
+        logExecution('fetchAllDeviceTrigger', tenantId, 'ERROR', 'Error during device check');
+        return res.status(500).json({ message: 'Internal server error' });
+      }
+
+      // Log the end of the function execution
+      logExecution('fetchAllDeviceTrigger', tenantId, 'INFO', `Fetched all triggers for CompanyEmail ${CompanyEmail}`);
+
+      res.status(200).json({ triggers });
+    });
+  } catch (error) {
+    console.error('Error in device check:', error);
+    // Log the error
+    logExecution('fetchAllDeviceTrigger', tenantId, 'ERROR', 'Error in device check');
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}
+
 
 function editDeviceTrigger(req, res) {
   const deviceId = req.params.deviceId;
   const { TriggerValue, CompanyEmail } = req.body;
+
+  // Generate a UUID for tenant_id
+  const tenantId = uuidv4();
+
+  // Log the start of the function execution
+  logExecution('editDeviceTrigger', tenantId, 'INFO', `Editing device trigger for DeviceUID ${deviceId}`);
+
   const deviceCheckQuery = 'SELECT * FROM tms_trigger WHERE DeviceUID = $1';
 
   db.query(deviceCheckQuery, [deviceId], (error, deviceCheckResult) => {
     if (error) {
       console.error('Error during device check:', error);
+      // Log the error
+      logExecution('editDeviceTrigger', tenantId, 'ERROR', 'Error during device check');
       return res.status(500).json({ message: 'Internal server error' });
     }
 
@@ -251,8 +384,13 @@ function editDeviceTrigger(req, res) {
         db.query(insertTriggerQuery, [deviceId, TriggerValue, CompanyEmail], (error, insertResult) => {
           if (error) {
             console.error('Error while inserting device:', error);
+            // Log the error
+            logExecution('editDeviceTrigger', tenantId, 'ERROR', 'Error while inserting device');
             return res.status(500).json({ message: 'Internal server error' });
           }
+
+          // Log the end of the function execution
+          logExecution('editDeviceTrigger', tenantId, 'INFO', 'Device added successfully');
 
           return res.json({ message: 'Device added successfully!' });
         });
@@ -262,14 +400,21 @@ function editDeviceTrigger(req, res) {
         db.query(updateDeviceTriggerQuery, [TriggerValue, CompanyEmail, deviceId], (error, updateResult) => {
           if (error) {
             console.error('Error updating device trigger:', error);
+            // Log the error
+            logExecution('editDeviceTrigger', tenantId, 'ERROR', 'Error updating device trigger');
             return res.status(500).json({ message: 'Internal server error' });
           }
+
+          // Log the end of the function execution
+          logExecution('editDeviceTrigger', tenantId, 'INFO', 'Device updated successfully');
 
           return res.json({ message: 'Device updated successfully' });
         });
       }
     } catch (error) {
       console.error('Error in device check:', error);
+      // Log the error
+      logExecution('editDeviceTrigger', tenantId, 'ERROR', 'Error in device check');
       res.status(500).json({ message: 'Internal server error' });
     }
   });
@@ -281,70 +426,20 @@ function getDataByTimeInterval(req, res) {
     const timeInterval = req.query.interval;
     const averageField = req.query.averageField;
 
-    if (!timeInterval) {
+    // Define mapping for time intervals to duration and table name
+    const intervalMapping = {
+      '30sec': { duration: 30 * 1000, tableName: 'interval_min' },
+      '1min': { duration: 60 * 1000, tableName: 'interval_min' },
+      // Add other intervals here
+    };
+
+    // Validate the selected time interval
+    const intervalInfo = intervalMapping[timeInterval];
+    if (!intervalInfo) {
       return res.status(400).json({ message: 'Invalid time interval' });
     }
 
-    let duration;
-    let tableName;
-
-    switch (timeInterval) {
-      case '30sec':
-        duration = 30 * 1000;
-        tableName = 'interval_min';
-        break;
-      case '1min':
-        duration = 60 * 1000;
-        tableName = 'interval_min';
-        break;
-      case '2min':
-        duration = 2 * 60 * 1000;
-        tableName = 'interval_hour';
-        break;
-      case '5min':
-        duration = 5 * 60 * 1000;
-        tableName = 'interval_hour';
-        break;
-      case '10min':
-        duration = 10 * 60 * 1000;
-        tableName = 'interval_hour';
-        break;
-      case '30min':
-        duration = 30 * 60 * 1000;
-        tableName = 'interval_hour';
-        break;
-      case '1hour':
-        duration = 60 * 60 * 1000;
-        tableName = 'interval_hour';
-        break;
-      case '2hour':
-        duration = 2 * 60 * 60 * 1000;
-        tableName = 'interval_day';
-        
-        break;
-      case '10hour':
-        duration = 10 * 60 * 60 * 1000;
-        tableName = 'interval_day';
-        break;
-      case '12hour':
-        duration = 12 * 60 * 60 * 1000;
-        tableName = 'interval_day';
-        break;
-      case '1day':
-        duration = 24 * 60 * 60 * 1000;
-        tableName = 'interval_day';
-        break;
-      case '7day':
-        duration = 7 * 24 * 60 * 60 * 1000;
-        tableName = 'interval_week';
-        break;
-      case '30day':
-        duration = 30 * 24 * 60 * 60 * 1000;
-        tableName = 'interval_month';
-        break;
-      default:
-        return res.status(400).json({ message: 'Invalid time interval' });
-    }
+    const { duration, tableName } = intervalInfo;
 
     const now = new Date();
     const startTime = new Date(now - duration);
@@ -359,13 +454,13 @@ function getDataByTimeInterval(req, res) {
       const dataRows = results.rows;
 
       if (averageField) {
+        // Calculate average values within each time interval
         const aggregatedData = {};
-        const intervalMilliseconds = duration; // Using the same duration as the interval
 
         dataRows.forEach(row => {
           const timestamp = new Date(row.timestamp).getTime();
-          const intervalStart = Math.floor(timestamp / intervalMilliseconds) * intervalMilliseconds;
-          const intervalEnd = intervalStart + intervalMilliseconds;
+          const intervalStart = Math.floor(timestamp / duration) * duration;
+          const intervalEnd = intervalStart + duration;
 
           if (!aggregatedData[intervalStart]) {
             aggregatedData[intervalStart] = {
@@ -380,9 +475,12 @@ function getDataByTimeInterval(req, res) {
           }
         });
 
+        // Prepare aggregated response data
         const aggregatedResponseData = [];
+
         for (const intervalStart in aggregatedData) {
-          const intervalAverage = aggregatedData[intervalStart].totalValue / aggregatedData[intervalStart].count;
+          const intervalAverage =
+            aggregatedData[intervalStart].totalValue / aggregatedData[intervalStart].count;
           aggregatedResponseData.push({
             intervalStart: new Date(parseInt(intervalStart)).toISOString(),
             average: intervalAverage,
@@ -391,6 +489,7 @@ function getDataByTimeInterval(req, res) {
 
         res.json(aggregatedResponseData);
       } else {
+        // Return raw data within the time range
         const responseData = {
           data: dataRows,
         };
@@ -403,6 +502,7 @@ function getDataByTimeInterval(req, res) {
     res.status(500).json({ message: 'Internal server error' });
   }
 }
+
        
 
 function getDataByTimeIntervalStatus(req, res) {
@@ -602,8 +702,6 @@ function getUserData(req, res) {
   try {
     const userId = req.params.userId;
 
-    // Validate the deviceId parameter if necessary
-
     const userDetailsQuery = 'SELECT * FROM ems.ems_users WHERE UserId = $1';
     db.query(userDetailsQuery, [userId], (error, userDetail) => {
       if (error) {
@@ -611,18 +709,19 @@ function getUserData(req, res) {
         return res.status(500).json({ message: 'Internal server error' });
       }
 
-      if (userDetail.length === 0) {
-        // Handle the case when no device details are found
+      if (userDetail.rows.length === 0) {
         return res.status(404).json({ message: 'User details not found' });
       }
 
-      res.status(200).json(userDetail);
+      const userData = userDetail.rows[0];
+      res.status(200).json(userData);
     });
   } catch (error) {
     console.error('An error occurred:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 }
+
 
 
 function insertNewMessage(req, res) {

@@ -33,7 +33,7 @@ router.post('/reset-password', authentication.resetPassword);
 router.get('/userdevices/:companyEmail', dashboard.userDevices);
 router.put('/editDevice/:deviceId', dashboard.editDevice);
 router.put('/companyDetails/:UserId', dashboard.companyDetails);
-//router.put('/personalDetails/:UserId', authentication.personalDetails);
+// router.put('/personalDetails/:UserId', authentication.personalDetails);
 router.put('/updatePassword/:UserId', dashboard.updatePassword);
 router.put('/editDeviceTrigger/:deviceId', dashboard.editDeviceTrigger);
 router.get('/device-trigger/:deviceId', dashboard.fetchDeviceTrigger);
@@ -44,7 +44,7 @@ router.get('/dataStatus/:deviceId/intervals', dashboard.getDataByTimeIntervalSta
 router.get('/dataStatus/:deviceId', dashboard.getDataByCustomDateStatus);
 router.get('/live-device-detail/:deviceId', dashboard.getDeviceDetails);
 router.get('/live-device-status/:deviceId', dashboard.getLiveStatusDetails);
-//router.get('/userdata/:userId', authentication.getUserData);
+router.get('/userdata/:userId', dashboard.getUserData);
 router.post('/new-message', dashboard.insertNewMessage);
 router.put('/mark-read-message/:messageId', dashboard.markMessageAsRead);
 router.delete('/delete-message/:messageId', dashboard.deleteMessage);

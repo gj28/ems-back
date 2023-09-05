@@ -2,7 +2,7 @@ const db = require('./db');
 
 function logExecution(functionName, tenantId, status, message) {
   const createdTime = new Date().toISOString(); 
-  const entity_type = 'TENANT';
+  const entity_type = 'SenseLive';
   const entity_id = tenantId; 
   const transport = 'ENABLED'; 
   const db_storage = 'ENABLED'; 

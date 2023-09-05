@@ -24,17 +24,27 @@ function register(req, res) {
     password,
   } = req.body;
 
+  // Generate a UUID for tenant_id
+  const tenantId = uuidv4();
+
+  // Log the start of the registration process
+  logExecution('register', tenantId, 'INFO', 'Registration process started');
+
   // Check if the company email is already registered
   const emailCheckQuery = 'SELECT * FROM ems.ems_users WHERE CompanyEmail = $1';
   db.query(emailCheckQuery, [companyEmail], (error, emailCheckResult) => {
     if (error) {
       console.error('Error during email check:', error);
+      // Log the error
+      logExecution('register', tenantId, 'ERROR', 'Error during email check');
       return res.status(500).json({ message: 'Internal server error' });
     }
 
     try {
       if (emailCheckResult.length > 0) {
         console.log('Company email already exists');
+        // Log the error
+        logExecution('register', tenantId, 'ERROR', 'Company email already exists');
         return res.status(400).json({ message: 'Company email already exists' });
       }
 
@@ -43,12 +53,16 @@ function register(req, res) {
       db.query(personalEmailCheckQuery, [personalEmail], (error, personalEmailCheckResult) => {
         if (error) {
           console.error('Error during username check:', error);
+          // Log the error
+          logExecution('register', tenantId, 'ERROR', 'Error during username check');
           return res.status(500).json({ message: 'Internal server error' });
         }
 
         try {
           if (personalEmailCheckResult.length > 0) {
             console.log('Username already exists');
+            // Log the error
+            logExecution('register', tenantId, 'ERROR', 'Username already exists');
             return res.status(400).json({ message: 'User already exists' });
           }
 
@@ -59,6 +73,8 @@ function register(req, res) {
           bcrypt.hash(password, 10, (error, hashedPassword) => {
             if (error) {
               console.error('Error during password hashing:', error);
+              // Log the error
+              logExecution('register', tenantId, 'ERROR', 'Error during password hashing');
               return res.status(500).json({ message: 'Internal server error' });
             }
 
@@ -90,11 +106,13 @@ function register(req, res) {
                 (error, insertResult) => {
                   if (error) {
                     console.error('Error during user insertion:', error);
+                    // Log the error
+                    logExecution('register', tenantId, 'ERROR', 'Error during user insertion');
                     return res.status(500).json({ message: 'Internal server error' });
                   }
 
-                  // Log the execution
-                  logExecution('register', '60ca6460-46ac-11ee-91bb-c7905c3b6796');
+                  // Log the registration success
+                  logExecution('register', tenantId, 'SUCCESS', 'User registered successfully');
 
                   try {
                     // Send the verification token to the user's email
@@ -104,45 +122,67 @@ function register(req, res) {
                     res.json({ message: 'Registration successful. Check your email for the verification token.' });
                   } catch (error) {
                     console.error('Error sending verification token:', error);
+                    // Log the error
+                    logExecution('register', tenantId, 'ERROR', 'Error sending verification token');
                     res.status(500).json({ message: 'Internal server error' });
                   }
                 }
               );
             } catch (error) {
               console.error('Error during registration:', error);
+              // Log the error
+              logExecution('register', tenantId, 'ERROR', 'Error during registration');
               res.status(500).json({ message: 'Internal server error' });
             }
           });
         } catch (error) {
           console.error('Error during registration:', error);
+          // Log the error
+          logExecution('register', tenantId, 'ERROR', 'Error during registration');
           res.status(500).json({ message: 'Internal server error' });
         }
       });
     } catch (error) {
       console.error('Error during registration:', error);
+      // Log the error
+      logExecution('register', tenantId, 'ERROR', 'Error during registration');
       res.status(500).json({ message: 'Internal server error' });
     }
   });
 }
 
 
+
   // Helper function to generate a unique 10-digit user ID
-function generateUserId() {
+  function generateUserId() {
     const userIdLength = 10;
     let userId = '';
   
     const characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
   
+    // Log the start of the function execution
+    logExecution('generateUserId', 'YOUR_TENANT_ID', 'INFO', 'Generating user ID');
+
     for (let i = 0; i < userIdLength; i++) {
       const randomIndex = Math.floor(Math.random() * characters.length);
       userId += characters.charAt(randomIndex);
     }
-  
+
+    // Log the end of the function execution
+    logExecution('generateUserId', 'YOUR_TENANT_ID', 'INFO', 'User ID generated');
+
     return userId;
-  }
+}
+
 // Function to send an email with the token
 function sendTokenEmail(email, token) {
-    const transporter = nodemailer.createTransport({
+  // Generate a UUID for tenant_id
+  const tenantId = uuidv4();
+
+  // Log the start of the function execution
+  logExecution('sendTokenEmail', tenantId, 'INFO', 'Sending registration token email');
+
+  const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
     port: 465,
     secure: true,
@@ -151,37 +191,42 @@ function sendTokenEmail(email, token) {
       pass: "woptjevenzhqmrpp"
     },
   });
-  
-    // Read the email template file
-    const templatePath = path.join(__dirname, '../mail-body/email-template.ejs');
-    fs.readFile(templatePath, 'utf8', (err, templateData) => {
-      if (err) {
-        console.error('Error reading email template:', err);
-        return;
+
+  // Read the email template file
+  const templatePath = path.join(__dirname, '../mail-body/email-template.ejs');
+  fs.readFile(templatePath, 'utf8', (err, templateData) => {
+    if (err) {
+      console.error('Error reading email template:', err);
+      return;
+    }
+
+    // Compile the email template with EJS
+    const compiledTemplate = ejs.compile(templateData);
+
+    // Render the template with the token
+    const html = compiledTemplate({ token });
+
+    const mailOptions = {
+      from: 'kpohekar19@gmail.com',
+      to: email,
+      subject: 'Registration Token',
+      html: html,
+    };
+
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.error('Error sending email:', error);
+      } else {
+        console.log('Email sent:', info.response);
       }
-  
-      // Compile the email template with EJS
-      const compiledTemplate = ejs.compile(templateData);
-  
-      // Render the template with the token
-      const html = compiledTemplate({ token });
-  
-      const mailOptions = {
-        from: 'kpohekar19@gmail.com',
-        to: email,
-        subject: 'Registration Token',
-        html: html,
-      };
-  
-      transporter.sendMail(mailOptions, (error, info) => {
-        if (error) {
-          console.error('Error sending email:', error);
-        } else {
-          console.log('Email sent:', info.response);
-        }
-      });
+
+      // Log the end of the function execution
+      logExecution('sendTokenEmail', tenantId, 'INFO', 'Registration token email sent');
     });
-  }
+  });
+}
+
+
 
   // Login function
   function login(req, res) {
@@ -289,49 +334,78 @@ function sendTokenEmail(email, token) {
   
   // User details endpoint
   function getUserDetails(req, res) {
-    const token = req.headers.authorization.split(' ')[1]; 
-  
-    console.log('Extracted Token:', token); 
-  
+    const tenantId = uuid.v4(); // Generate a UUID for tenant_id
+
+    // Log the start of the function execution
+    logExecution('getUserDetails', tenantId, 'INFO', 'Fetching user details');
+
+    const token = req.headers.authorization.split(' ')[1];
+
+    console.log('Extracted Token:', token);
+
     // Verify the token
     const decodedToken = jwtUtils.verifyToken(token);
     if (!decodedToken) {
-      console.log('Invalid Token');
-      return res.status(401).json({ message: 'Invalid token' });
+        // Log the error and response
+        console.log('Invalid Token');
+        logExecution('getUserDetails', tenantId, 'ERROR', 'Invalid token');
+
+        return res.status(401).json({ message: 'Invalid token' });
     }
-  
-    console.log('Decoded Token:', decodedToken); 
-  
+
+    console.log('Decoded Token:', decodedToken);
+
     const query = 'SELECT * FROM ems.ems_users WHERE username = $1';
     db.query(query, [decodedToken.Username], (error, result) => {
-      if (error) {
-        console.error('Error executing query:', error);
-        return res.status(500).json({ message: 'Internal server error' });
-      }
-  
-      console.log('Query result:', result); 
-      if (result.rowCount === 0) {
-        console.log('User Not Found');
-        return res.status(404).json({ message: 'User not found' });
-      }
-  
-      const userDetail = result.rows[0];
-      console.log('User Details:', userDetail);
-      res.json(userDetail);
+        if (error) {
+            // Log the error and response
+            console.error('Error executing query:', error);
+            logExecution('getUserDetails', tenantId, 'ERROR', 'Error executing database query');
+
+            return res.status(500).json({ message: 'Internal server error' });
+        }
+
+        console.log('Query result:', result);
+        if (result.rowCount === 0) {
+            // Log the error and response
+            console.log('User Not Found');
+            logExecution('getUserDetails', tenantId, 'ERROR', 'User not found');
+
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const userDetail = result.rows[0];
+        console.log('User Details:', userDetail);
+
+        // Log the end of the function execution
+        logExecution('getUserDetails', tenantId, 'INFO', 'User details fetched successfully');
+
+        res.json(userDetail);
     });
-  }
+}
+
  // Forgot password
  function forgotPassword(req, res) {
   const { personalEmail } = req.body;
+
+  // Generate a UUID for tenant_id
+  const tenantId = uuidv4();
+
+  // Log the start of the function execution
+  logExecution('forgotPassword', tenantId, 'INFO', 'Initiating password reset');
 
   const query = 'SELECT * FROM ems.ems_users WHERE personalemail = $1';
   db.query(query, [personalEmail], (error, result) => {
     if (error) {
       console.error(error);
+      // Log the error and response
+      logExecution('forgotPassword', tenantId, 'ERROR', 'Internal server error');
       return res.status(500).json({ message: 'Internal server error' });
     }
 
     if (result.rows.length === 0) {
+      // Log the error and response
+      logExecution('forgotPassword', tenantId, 'ERROR', 'User not found');
       return res.status(404).json({ message: 'User not found' });
     }
 
@@ -342,9 +416,14 @@ function sendTokenEmail(email, token) {
     db.query(insertQuery, [userId, resetToken], (insertError) => {
       if (insertError) {
         console.error(insertError);
+        // Log the error and response
+        logExecution('forgotPassword', tenantId, 'ERROR', 'Error saving reset token');
         return res.status(500).json({ message: 'Error saving reset token' });
       }
       sendResetTokenEmail(personalEmail, resetToken);
+
+      // Log the success
+      logExecution('forgotPassword', tenantId, 'SUCCESS', 'Reset token sent to email');
 
       res.json({ message: 'Reset token sent to your email' });
     });
@@ -352,19 +431,30 @@ function sendTokenEmail(email, token) {
 }
 
 
+
 function resendResetToken(req, res) {
   const { personalEmail } = req.body;
+
+  // Generate a UUID for tenant_id
+  const tenantId = uuidv4();
+
+  // Log the start of the function execution
+  logExecution('resendResetToken', tenantId, 'INFO', 'Initiating resend of reset token');
 
   // Check if the user is available
   const checkUserQuery = 'SELECT * FROM ems.ems_user WHERE personalemail = $1';
   db.query(checkUserQuery, [personalEmail], (error, userResult) => {
     if (error) {
       console.error('Error checking user availability:', error);
+      // Log the error and response
+      logExecution('resendResetToken', tenantId, 'ERROR', 'Internal server error');
       return res.status(500).json({ message: 'Internal server error' });
     }
 
     // If no user found, send an error response
     if (userResult.length === 0) {
+      // Log the error and response
+      logExecution('resendResetToken', tenantId, 'ERROR', 'User not found');
       return res.status(404).json({ message: 'User not found' });
     }
 
@@ -377,12 +467,17 @@ function resendResetToken(req, res) {
     db.query(updateQuery, [verificationToken, userId], (error, updateResult) => {
       if (error) {
         console.error('Error updating Resend link:', error);
+        // Log the error and response
+        logExecution('resendResetToken', tenantId, 'ERROR', 'Internal server error');
         return res.status(500).json({ message: 'Internal server error' });
       }
 
       try {
         // Send the new verification token to the user's email
         sendResetTokenEmail(personalEmail, verificationToken);
+
+        // Log the success
+        logExecution('resendResetToken', tenantId, 'SUCCESS', 'Resend link resent');
 
         console.log('Resend link resent');
         res.json({ message: 'Resend link resent. Check your email for the new token.' });
@@ -394,18 +489,29 @@ function resendResetToken(req, res) {
   });
 }
 
+
 function resetPassword(req, res) {
   const { token, password } = req.body;
+
+  // Generate a UUID for tenant_id
+  const tenantId = uuidv4();
+
+  // Log the start of the function execution
+  logExecution('resetPassword', tenantId, 'INFO', 'Resetting password');
 
   // Check if the email and reset token match in the database
   const query = 'SELECT * FROM ems.ems_reset_tokens WHERE token = $1';
   db.query(query, [token], (error, result) => {
     if (error) {
       console.error('Error during reset password query:', error);
+      // Log the error and response
+      logExecution('resetPassword', tenantId, 'ERROR', 'Internal server error');
       return res.status(500).json({ message: 'Internal server error' });
     }
 
     if (result.rowCount === 0) {
+      // Log the error and response
+      logExecution('resetPassword', tenantId, 'ERROR', 'Invalid token');
       return res.status(401).json({ message: 'Invalid token' });
     }
 
@@ -416,6 +522,8 @@ function resetPassword(req, res) {
     bcrypt.hash(password, 10, (error, hashedPassword) => {
       if (error) {
         console.error('Error during password hashing:', error);
+        // Log the error and response
+        logExecution('resetPassword', tenantId, 'ERROR', 'Internal server error');
         return res.status(500).json({ message: 'Internal server error' });
       }
 
@@ -424,6 +532,8 @@ function resetPassword(req, res) {
       db.query(updateQuery, [hashedPassword, userId], (error, updateResult) => {
         if (error) {
           console.error('Error updating password:', error);
+          // Log the error and response
+          logExecution('resetPassword', tenantId, 'ERROR', 'Internal server error');
           return res.status(500).json({ message: 'Internal server error' });
         }
 
@@ -434,6 +544,9 @@ function resetPassword(req, res) {
             console.error('Error deleting reset token:', error);
           }
 
+          // Log the success
+          logExecution('resetPassword', tenantId, 'SUCCESS', 'Password reset successful');
+
           res.json({ message: 'Password reset successful' });
         });
       });
@@ -442,8 +555,15 @@ function resetPassword(req, res) {
 }
 
 
+
 // Function to send an email with the token
 function sendTokenEmail(email, token) {
+  // Generate a UUID for tenant_id
+  const tenantId = uuidv4();
+
+  // Log the start of the function execution
+  logExecution('sendTokenEmail', tenantId, 'INFO', 'Sending registration token email');
+
   const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
     port: 465,
@@ -459,6 +579,8 @@ function sendTokenEmail(email, token) {
   fs.readFile(templatePath, 'utf8', (err, templateData) => {
     if (err) {
       console.error('Error reading email template:', err);
+      // Log the error
+      logExecution('sendTokenEmail', tenantId, 'ERROR', 'Error reading email template');
       return;
     }
 
@@ -478,14 +600,25 @@ function sendTokenEmail(email, token) {
     transporter.sendMail(mailOptions, (error, info) => {
       if (error) {
         console.error('Error sending email:', error);
+        // Log the error
+        logExecution('sendTokenEmail', tenantId, 'ERROR', 'Error sending email');
       } else {
         console.log('Email sent:', info.response);
+        // Log the end of the function execution
+        logExecution('sendTokenEmail', tenantId, 'INFO', 'Registration token email sent');
       }
     });
   });
 }
 
+
 function sendResetTokenEmail(personalEmail, resetToken) {
+  // Generate a UUID for tenant_id
+  const tenantId = uuidv4();
+
+  // Log the start of the function execution
+  logExecution('sendResetTokenEmail', tenantId, 'INFO', 'Sending reset password email');
+
   const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
     port: 465,
@@ -501,13 +634,15 @@ function sendResetTokenEmail(personalEmail, resetToken) {
   fs.readFile(templatePath, 'utf8', (err, templateData) => {
     if (err) {
       console.error('Error reading email template:', err);
+      // Log the error
+      logExecution('sendResetTokenEmail', tenantId, 'ERROR', 'Error reading email template');
       return;
     }
 
     // Compile the email template with EJS
     const compiledTemplate = ejs.compile(templateData);
 
-    // Render the template with the token
+    // Render the template with the reset token
     const html = compiledTemplate({ resetToken });
 
     const mailOptions = {
@@ -520,28 +655,43 @@ function sendResetTokenEmail(personalEmail, resetToken) {
     transporter.sendMail(mailOptions, (error, info) => {
       if (error) {
         console.error('Error sending email:', error);
+        // Log the error
+        logExecution('sendResetTokenEmail', tenantId, 'ERROR', 'Error sending email');
       } else {
         console.log('Email sent:', info.response);
+        // Log the end of the function execution
+        logExecution('sendResetTokenEmail', tenantId, 'INFO', 'Reset password email sent');
       }
     });
   });
 }
 
+
 // Function to handle token verification
 function verifyToken(req, res) {
   const { token } = req.body;
+
+  // Generate a UUID for tenant_id
+  const tenantId = uuidv4();
+
+  // Log the start of the function execution
+  logExecution('verifyToken', tenantId, 'INFO', 'Verifying user token');
 
   // Check if the token matches the one stored in the database
   const tokenCheckQuery = 'SELECT * FROM ems.ems_users WHERE VerificationToken = $1';
   db.query(tokenCheckQuery, [token], (error, tokenCheckResult) => {
     if (error) {
       console.error('Error during token verification:', error);
+      // Log the error
+      logExecution('verifyToken', tenantId, 'ERROR', 'Error during token verification');
       return res.status(500).json({ message: 'Internal server error' });
     }
 
     try {
       if (tokenCheckResult.length === 0) {
         console.log('Token verification failed');
+        // Log the end of the function execution with an error message
+        logExecution('verifyToken', tenantId, 'ERROR', 'Token verification failed');
         return res.status(400).json({ message: 'Token verification failed' });
       }
 
@@ -550,29 +700,44 @@ function verifyToken(req, res) {
       db.query(updateQuery, [true, token], (error, updateResult) => {
         if (error) {
           console.error('Error updating user verification status:', error);
+          // Log the error
+          logExecution('verifyToken', tenantId, 'ERROR', 'Error updating user verification status');
           return res.status(500).json({ message: 'Internal server error' });
         }
 
         console.log('Token verification successful');
+        // Log the end of the function execution
+        logExecution('verifyToken', tenantId, 'INFO', 'Token verification successful');
         res.json({ message: 'Token verification successful. You can now log in.' });
       });
     } catch (error) {
       console.error('Error during token verification:', error);
+      // Log the error
+      logExecution('verifyToken', tenantId, 'ERROR', 'Error during token verification');
       res.status(500).json({ message: 'Internal server error' });
     }
   });
 }
+
 
 // Function to resend the verification token
 
 function resendToken(req, res) {
   const { personalEmail } = req.body;
 
+  // Generate a UUID for tenant_id
+  const tenantId = uuidv4();
+
+  // Log the start of the function execution
+  logExecution('resendToken', tenantId, 'INFO', 'Resending verification token');
+
   // Check if the user is available
   const checkUserQuery = 'SELECT * FROM ems.ems_users WHERE PersonalEmail = $1';
   db.query(checkUserQuery, [personalEmail], (error, userResult) => {
     if (error) {
       console.error('Error checking user availability:', error);
+      // Log the error
+      logExecution('resendToken', tenantId, 'ERROR', 'Error checking user availability');
       return res.status(500).json({ message: 'Internal server error' });
     }
 
@@ -583,6 +748,8 @@ function resendToken(req, res) {
 
     // If user is already verified, send a bad request error response
     if (userResult[0].Verified === '1') {
+      // Log the end of the function execution with an error message
+      logExecution('resendToken', tenantId, 'ERROR', 'User already verified');
       return res.status(400).json({ message: 'User already verified' });
     } else {
       // Generate a new verification token
@@ -593,6 +760,8 @@ function resendToken(req, res) {
       db.query(updateQuery, [verificationToken, personalEmail], (error, updateResult) => {
         if (error) {
           console.error('Error updating verification token:', error);
+          // Log the error
+          logExecution('resendToken', tenantId, 'ERROR', 'Error updating verification token');
           return res.status(500).json({ message: 'Internal server error' });
         }
 
@@ -601,6 +770,8 @@ function resendToken(req, res) {
           sendTokenEmail(personalEmail, verificationToken);
 
           console.log('Verification token resent');
+          // Log the end of the function execution with a success message
+          logExecution('resendToken', tenantId, 'INFO', 'Verification token resent');
           res.json({ message: 'Verification token resent. Check your email for the new token.' });
         } catch (error) {
           console.error('Error sending verification token:', error);
@@ -611,6 +782,7 @@ function resendToken(req, res) {
   });
 }
 
+
 function register_dashboard(req, res) {
   const {
     companyName,
@@ -624,18 +796,28 @@ function register_dashboard(req, res) {
     password,
     userType
   } = req.body;
+
+  // Generate a UUID for tenant_id
+  const tenantId = uuidv4();
+
+  // Log the start of the function execution
+  logExecution('register_dashboard', tenantId, 'INFO', 'User registration started');
 
   // Check if the username (company email) is already registered
   const personalEmailCheckQuery = 'SELECT * FROM ems.ems_users WHERE PersonalEmail = $1';
   db.query(personalEmailCheckQuery, [personalEmail], (error, personalEmailCheckResult) => {
     if (error) {
       console.error('Error during username check:', error);
+      // Log the error
+      logExecution('register_dashboard', tenantId, 'ERROR', 'Error during username check');
       return res.status(500).json({ message: 'Internal server error' });
     }
 
     try {
       if (personalEmailCheckResult.length > 0) {
         console.log('Username already exists');
+        // Log the end of the function execution with an error message
+        logExecution('register_dashboard', tenantId, 'ERROR', 'Username already exists');
         return res.status(400).json({ message: 'User already exists' });
       }
 
@@ -646,6 +828,8 @@ function register_dashboard(req, res) {
       bcrypt.hash(password, 10, (error, hashedPassword) => {
         if (error) {
           console.error('Error during password hashing:', error);
+          // Log the error
+          logExecution('register_dashboard', tenantId, 'ERROR', 'Error during password hashing');
           return res.status(500).json({ message: 'Internal server error' });
         }
 
@@ -677,6 +861,8 @@ function register_dashboard(req, res) {
             (error, insertResult) => {
               if (error) {
                 console.error('Error during user insertion:', error);
+                // Log the error
+                logExecution('register_dashboard', tenantId, 'ERROR', 'Error during user insertion');
                 return res.status(500).json({ message: 'Internal server error' });
               }
 
@@ -685,6 +871,8 @@ function register_dashboard(req, res) {
                 sendTokenDashboardEmail(personalEmail, verificationToken);
 
                 console.log('User registered successfully');
+                // Log the end of the function execution with a success message
+                logExecution('register_dashboard', tenantId, 'INFO', 'User registered successfully');
                 res.json({ message: 'Registration successful. Check your email for the verification token.' });
               } catch (error) {
                 console.error('Error sending verification token:', error);
@@ -703,6 +891,7 @@ function register_dashboard(req, res) {
     }
   });
 }
+
 
 function register_dashboard(req, res) {
   const {
@@ -718,17 +907,24 @@ function register_dashboard(req, res) {
     userType
   } = req.body;
 
+  // Generate a UUID for tenant_id
+  const tenantId = uuidv4();
+
   // Check if the username (company email) is already registered
-  const personalEmailCheckQuery = 'SELECT * FROM ems.ems_users WHERE personalemail = $1';
+  const personalEmailCheckQuery = 'SELECT * FROM ems.ems_users WHERE PersonalEmail = $1';
   db.query(personalEmailCheckQuery, [personalEmail], (error, personalEmailCheckResult) => {
     if (error) {
       console.error('Error during username check:', error);
+      // Log the error
+      logExecution('register_dashboard', tenantId, 'ERROR', 'Error during username check');
       return res.status(500).json({ message: 'Internal server error' });
     }
 
     try {
       if (personalEmailCheckResult.length > 0) {
         console.log('Username already exists');
+        // Log the end of the function execution with an error message
+        logExecution('register_dashboard', tenantId, 'ERROR', 'Username already exists');
         return res.status(400).json({ message: 'User already exists' });
       }
 
@@ -739,6 +935,8 @@ function register_dashboard(req, res) {
       bcrypt.hash(password, 10, (error, hashedPassword) => {
         if (error) {
           console.error('Error during password hashing:', error);
+          // Log the error
+          logExecution('register_dashboard', tenantId, 'ERROR', 'Error during password hashing');
           return res.status(500).json({ message: 'Internal server error' });
         }
 
@@ -770,6 +968,8 @@ function register_dashboard(req, res) {
             (error, insertResult) => {
               if (error) {
                 console.error('Error during user insertion:', error);
+                // Log the error
+                logExecution('register_dashboard', tenantId, 'ERROR', 'Error during user insertion');
                 return res.status(500).json({ message: 'Internal server error' });
               }
 
@@ -778,6 +978,8 @@ function register_dashboard(req, res) {
                 sendTokenDashboardEmail(personalEmail, verificationToken);
 
                 console.log('User registered successfully');
+                // Log the end of the function execution with a success message
+                logExecution('register_dashboard', tenantId, 'INFO', 'User registered successfully');
                 res.json({ message: 'Registration successful. Check your email for the verification token.' });
               } catch (error) {
                 console.error('Error sending verification token:', error);
@@ -796,6 +998,7 @@ function register_dashboard(req, res) {
     }
   });
 }
+
 
   module.exports = {
     register,
