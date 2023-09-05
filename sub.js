@@ -1,5 +1,6 @@
 const mqtt = require('mqtt');
 const { Client } = require('pg');
+const os = require('os');
 
 // MQTT broker URL
 const broker = 'mqtt://broker.emqx.io';
@@ -19,11 +20,29 @@ const pgClient = new Client(pgConfig);
 // Connect to the PostgreSQL database
 pgClient.connect()
   .then(() => {
-    //console.log('Connected to PostgreSQL database');
+    console.log('Connected to PostgreSQL database');
   })
   .catch(error => {
     console.error('Error connecting to PostgreSQL:', error);
   });
+
+// Fetch the local IP address
+const localIpAddress = getLocalIpAddress();
+
+function getLocalIpAddress() {
+  const interfaces = os.networkInterfaces();
+  for (const key in interfaces) {
+    const iface = interfaces[key];
+    for (const item of iface) {
+      if (item.family === 'IPv4' && !item.internal) {
+        return item.address;
+      }
+    }
+  }
+  return 'Unknown'; // Return 'Unknown' if no IP address is found
+}
+
+console.log('Local IP Address:', localIpAddress);
 
 // Connect to the MQTT broker
 const mqttClient = mqtt.connect(broker);
@@ -39,33 +58,21 @@ mqttClient.on('connect', () => {
       if (error) {
         console.error(`Error subscribing to ${topic}:`, error);
       } else {
-        //console.log(`Subscribed to ${topic}`);
+        console.log(`Subscribed to ${topic}`);
       }
     });
   }
-//   for (let i = 10; i <= 1000; i++) {
-//     const deviceId = `SL012023${i}`;
-//     const topic = `ems/mqtt/${deviceId}`;
-//     mqttClient.subscribe(topic, (error) => {
-//       if (error) {
-//         console.error(`Error subscribing to ${topic}:`, error);
-//       } else {
-//         console.log(`Subscribed to ${topic}`);
-//       }
-//     });
-//   }
 });
 
 mqttClient.on('message', async (topic, message) => {
   try {
-    //console.log(`Received message on topic '${topic}': ${message.toString()}`);
-  
     const data = JSON.parse(message);
-  
+
     const insertQuery = `
-    INSERT INTO ems.ems_actual_data (deviceuid, voltage, current, kva, kw, pf, freq, timestamp)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    INSERT INTO ems.ems_actual_data (deviceuid, voltage, current, kva, kw, pf, freq, timestamp, ip_address)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
     `;
+
     const insertValues = [
       data.DeviceUID,
       data.Voltage,
@@ -75,9 +82,11 @@ mqttClient.on('message', async (topic, message) => {
       data.PF,
       data.Freq,
       data.Timestamp,
+      localIpAddress,
     ];
+
     await pgClient.query(insertQuery, insertValues);
-    //console.log('Data inserted into PostgreSQL');
+    console.log('Data inserted into PostgreSQL');
   } catch (error) {
     console.error('Error processing message:', error);
   }
