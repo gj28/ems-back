@@ -44,7 +44,7 @@ router.get('/dataStatus/:deviceId/intervals', dashboard.getDataByTimeIntervalSta
 router.get('/dataStatus/:deviceId', dashboard.getDataByCustomDateStatus);
 router.get('/live-device-detail/:deviceId', dashboard.getDeviceDetails);
 router.get('/live-device-status/:deviceId', dashboard.getLiveStatusDetails);
-router.get('/userdata/:userId', dashboard.getUserData);
+router.get('/user-data/:userId', dashboard.getUserData);
 router.post('/new-message', dashboard.insertNewMessage);
 router.put('/mark-read-message/:messageId', dashboard.markMessageAsRead);
 router.delete('/delete-message/:messageId', dashboard.deleteMessage);
