@@ -334,55 +334,62 @@ function sendTokenEmail(email, token) {
   
   // User details endpoint
   function getUserDetails(req, res) {
-    const tenantId = uuid.v4(); // Generate a UUID for tenant_id
-
+    const tenantId = uuidv4(); // Generate a UUID for tenant_id
+  
     // Log the start of the function execution
     logExecution('getUserDetails', tenantId, 'INFO', 'Fetching user details');
-
+  
     const token = req.headers.authorization.split(' ')[1];
-
+  
     console.log('Extracted Token:', token);
-
-    // Verify the token
-    const decodedToken = jwtUtils.verifyToken(token);
-    if (!decodedToken) {
+  
+    try {
+      // Verify the token
+      const decodedToken = jwtUtils.verifyToken(token);
+  
+      if (!decodedToken) {
         // Log the error and response
         console.log('Invalid Token');
         logExecution('getUserDetails', tenantId, 'ERROR', 'Invalid token');
-
+  
         return res.status(401).json({ message: 'Invalid token' });
-    }
-
-    console.log('Decoded Token:', decodedToken);
-
-    const query = 'SELECT * FROM ems.ems_users WHERE username = $1';
-    db.query(query, [decodedToken.Username], (error, result) => {
+      }
+  
+      console.log('Decoded Token:', decodedToken);
+  
+      const query = 'SELECT * FROM ems.ems_users WHERE username = $1';
+      db.query(query, [decodedToken.Username], (error, result) => {
         if (error) {
-            // Log the error and response
-            console.error('Error executing query:', error);
-            logExecution('getUserDetails', tenantId, 'ERROR', 'Error executing database query');
-
-            return res.status(500).json({ message: 'Internal server error' });
+          // Log the error and response
+          console.error('Error executing query:', error);
+          logExecution('getUserDetails', tenantId, 'ERROR', 'Error executing database query');
+  
+          return res.status(500).json({ message: 'Internal server error' });
         }
-
+  
         console.log('Query result:', result);
         if (result.rowCount === 0) {
-            // Log the error and response
-            console.log('User Not Found');
-            logExecution('getUserDetails', tenantId, 'ERROR', 'User not found');
-
-            return res.status(404).json({ message: 'User not found' });
+          // Log the error and response
+          console.log('User Not Found');
+          logExecution('getUserDetails', tenantId, 'ERROR', 'User not found');
+  
+          return res.status(404).json({ message: 'User not found' });
         }
-
+  
         const userDetail = result.rows[0];
         console.log('User Details:', userDetail);
-
+  
         // Log the end of the function execution
         logExecution('getUserDetails', tenantId, 'INFO', 'User details fetched successfully');
-
+  
         res.json(userDetail);
-    });
-}
+      });
+    } catch (error) {
+      console.error('Token verification error:', error);
+      logExecution('getUserDetails', tenantId, 'ERROR', 'Token verification error');
+      return res.status(401).json({ message: 'Token verification error' });
+    }
+  }
 
  // Forgot password
  function forgotPassword(req, res) {
