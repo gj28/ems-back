@@ -29,12 +29,18 @@ router.post('/resend-forgot', authentication.resendResetToken);
 router.post('/reset-password', authentication.resetPassword);
 // router.put('/setUserOnline/:UserId', authentication.setUserOnline);
 // router.put('/setUserOffline/:UserId', authentication.setUserOffline);
+
+
 // // //Dashboard
 router.get('/userdevices/:companyEmail', dashboard.userDevices);
 router.put('/editDevice/:deviceId', dashboard.editDevice);
+
 router.put('/companyDetails/:UserId', dashboard.companyDetails);
-// router.put('/personalDetails/:UserId', authentication.personalDetails);
+router.put('/personalDetails/:UserId', dashboard.personalDetails);
 router.put('/updatePassword/:UserId', dashboard.updatePassword);
+
+// router.put('/personalDetails/:UserId', authentication.personalDetails);
+
 router.put('/editDeviceTrigger/:deviceId', dashboard.editDeviceTrigger);
 router.get('/device-trigger/:deviceId', dashboard.fetchDeviceTrigger);
 router.get('/user-devices-trigger/:CompanyEmail', dashboard.fetchAllDeviceTrigger);

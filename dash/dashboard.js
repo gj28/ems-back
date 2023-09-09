@@ -131,7 +131,7 @@ function companyDetails(req, res) {
   // Log the start of the function execution
   logExecution('companyDetails', tenantId, 'INFO', `Updating company details for user ${UserId}`);
 
-  const userCheckQuery = 'SELECT * FROM ems.ems_users WHERE UserId = $1';
+  const userCheckQuery = 'SELECT * FROM ems.ems_users WHERE userid = $1';
 
   db.query(userCheckQuery, [UserId], (error, useridCheckResult) => {
     if (error) {
@@ -149,7 +149,7 @@ function companyDetails(req, res) {
         return res.status(400).json({ message: 'User not found!' });
       }
 
-      const userQuery = 'UPDATE ems.ems_users SET Designation = $1, ContactNo = $2, Location = $3 WHERE UserId = $4';
+      const userQuery = 'UPDATE ems.ems_users SET designation = $1, contactno = $2, location = $3 WHERE userid = $4';
 
       db.query(userQuery, [Designation, ContactNo, Location, UserId], (error, details) => {
         if (error) {
@@ -186,7 +186,7 @@ function personalDetails(req, res) {
   // Log the start of the function execution
   logExecution('personalDetails', tenantId, 'INFO', `Updating personal details for user ${UserId}`);
 
-  const userCheckQuery = 'SELECT * FROM ems.ems_users WHERE UserId = $1';
+  const userCheckQuery = 'SELECT * FROM ems.ems_users WHERE userid = $1';
 
   db.query(userCheckQuery, [UserId], (error, useridCheckResult) => {
     if (error) {
@@ -204,7 +204,7 @@ function personalDetails(req, res) {
         return res.status(400).json({ message: 'User not found!' });
       }
 
-      const userdetailQuery = 'UPDATE ems.ems_users SET FirstName = $1, LastName = $2 WHERE UserId = $3';
+      const userdetailQuery = 'UPDATE ems.ems_users SET firstname = $1, lastname = $2 WHERE userid = $3';
 
       db.query(userdetailQuery, [FirstName, LastName, UserId], (error, details) => {
         if (error) {
@@ -242,7 +242,7 @@ function updatePassword(req, res) {
   logExecution('updatePassword', tenantId, 'INFO', `Updating password for user ${UserId}`);
 
   // Check if the user exists in the database
-  const userCheckQuery = 'SELECT * FROM ems.ems_users WHERE UserId = $1';
+  const userCheckQuery = 'SELECT * FROM ems.ems_users WHERE userid = $1';
   db.query(userCheckQuery, [UserId], (error, useridCheckResult) => {
     try {
       if (error) {
@@ -263,7 +263,7 @@ function updatePassword(req, res) {
       const hashedPassword = bcrypt.hashSync(Password, 10);
 
       // Update the user's password in the database
-      const updatePasswordQuery = 'UPDATE ems.ems_users SET Password = $1 WHERE UserId = $2';
+      const updatePasswordQuery = 'UPDATE ems.ems_users SET password = $1 WHERE userid = $2';
       db.query(updatePasswordQuery, [hashedPassword, UserId], (error, result) => {
         if (error) {
           console.error('Error updating password:', error);
