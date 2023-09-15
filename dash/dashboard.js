@@ -851,18 +851,23 @@ function fetchCompanyUser(req, res) {
   const CompanyEmail = req.params.CompanyEmail;
   try {
     const query = 'SELECT * FROM ems.ems_users where CompanyEmail = $1';
-    db.query(query, [CompanyEmail], (error, users) => {
+    db.query(query, [CompanyEmail], (error, result) => {
       if (error) {
-        throw new Error('Error fetching users');
+        throw new Error('Error fetching user');
       }
-
-      res.status(200).json(users);
+      if (result.rows.length === 1) {
+        const user = result.rows[0];
+        res.status(200).json(user);
+      } else {
+        res.status(404).json({ message: 'User not found' });
+      }
     });
   } catch (error) {
-    console.error('Error fetching devices:', error);
+    console.error('Error fetching user:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 }
+
 
 
 function addDeviceTrigger(req, res) {
