@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const secretKey = 'SenseLive-TMS-Dashboard'; // Replace with your own secret key
+const secretKey = 'SenseLive-ems-Dashboard'; // Replace with your own secret key
 
 // Generate a JWT token
 function generateToken(payload) {

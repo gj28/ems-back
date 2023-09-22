@@ -303,7 +303,7 @@ function fetchDeviceTrigger(req, res) {
   // Log the start of the function execution
   logExecution('fetchDeviceTrigger', tenantId, 'INFO', `Fetching triggers for device ${deviceId}`);
 
-  const deviceTriggerQuery = 'SELECT * FROM tms_trigger WHERE DeviceUID = $1';
+  const deviceTriggerQuery = 'SELECT * FROM ems_trigger WHERE DeviceUID = $1';
 
   try {
     db.query(deviceTriggerQuery, [deviceId], (error, deviceTriggerResult) => {
@@ -337,7 +337,7 @@ function fetchAllDeviceTrigger(req, res) {
   // Log the start of the function execution
   logExecution('fetchAllDeviceTrigger', tenantId, 'INFO', `Fetching all triggers for CompanyEmail ${CompanyEmail}`);
 
-  const deviceTriggerQuery = 'SELECT * FROM tms_trigger WHERE CompanyEmail = $1';
+  const deviceTriggerQuery = 'SELECT * FROM ems_trigger WHERE CompanyEmail = $1';
 
   try {
     db.query(deviceTriggerQuery, [CompanyEmail], (error, triggers) => {
@@ -372,7 +372,7 @@ function editDeviceTrigger(req, res) {
   // Log the start of the function execution
   logExecution('editDeviceTrigger', tenantId, 'INFO', `Editing device trigger for DeviceUID ${deviceId}`);
 
-  const deviceCheckQuery = 'SELECT * FROM tms_trigger WHERE DeviceUID = $1';
+  const deviceCheckQuery = 'SELECT * FROM ems_trigger WHERE DeviceUID = $1';
 
   db.query(deviceCheckQuery, [deviceId], (error, deviceCheckResult) => {
     if (error) {
@@ -384,7 +384,7 @@ function editDeviceTrigger(req, res) {
 
     try {
       if (deviceCheckResult.length === 0) {
-        const insertTriggerQuery = 'INSERT INTO tms_trigger (DeviceUID, TriggerValue, CompanyEmail) VALUES ($1,$2,$3)';
+        const insertTriggerQuery = 'INSERT INTO ems_trigger (DeviceUID, TriggerValue, CompanyEmail) VALUES ($1,$2,$3)';
 
         db.query(insertTriggerQuery, [deviceId, TriggerValue, CompanyEmail], (error, insertResult) => {
           if (error) {
@@ -400,7 +400,7 @@ function editDeviceTrigger(req, res) {
           return res.json({ message: 'Device added successfully!' });
         });
       } else {
-        const updateDeviceTriggerQuery = 'UPDATE tms_trigger SET TriggerValue = $1, CompanyEmail = $2 WHERE DeviceUID = $3';
+        const updateDeviceTriggerQuery = 'UPDATE ems_trigger SET TriggerValue = $1, CompanyEmail = $2 WHERE DeviceUID = $3';
 
         db.query(updateDeviceTriggerQuery, [TriggerValue, CompanyEmail, deviceId], (error, updateResult) => {
           if (error) {
@@ -562,7 +562,7 @@ function getDataByTimeIntervalStatus(req, res) {
       return res.status(400).json({ message: 'Invalid time interval' });
   }
 
-  const sql = `SELECT Status, COUNT(*) as count FROM tms_trigger_logs WHERE DeviceUID = $1 AND TimeStamp >= DATE_SUB(NOW(), ${duration}) GROUP BY Status`;
+  const sql = `SELECT Status, COUNT(*) as count FROM ems_trigger_logs WHERE DeviceUID = $1 AND TimeStamp >= DATE_SUB(NOW(), ${duration}) GROUP BY Status`;
   db.query(sql, [deviceId], (error, results) => {
     if (error) {
       console.error('Error fetching data:', error);
@@ -624,7 +624,7 @@ function getDataByCustomDateStatus(req, res) {
       return res.status(400).json({ message: 'Invalid parameters' });
     }
 
-    const sql = `SELECT Status, COUNT(*) as count FROM tms_trigger_logs WHERE DeviceUID = $1 AND TimeStamp >= $2 AND TimeStamp <= $3 GROUP BY Status`;
+    const sql = `SELECT Status, COUNT(*) as count FROM ems_trigger_logs WHERE DeviceUID = $1 AND TimeStamp >= $2 AND TimeStamp <= $3 GROUP BY Status`;
     db.query(sql, [deviceId, startDate + 'T00:00:00.000Z', endDate + 'T23:59:59.999Z'], (error, results) => {
       if (error) {
         console.error('Error fetching data:', error);
@@ -683,7 +683,7 @@ function getLiveStatusDetails(req, res) {
 
     // Validate the deviceId parameter if necessary
 
-    const liveStatusQuery = 'SELECT * FROM tms_trigger_logs WHERE DeviceUID = $1 ORDER BY TimeStamp DESC LIMIT 1';
+    const liveStatusQuery = 'SELECT * FROM ems_trigger_logs WHERE DeviceUID = $1 ORDER BY TimeStamp DESC LIMIT 1';
     db.query(liveStatusQuery, [deviceId], (error, liveStatus) => {
       if (error) {
         console.error('Error fetching data:', error);
@@ -735,7 +735,7 @@ function insertNewMessage(req, res) {
     const timestamp = new Date().toISOString();
     const isRead = 0; // Assuming the initial value for isRead is 0 (false)
 
-    const insertQuery = 'INSERT INTO tms_notifications (sender, receiver, message, timestamp, isRead) VALUES ($1, $2, $3, $4, $5)';
+    const insertQuery = 'INSERT INTO ems_notifications (sender, receiver, message, timestamp, isRead) VALUES ($1, $2, $3, $4, $5)';
     db.query(insertQuery, [sender, receiver, message, timestamp, isRead], (error, result) => {
       if (error) {
         console.error('Error inserting new message:', error);
@@ -763,7 +763,7 @@ function markMessageAsRead(req, res) {
   try {
     const messageId = req.params.messageId;
 
-    const updateQuery = 'UPDATE tms_notifications SET isRead = 1 WHERE msgid = ?';
+    const updateQuery = 'UPDATE ems_notifications SET isRead = 1 WHERE msgid = ?';
     db.query(updateQuery, [messageId], (error, result) => {
       if (error) {
         console.error('Error updating message status:', error);
@@ -787,7 +787,7 @@ function deleteMessage(req, res) {
   try {
     const messageId = req.params.messageId;
 
-    const deleteQuery = 'DELETE FROM tms_notifications WHERE msgid = ?';
+    const deleteQuery = 'DELETE FROM ems_notifications WHERE msgid = ?';
     db.query(deleteQuery, [messageId], (error, result) => {
       if (error) {
         console.error('Error deleting message:', error);
@@ -811,7 +811,7 @@ function countUnreadMessages(req, res) {
   try {
     const receiver = req.params.receiver;
 
-    const countQuery = 'SELECT COUNT(*) AS unreadCount FROM tms_notifications WHERE receiver = ? AND isRead = 0';
+    const countQuery = 'SELECT COUNT(*) AS unreadCount FROM ems_notifications WHERE receiver = ? AND isRead = 0';
     db.query(countQuery, [receiver], (error, result) => {
       if (error) {
         console.error('Error counting unread messages:', error);
@@ -832,7 +832,7 @@ function getUserMessages(req, res) {
   try {
     const receiver = req.params.receiver;
 
-    const messagesQuery = 'SELECT * FROM tms_notifications WHERE receiver = ? ORDER BY timestamp desc';
+    const messagesQuery = 'SELECT * FROM ems_notifications WHERE receiver = ? ORDER BY timestamp desc';
     db.query(messagesQuery, [receiver], (error, messages) => {
       if (error) {
         console.error('Error fetching user messages:', error);
@@ -873,7 +873,7 @@ function fetchCompanyUser(req, res) {
 function addDeviceTrigger(req, res) {
   const { DeviceUID, TriggerValue, CompanyEmail } = req.body;
     try {
-        const insertTriggerQuery = 'INSERT INTO tms_trigger (DeviceUID, TriggerValue, CompanyEmail) VALUES ($1,$2,$3)';
+        const insertTriggerQuery = 'INSERT INTO ems_trigger (DeviceUID, TriggerValue, CompanyEmail) VALUES ($1,$2,$3)';
 
         db.query(insertTriggerQuery, [DeviceUID, TriggerValue, CompanyEmail], (error, insertResult) => {
           if (error) {

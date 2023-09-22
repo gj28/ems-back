@@ -4,6 +4,7 @@ const authentication = require('./auth/authentication');
 const dashboard = require('./dash/dashboard.js');
 const limitter = require('express-rate-limit');
 const logs = require('./audit_logs');
+const SA = require('./superadmin/SA.js');
 
 const registerLimitter = limitter({
     windowMS : 5*60*1000,
@@ -61,4 +62,24 @@ router.post('/addDeviceTrigger', dashboard.addDeviceTrigger)
 router.post('/addDevice', dashboard.addDevice);
 router.get('/logs', logs.fetchLogs);
 
+
+
+//SA
+// router.get('/fetchAllDevices', SA.fetchAllDevices);
+// router.get('/fetchAllUsers', SA.fetchAllUsers);
+// router.post('/addDevice', SA.addDevice);
+// router.get('/getDeviceByUID/:deviceUID', SA.getDeviceByUID);
+// router.put('/updateDevice/:deviceUID', SA.updateDevice);
+// router.delete('/deleteDevice/:deviceUID', SA.deleteDevice);
+// router.get('/fetchCompanyDetails/:CompanyEmail', SA.fetchCompanyDetails);
+// router.get('/fetchCounts/:CompanyEmail', SA.fetchCounts);
+// router.get('/logs', SA.fetchLogs);
+// router.get('/apilogs', SA.apilogs);
+// router.get('/devicelogs', SA.devicelogs);
+// router.delete('/removeUser/:userId', SA.removeUser);
+// router.get('/usermanagement', SA.usermanagement);
+// router.get('/userInfo', SA.userInfo);
+// router.get('/compInfo', SA.companyinfo);
+ router.get('/alarms', SA.alarms);
+// router.get('/notification', SA.notification);
 module.exports = router;
