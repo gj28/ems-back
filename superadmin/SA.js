@@ -282,7 +282,7 @@ function alarms(req, res) {
   //   });
   // }
   function usermanagement(req, res) {
-    const userQuery = 'SELECT userid, username, companyname, designation, personalemail, location, contactno FROM ems.ems_users';
+    const userQuery = 'SELECT userid, username, companyname, designation, personalemail, location, contactno , block FROM ems.ems_users';
   
     db.query(userQuery, (error, userResult) => {
       if (error) {
