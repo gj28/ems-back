@@ -77,7 +77,7 @@ router.get('/logs', logs.fetchLogs);
 // router.get('/apilogs', SA.apilogs);
 // router.get('/devicelogs', SA.devicelogs);
 // router.delete('/removeUser/:userId', SA.removeUser);
-// router.get('/usermanagement', SA.usermanagement);
+ router.get('/usermanagement', SA.usermanagement);
 // router.get('/userInfo', SA.userInfo);
 // router.get('/compInfo', SA.companyinfo);
  router.get('/alarms', SA.alarms);

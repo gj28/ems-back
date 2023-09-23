@@ -19,7 +19,6 @@ function alarms(req, res) {
         return;
       }
       
-      // Assuming the data you want is in result.rows
       const logs = result.rows;
       
       res.json({ logs });
@@ -264,24 +263,43 @@ function alarms(req, res) {
 //   }
   
   
-//   function usermanagement(req, res) {
-//     const userQuery = 'SELECT UserId,Username,CompanyName, Designation,PersonalEmail,Location,ContactNo,Block FROM ems_users';
+  // function usermanagement(req, res) {
+  //   const userQuery = 'SELECT userid,username,companyname, designation,personalemail,location,contactno FROM ems.ems_users';
   
-//     db.query(userQuery, (error, userResult) => {
-//       if (error) {
-//         console.error('Error fetching user details:', error);
-//         return res.status(500).json({ message: 'Internal server error' });
-//       }
+  //   db.query(userQuery, (error, userResult) => {
+  //     if (error) {
+  //       console.error('Error fetching user details:', error);
+  //       return res.status(500).json({ message: 'Internal server error' });
+  //     }
   
-//       if (userResult.length === 0) {
-//         console.log('users not found!');
-//         return res.status(404).json({ message: 'users not found!' });
-//       }
+  //     if (userResult.length === 0) {
+  //       console.log('users not found!');
+  //       return res.status(404).json({ message: 'users not found!' });
+  //     }
   
-//       const users = userResult;
-//       res.json({ userDetails: users });
-//     });
-//   }
+  //     const users = userResult;
+  //     res.json({ userDetails: users });
+  //   });
+  // }
+  function usermanagement(req, res) {
+    const userQuery = 'SELECT userid, username, companyname, designation, personalemail, location, contactno FROM ems.ems_users';
+  
+    db.query(userQuery, (error, userResult) => {
+      if (error) {
+        console.error('Error fetching user details:', error);
+        return res.status(500).json({ message: 'Internal server error', error: error.message });
+      }
+  
+      if (userResult.rows.length === 0) {
+        console.log('Users not found!');
+        return res.status(404).json({ message: 'Users not found!' });
+      }
+  
+      const users = userResult.rows;
+      res.json({ userDetails: users });
+    });
+  }
+  
 
 //   function logExecution(functionName, tenantId, status, message) {
 //     const createdTime = new Date().toISOString(); 
@@ -352,34 +370,34 @@ function alarms(req, res) {
 //       }
 //     }
   
-//     function userInfo(req, res) {
-//       try {
-//         const query = 'SELECT * FROM user_info';
-//         db.query(query, (error, rows) => {
-//           if (error) {
-//             throw new Error('Error fetching logs');
-//           }
-//           res.json({ logs: rows });
-//         });
-//       } catch (error) {
-//         console.error('Error fetching logs:', error);
-//         res.status(500).json({ message: 'Internal server error' });
-//       }
-//     }
-//     function companyinfo(req, res) {
-//       try {
-//         const query = 'SELECT * FROM company_info';
-//         db.query(query, (error, rows) => {
-//           if (error) {
-//             throw new Error('Error fetching logs');
-//           }
-//           res.json({ logs: rows });
-//         });
-//       } catch (error) {
-//         console.error('Error fetching logs:', error);
-//         res.status(500).json({ message: 'Internal server error' });
-//       }
-//     }
+    // function userInfo(req, res) {
+    //   try {
+    //     const query = 'SELECT * FROM ems.user_info';
+    //     db.query(query, (error, rows) => {
+    //       if (error) {
+    //         throw new Error('Error fetching logs');
+    //       }
+    //       res.json({ logs: rows });
+    //     });
+    //   } catch (error) {
+    //     console.error('Error fetching logs:', error);
+    //     res.status(500).json({ message: 'Internal server error' });
+    //   }
+    // }
+    // function companyinfo(req, res) {
+    //   try {
+    //     const query = 'SELECT * FROM ems.company_info';
+    //     db.query(query, (error, rows) => {
+    //       if (error) {
+    //         throw new Error('Error fetching logs');
+    //       }
+    //       res.json({ logs: rows });
+    //     });
+    //   } catch (error) {
+    //     console.error('Error fetching logs:', error);
+    //     res.status(500).json({ message: 'Internal server error' });
+    //   }
+    // }
   
   
 //     function notification(req, res) {
@@ -718,50 +736,50 @@ function alarms(req, res) {
 //       });
 //     }
 
-//     function deviceCount(req, res) {
-//       const deviceQuery = 'SELECT COUNT(*) AS deviceCount FROM ems_devices';
-//       const activeQuery = 'SELECT COUNT(*) AS activeCount FROM ems_devices WHERE  status = "1"';
-//       const inactiveQuery = 'SELECT COUNT(*) AS inactiveCount FROM ems_devices WHERE status = "0"';
+    // function deviceCount(req, res) {
+    //   const deviceQuery = 'SELECT COUNT(*) AS deviceCount FROM ems_devices';
+    //   const activeQuery = 'SELECT COUNT(*) AS activeCount FROM ems_devices WHERE  status = "1"';
+    //   const inactiveQuery = 'SELECT COUNT(*) AS inactiveCount FROM ems_devices WHERE status = "0"';
       
-//       try {
-//         db.query(deviceQuery, (error, deviceQuery) => {
-//           if (error) {
-//             console.error('Error fetching standard user count:', error);
-//             throw new Error('Internal server error');
-//           }
+    //   try {
+    //     db.query(deviceQuery, (error, deviceQuery) => {
+    //       if (error) {
+    //         console.error('Error fetching standard user count:', error);
+    //         throw new Error('Internal server error');
+    //       }
     
-//           const deviceCount = deviceQuery[0].deviceCount;
+    //       const deviceCount = deviceQuery[0].deviceCount;
     
-//           db.query(activeQuery, (error, activeResult) => {
-//             if (error) {
-//               console.error('Error fetching admin count:', error);
-//               throw new Error('Internal server error');
-//             }
+    //       db.query(activeQuery, (error, activeResult) => {
+    //         if (error) {
+    //           console.error('Error fetching admin count:', error);
+    //           throw new Error('Internal server error');
+    //         }
     
-//             const activeCount = activeResult[0].activeCount;
+    //         const activeCount = activeResult[0].activeCount;
     
-//             db.query(inactiveQuery,(error, inactiveResult) => {
-//               if (error) {
-//                 console.error('Error fetching device count:', error);
-//                 throw new Error('Internal server error');
-//               }
+    //         db.query(inactiveQuery,(error, inactiveResult) => {
+    //           if (error) {
+    //             console.error('Error fetching device count:', error);
+    //             throw new Error('Internal server error');
+    //           }
     
-//               const inactiveCount = inactiveResult[0].inactiveCount;
-//                 res.json({
-//                   deviceCount: deviceCount,
-//                   activeCount:activeCount,
-//                   inactiveCount:inactiveCount
+    //           const inactiveCount = inactiveResult[0].inactiveCount;
+    //             res.json({
+    //               deviceCount: deviceCount,
+    //               activeCount:activeCount,
+    //               inactiveCount:inactiveCount
                   
-//                 });
-//               });
-//             });
-//           });
+    //             });
+    //           });
+    //         });
+    //       });
       
-//       } catch (error) {
-//         console.error('Error occurred:', error);
-//         res.status(500).json({ message: 'Internal server error' });
-//       }
-//     }
+    //   } catch (error) {
+    //     console.error('Error occurred:', error);
+    //     res.status(500).json({ message: 'Internal server error' });
+    //   }
+    // }
     
 
 module.exports = {
@@ -772,19 +790,19 @@ module.exports = {
   // getDeviceByUID,
   // updateDevice,
   // fetchCounts,
-  // usermanagement,
+  usermanagement,
   // logExecution,
   // apilogs,
   // devicelogs,
-  // userInfo,
-  // companyinfo,
+   //userInfo,
+  //companyinfo,
   alarms
   // notification,
   // log, 
   // fetchLogs,
   // deleteDevice,
   // removeUser,
-  // deviceCount,
+  //deviceCount
   // graph1,
   // graph2,
   // graph3,
