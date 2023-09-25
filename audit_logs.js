@@ -26,7 +26,7 @@ function log(req, res, next) {
     if (error) {
       console.error('Error writing to database:', error);
     } else {
-      console.log('Log data inserted into the database');
+      //console.log('Log data inserted into the database');
     }
     next();
   });
