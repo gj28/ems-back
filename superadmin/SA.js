@@ -137,7 +137,7 @@ function fetchAllUsers(req, res) {
   function getDeviceByUID(req, res) {
     try {
       const deviceUID = req.params.deviceUID;
-      const getDeviceByIdQuery = 'SELECT * FROM ems_devices WHERE deviceuid = ?';
+      const getDeviceByIdQuery = 'SELECT * FROM ems.ems_devices WHERE deviceuid = ?';
   
       db.query(getDeviceByIdQuery, [deviceUID], (error, result) => {
         if (error) {
@@ -161,25 +161,34 @@ function fetchAllUsers(req, res) {
     try {
       const deviceUID = req.params.deviceUID;
       const { EntryId, DeviceLocation, DeviceName, CompanyEmail, CompanyName } = req.body;
-      const updateDeviceQuery =
-        'UPDATE ems_devices SET entryid=?, devicelocation=?, devicename=?, companyemail=?, companyname=? WHERE deviceuid=?';
   
-      db.query(
-        updateDeviceQuery,
-        [EntryId, DeviceLocation, DeviceName, CompanyEmail, CompanyName, deviceUID],
-        (error, result) => {
-          if (error) {
-            console.error('Error updating device:', error);
-            return res.status(500).json({ message: 'Internal server error' });
-          }
+      // Check if EntryId is provided and not equal to the existing EntryId
+      if (EntryId !== undefined && EntryId !== deviceUID) {
+        return res.status(400).json({ message: 'Cannot update primary key (EntryId)' });
+      }
   
-          if (result.affectedRows === 0) {
-            return res.status(404).json({ message: 'Device not found' });
-          }
+      // SQL query for updating a device in PostgreSQL
+      const updateDeviceQuery = `
+        UPDATE ems.ems_devices
+        SET devicelocation = $1, devicename = $2, companyemail = $3, companyname = $4
+        WHERE deviceuid = $5
+      `;
   
-          res.json({ message: 'Device updated successfully' });
+      const values = [DeviceLocation, DeviceName, CompanyEmail, CompanyName, deviceUID];
+  
+      // Execute the SQL query using the connection pool
+      db.query(updateDeviceQuery, values, (error, result) => {
+        if (error) {
+          console.error('Error updating device:', error);
+          return res.status(500).json({ message: 'Internal server error' });
         }
-      );
+  
+        if (result.rowCount === 0) {
+          return res.status(404).json({ message: 'Device not found' });
+        }
+  
+        res.json({ message: 'Device updated successfully' });
+      });
     } catch (error) {
       console.error('Error updating device:', error);
       res.status(500).json({ message: 'Internal server error' });
