@@ -294,45 +294,45 @@ function fetchCompanyDetails(req, res) {
   }
   
 
-//   function logExecution(functionName, tenantId, status, message) {
-//     const createdTime = new Date().toISOString(); 
-//     const entity_type = 'SenseLive';
-//     const entity_id = tenantId; 
-//     const transport = 'ENABLED'; 
-//     const db_storage = 'ENABLED'; 
-//     const re_exec = 'ENABLED'; 
-//     const js_exec = 'ENABLED';
-//     const email_exec = 'ENABLED';
-//     const sms_exec = 'ENABLED'; 
-//     const alarm_exec = 'ENABLED';
+  function logExecution(functionName, tenantId, status, message) {
+    const createdTime = new Date().toISOString(); 
+    const entity_type = 'SenseLive';
+    const entity_id = tenantId; 
+    const transport = 'ENABLED'; 
+    const db_storage = 'ENABLED'; 
+    const re_exec = 'ENABLED'; 
+    const js_exec = 'ENABLED';
+    const email_exec = 'ENABLED';
+    const sms_exec = 'ENABLED'; 
+    const alarm_exec = 'ENABLED';
   
-//     const query = `
-//       INSERT INTO tmp_api_usage (created_time, tenant_id, entity_type, entity_id, transport, db_storage, re_exec, js_exec, email_exec, sms_exec, alarm_exec, status, message)
-//       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
-//     `;
+    const query = `
+      INSERT INTO ems.api_usage (created_time, tenant_id, entity_type, entity_id, transport, db_storage, re_exec, js_exec, email_exec, sms_exec, alarm_exec, status, message)
+      VALUES ($1, $2, $3, $4, $6, $7, $8, $9, $10, $11, $12, $13, $14);
+    `;
   
-//     db.query(query, [
-//       createdTime,
-//       tenantId,
-//       entity_type,
-//       entity_id,
-//       transport,
-//       db_storage,
-//       re_exec,
-//       js_exec,
-//       email_exec,
-//       sms_exec,
-//       alarm_exec,
-//       status,
-//       message,
-//     ], (error, results) => {
-//       if (error) {
-//         console.error(`Error logging execution of function '${functionName}':`, error);
-//       } else {
-//         console.log(`Function '${functionName}' executed and logged successfully.`);
-//       }
-//     });
-//   }
+    db.query(query, [
+      createdTime,
+      tenantId,
+      entity_type,
+      entity_id,
+      transport,
+      db_storage,
+      re_exec,
+      js_exec,
+      email_exec,
+      sms_exec,
+      alarm_exec,
+      status,
+      message,
+    ], (error, results) => {
+      if (error) {
+        console.error(`Error logging execution of function '${functionName}':`, error);
+      } else {
+        console.log(`Function '${functionName}' executed and logged successfully.`);
+      }
+    });
+  }
 //   function apilogs(req, res) {
 //       try {
 //         const query = 'SELECT * FROM tmp_api_usage';
@@ -403,20 +403,27 @@ function fetchLogs(req, res) {
     res.status(500).json({ message: 'Internal server error' });
   }
 }
-    // function companyinfo(req, res) {
-    //   try {
-    //     const query = 'SELECT * FROM ems.company_info';
-    //     db.query(query, (error, rows) => {
-    //       if (error) {
-    //         throw new Error('Error fetching logs');
-    //       }
-    //       res.json({ logs: rows });
-    //     });
-    //   } catch (error) {
-    //     console.error('Error fetching logs:', error);
-    //     res.status(500).json({ message: 'Internal server error' });
-    //   }
-    // }
+
+function companyinfo(req, res) {
+  try {
+    const query = 'SELECT * FROM ems.company_info';
+    db.query(query, (error, result) => {
+      if (error) {
+        console.error('Error fetching logs:', error);
+        res.status(500).json({ message: 'Internal server error' });
+        return;
+      }
+      
+      const logs = result.rows;
+      
+      res.json({ logs });
+    });
+  } catch (error) {
+    console.error('Error fetching logs:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}
+    
   
   
 //     function notification(req, res) {
@@ -766,18 +773,17 @@ module.exports = {
   updateDevice,
   // fetchCounts,
   usermanagement,
-  // logExecution,
+  logExecution,
   apilogs,
   devicelogs,
   userInfo,
- // companyinfo,
+ companyinfo,
   alarms,
   // notification,
   // log, 
   fetchLogs,
   deleteDevice,
    removeUser,
-  //deviceCount
   // graph1,
   // graph2,
   // graph3,
