@@ -80,11 +80,13 @@ router.get('/getDeviceByUID/:deviceUID', SA.getDeviceByUID);
 router.put('/updateDevice/:deviceUID', SA.updateDevice);
 router.get('/logs', SA.fetchLogs);
 router.get('/apilogs', SA.apilogs);
-// router.get('/devicelogs', SA.devicelogs);
+router.get('/devicelogs', SA.devicelogs);
 router.delete('/removeUser/:userId', SA.removeUser);
  router.get('/usermanagement', SA.usermanagement);
 router.get('/userInfo', SA.userInfo);
 // router.get('/compInfo', SA.companyinfo);
  router.get('/alarms', SA.alarms);
 // router.get('/notification', SA.notification);
+
+router.get('/userByCompanyname/:company_name', SA.userByCompanyname);
 module.exports = router;

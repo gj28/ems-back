@@ -90,29 +90,29 @@ function fetchAllUsers(req, res) {
     }
   }
   
-// function userByCompanyname(req, res) {
-//     try {
-//       const company_name = req.params.company_name;
-//       const getDeviceByIdQuery = 'SELECT FirstName,LastName,CompanyName,CompanyEmail,ContactNo,Location,UserType,PersonalEmail FROM ems_users WHERE CompanyName = $1';
+  function userByCompanyname(req, res) {
+    try {
+      const company_name = req.params.company_name;
+      const getDeviceByIdQuery = 'SELECT firstname, lastname, companyname, companyemail, contactno, location, usertype, personalemail FROM ems.ems_users WHERE companyname = $1';
   
-//       db.query(getDeviceByIdQuery, [company_name], (error, result) => {
-//         if (error) {
-//           console.error('Error fetching device:', error);
-//           return res.status(500).json({ message: 'Internal server error' });
-//         }
+      db.query(getDeviceByIdQuery, [company_name], (error, result) => {
+        if (error) {
+          console.error('Error fetching user:', error);
+          return res.status(500).json({ message: 'Internal server error' });
+        }
   
-//         if (result.length === 0) {
-//           return res.status(404).json({ message: 'User not found' });
-//         }
+        if (result.rows.length === 0) {
+          return res.status(404).json({ message: 'User not found' });
+        }
   
-//         res.json(result);
-//       });
-//     } catch (error) {
-//       console.error('Error fetching device:', error);
-//       res.status(500).json({ message: 'Internal server error' });
-//     }
-//   }
-
+        res.json({ user: result.rows}); // Assuming you expect a single user
+      });
+    } catch (error) {
+      console.error('Error fetching user:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  }
+  
 
   //DEVICES
   function addDevice(req, res) {
@@ -194,29 +194,6 @@ function fetchAllUsers(req, res) {
       res.status(500).json({ message: 'Internal server error' });
     }
   }
-
-//   // function deleteDevice(req, res) {
-//   //   try {
-//   //     const deviceUID = req.params.deviceUID;
-//   //     const deleteDeviceQuery = 'DELETE FROM ems_devices WHERE DeviceUID = ?';
-  
-//   //     db.query(deleteDeviceQuery, [deviceUID], (error, result) => {
-//   //       if (error) {
-//   //         console.error('Error deleting device:', error);
-//   //         return res.status(500).json({ message: 'Internal server error' });
-//   //       }
-  
-//   //       if (result.affectedRows === 0) {
-//   //         return res.status(404).json({ message: 'Device not found' });
-//   //       }
-  
-//   //       res.json({ message: 'Device deleted successfully' });
-//   //     });
-//   //   } catch (error) {
-//   //     console.error('Error deleting device:', error);
-//   //     res.status(500).json({ message: 'Internal server error' });
-//   //   }
-//   // }
 
 
  
@@ -371,20 +348,20 @@ function fetchCompanyDetails(req, res) {
 //       }
 //     }
   
-//     function devicelogs(req, res) {
-//       try {
-//         const query = 'SELECT * FROM ems_trigger';
-//         db.query(query, (error, rows) => {
-//           if (error) {
-//             throw new Error('Error fetching logs');
-//           }
-//           res.json({ logs: rows });
-//         });
-//       } catch (error) {
-//         console.error('Error fetching logs:', error);
-//         res.status(500).json({ message: 'Internal server error' });
-//       }
-//     }
+    function devicelogs(req, res) {
+      try {
+        const query = 'SELECT * FROM ems.ems_trigger';
+        db.query(query, (error, rows) => {
+          if (error) {
+            throw new Error('Error fetching logs');
+          }
+          res.json({ logs: rows });
+        });
+      } catch (error) {
+        console.error('Error fetching logs:', error);
+        res.status(500).json({ message: 'Internal server error' });
+      }
+    }
   
 
 function userInfo(req, res) {
@@ -778,72 +755,20 @@ function fetchLogs(req, res) {
       });
     }
 
-    // function deviceCount(req, res) {
-    //   const deviceQuery = 'SELECT COUNT(*) AS deviceCount FROM ems.ems_devices';
-    //   const activeQuery = 'SELECT COUNT(*) AS activeCount FROM ems.ems_devices WHERE  status = "1"';
-    //   const inactiveQuery = 'SELECT COUNT(*) AS inactiveCount FROM ems.ems_devices WHERE status = "0"';
-      
-    //   try {
-    //     db.query(deviceQuery, (error, deviceQuery) => {
-    //       if (error) {
-    //         console.error('Error fetching standard user count:', error);
-    //         throw new Error('Internal server error');
-    //       }
-    
-    //       const deviceCount = deviceQuery[0].deviceCount;
-    
-    //       db.query(activeQuery, (error, activeResult) => {
-    //         if (error) {
-    //           console.error('Error fetching admin count:', error);
-    //           throw new Error('Internal server error');
-    //         }
-    
-    //         const activeCount = activeResult[0].activeCount;
-    
-    //         db.query(inactiveQuery,(error, inactiveResult) => {
-    //           if (error) {
-    //             console.error('Error fetching device count:', error);
-    //             throw new Error('Internal server error');
-    //           }
-    
-    //           const inactiveCount = inactiveResult[0].inactiveCount;
-    //             res.json({
-    //               deviceCount: deviceCount,
-    //               activeCount:activeCount,
-    //               inactiveCount:inactiveCount
-                  
-    //             });
-    //           });
-    //         });
-    //       });
-      
-    //   } catch (error) {
-    //     console.error('Error occurred:', error);
-    //     res.status(500).json({ message: 'Internal server error' });
-    //   }
-    // }
-    
+   
 
 module.exports = {
   fetchAllUsers,
   fetchAllDevices,
-
   fetchCompanyDetails,
-  // addDevice,
-  // getDeviceByUID,
-  // updateDevice,
-  //fetchCounts,
-
-  // fetchCompanyDetails,
   addDevice,
   getDeviceByUID,
   updateDevice,
   // fetchCounts,
-
   usermanagement,
   // logExecution,
   apilogs,
-  // devicelogs,
+  devicelogs,
   userInfo,
  // companyinfo,
   alarms,
@@ -857,7 +782,7 @@ module.exports = {
   // graph2,
   // graph3,
   // graph4,
-  // userByCompanyname
+  userByCompanyname
 
   
 };
