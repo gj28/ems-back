@@ -114,77 +114,86 @@ function fetchAllUsers(req, res) {
 //   }
 
 
-//   //DEVICES
-//   function addDevice(req, res) {
-//     try {
-//       const { EntryId, DeviceUID, DeviceLocation, DeviceName, CompanyEmail, CompanyName } = req.body;
-//       const createDeviceQuery = 'INSERT INTO ems_devices (EntryId, DeviceUID, DeviceLocation, DeviceName, CompanyEmail, CompanyName) VALUES (?, ?, ?, ?, ?, ?)';
+  //DEVICES
+  function addDevice(req, res) {
+    try {
+      const { EntryId, DeviceUID, DeviceLocation, DeviceName, CompanyEmail, CompanyName } = req.body;
+      const createDeviceQuery = 'INSERT INTO ems_devices (entryid, deviceuid, devicelocation, devicename, companyemail, companyname) VALUES (?, ?, ?, ?, ?, ?)';
   
-//       db.query(createDeviceQuery, [EntryId, DeviceUID, DeviceLocation, DeviceName, CompanyEmail, CompanyName], (error, result) => {
-//         if (error) {
-//           console.error('Error adding device:', error);
-//           return res.status(500).json({ message: 'Internal server error' });
-//         }
+      db.query(createDeviceQuery, [EntryId, DeviceUID, DeviceLocation, DeviceName, CompanyEmail, CompanyName], (error, result) => {
+        if (error) {
+          console.error('Error adding device:', error);
+          return res.status(500).json({ message: 'Internal server error' });
+        }
   
-//         res.json({ message: 'Device added successfully' });
-//       });
-//     } catch (error) {
-//       console.error('Error adding device:', error);
-//       res.status(500).json({ message: 'Internal server error' });
-//     }
-//   }
+        res.json({ message: 'Device added successfully' });
+      });
+    } catch (error) {
+      console.error('Error adding device:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  }
 
-//   function getDeviceByUID(req, res) {
-//     try {
-//       const deviceUID = req.params.deviceUID;
-//       const getDeviceByIdQuery = 'SELECT * FROM ems_devices WHERE DeviceUID = ?';
+  function getDeviceByUID(req, res) {
+    try {
+      const deviceUID = req.params.deviceUID;
+      const getDeviceByIdQuery = 'SELECT * FROM ems.ems_devices WHERE deviceuid = ?';
   
-//       db.query(getDeviceByIdQuery, [deviceUID], (error, result) => {
-//         if (error) {
-//           console.error('Error fetching device:', error);
-//           return res.status(500).json({ message: 'Internal server error' });
-//         }
+      db.query(getDeviceByIdQuery, [deviceUID], (error, result) => {
+        if (error) {
+          console.error('Error fetching device:', error);
+          return res.status(500).json({ message: 'Internal server error' });
+        }
   
-//         if (result.length === 0) {
-//           return res.status(404).json({ message: 'Device not found' });
-//         }
+        if (result.length === 0) {
+          return res.status(404).json({ message: 'Device not found' });
+        }
   
-//         res.json(result[0]);
-//       });
-//     } catch (error) {
-//       console.error('Error fetching device:', error);
-//       res.status(500).json({ message: 'Internal server error' });
-//     }
-//   }
+        res.json(result[0]);
+      });
+    } catch (error) {
+      console.error('Error fetching device:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  }
 
-//   function updateDevice(req, res) {
-//     try {
-//       const deviceUID = req.params.deviceUID;
-//       const { EntryId, DeviceLocation, DeviceName, CompanyEmail, CompanyName } = req.body;
-//       const updateDeviceQuery =
-//         'UPDATE ems_devices SET EntryId=?, DeviceLocation=?, DeviceName=?, CompanyEmail=?, CompanyName=? WHERE DeviceUID=?';
+  function updateDevice(req, res) {
+    try {
+      const deviceUID = req.params.deviceUID;
+      const { EntryId, DeviceLocation, DeviceName, CompanyEmail, CompanyName } = req.body;
   
-//       db.query(
-//         updateDeviceQuery,
-//         [EntryId, DeviceLocation, DeviceName, CompanyEmail, CompanyName, deviceUID],
-//         (error, result) => {
-//           if (error) {
-//             console.error('Error updating device:', error);
-//             return res.status(500).json({ message: 'Internal server error' });
-//           }
+      // Check if EntryId is provided and not equal to the existing EntryId
+      if (EntryId !== undefined && EntryId !== deviceUID) {
+        return res.status(400).json({ message: 'Cannot update primary key (EntryId)' });
+      }
   
-//           if (result.affectedRows === 0) {
-//             return res.status(404).json({ message: 'Device not found' });
-//           }
+      // SQL query for updating a device in PostgreSQL
+      const updateDeviceQuery = `
+        UPDATE ems.ems_devices
+        SET devicelocation = $1, devicename = $2, companyemail = $3, companyname = $4
+        WHERE deviceuid = $5
+      `;
   
-//           res.json({ message: 'Device updated successfully' });
-//         }
-//       );
-//     } catch (error) {
-//       console.error('Error updating device:', error);
-//       res.status(500).json({ message: 'Internal server error' });
-//     }
-//   }
+      const values = [DeviceLocation, DeviceName, CompanyEmail, CompanyName, deviceUID];
+  
+      // Execute the SQL query using the connection pool
+      db.query(updateDeviceQuery, values, (error, result) => {
+        if (error) {
+          console.error('Error updating device:', error);
+          return res.status(500).json({ message: 'Internal server error' });
+        }
+  
+        if (result.rowCount === 0) {
+          return res.status(404).json({ message: 'Device not found' });
+        }
+  
+        res.json({ message: 'Device updated successfully' });
+      });
+    } catch (error) {
+      console.error('Error updating device:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  }
 
 //   // function deleteDevice(req, res) {
 //   //   try {
@@ -818,11 +827,19 @@ function fetchLogs(req, res) {
 module.exports = {
   fetchAllUsers,
   fetchAllDevices,
+
   fetchCompanyDetails,
   // addDevice,
   // getDeviceByUID,
   // updateDevice,
   //fetchCounts,
+
+  // fetchCompanyDetails,
+  addDevice,
+  getDeviceByUID,
+  updateDevice,
+  // fetchCounts,
+
   usermanagement,
   // logExecution,
   apilogs,

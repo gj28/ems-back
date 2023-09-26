@@ -69,12 +69,20 @@ router.get('/logs', logs.fetchLogs);
 //SA
 router.get('/fetchAllDevices', SA.fetchAllDevices);
 router.get('/fetchAllUsers', SA.fetchAllUsers);
+
 // router.post('/addDevice', SA.addDevice);
 // router.get('/getDeviceByUID/:deviceUID', SA.getDeviceByUID);
 // router.put('/updateDevice/:deviceUID', SA.updateDevice);
 router.delete('/deleteDevice/:deviceUID', SA.deleteDevice);
 router.get('/fetchCompanyDetails/:CompanyEmail', SA.fetchCompanyDetails);
 //router.get('/fetchCounts/:CompanyEmail', SA.fetchCounts);
+router.post('/addDevice', SA.addDevice);
+router.get('/getDeviceByUID/:deviceUID', SA.getDeviceByUID);
+router.put('/updateDevice/:deviceUID', SA.updateDevice);
+// router.delete('/deleteDevice/:deviceUID', SA.deleteDevice);
+// router.get('/fetchCompanyDetails/:CompanyEmail', SA.fetchCompanyDetails);
+// router.get('/fetchCounts/:CompanyEmail', SA.fetchCounts);
+
 router.get('/logs', SA.fetchLogs);
 router.get('/apilogs', SA.apilogs);
 // router.get('/devicelogs', SA.devicelogs);
