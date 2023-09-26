@@ -211,101 +211,83 @@ function fetchAllUsers(req, res) {
 
 
  
-//   function fetchCompanyDetails(req, res) {
-//     const CompanyEmail = req.params.CompanyEmail;
-//     const companyQuery = 'SELECT CompanyName, ContactNo, Location, Designation FROM ems_users WHERE CompanyEmail = ?';
-  
-//     db.query(companyQuery, [CompanyEmail], (error, companyResult) => {
-//       if (error) {
-//         console.error('Error fetching company details:', error);
-//         return res.status(500).json({ message: 'Internal server error' });
-//       }
-  
-//       if (companyResult.length === 0) {
-//         console.log('company not found!');
-//         return res.status(404).json({ message: 'company not found!' });
-//       }
-  
-//       const company = companyResult[0];
-//       res.json({ companyDetails: company });
-//     });
-//   }
+function fetchCompanyDetails(req, res) {
+  const CompanyEmail = req.params.CompanyEmail;
+  const companyQuery = 'SELECT companyname, contactno, location, designation FROM ems.ems_users WHERE companyemail = $1';
 
-//   function fetchCounts(req, res) {
-//     const CompanyEmail = req.params.CompanyEmail;
-//     const standardUserCountQuery = 'SELECT COUNT(*) AS standardUserCount FROM ems_users WHERE CompanyEmail = ? AND UserType = "Standard"';
-//     const adminCountQuery = 'SELECT COUNT(*) AS adminCount FROM ems_users WHERE CompanyEmail = ? AND UserType = "Admin"';
-//     const deviceCountQuery = 'SELECT COUNT(*) AS deviceCount FROM ems_devices WHERE CompanyEmail = ?';
-//     const userCountQuery = 'SELECT COUNT(*) AS userCount FROM ems_users WHERE CompanyEmail = ?';
+  db.query(companyQuery, [CompanyEmail], (error, companyResult) => {
+    if (error) {
+      console.error('Error fetching company details:', error);
+      return res.status(500).json({ message: 'Error fetching company details', error: error.message });
+    }
+
+    if (companyResult.rows.length === 0) {
+      console.log('Company not found for Email:', CompanyEmail);
+      return res.status(404).json({ message: 'Company not found!' });
+    }
+
+    const company = companyResult.rows[0];
+    res.json({ companyDetails: company });
+  });
+}
+
+  // function fetchCounts(req, res) {
+  //   const CompanyEmail = req.params.CompanyEmail;
+  //   const SuperAdminCountQuery = 'SELECT COUNT(*) AS standardUserCount FROM ems.ems_users WHERE companyemail = $1 AND usertype = "SuperAdmin"';
+  //   const adminCountQuery = 'SELECT COUNT(*) AS adminCount FROM ems.ems_users WHERE companyemail = $1 AND usertype = "Admin"';
+  //   const deviceCountQuery = 'SELECT COUNT(*) AS deviceCount FROM ems.ems_devices WHERE companyemail = $1';
+  //   const userCountQuery = 'SELECT COUNT(*) AS userCount FROM ems.ems_users WHERE companyemail = $1';
   
-//     try {
-//       db.query(standardUserCountQuery, [CompanyEmail], (error, standardUserResult) => {
-//         if (error) {
-//           console.error('Error fetching standard user count:', error);
-//           throw new Error('Internal server error');
-//         }
+  //   try {
+  //     db.query(SuperAdminCountQuery, [CompanyEmail], (error, standardUserResult) => {
+  //       if (error) {
+  //         console.error('Error fetching standard user count:', error);
+  //         throw new Error('Internal server error');
+  //       }
   
-//         const standardUserCount = standardUserResult[0].standardUserCount;
+  //       const SuperAdminCount = standardUserResult[0].SuperAdminCount;
   
-//         db.query(adminCountQuery, [CompanyEmail], (error, adminResult) => {
-//           if (error) {
-//             console.error('Error fetching admin count:', error);
-//             throw new Error('Internal server error');
-//           }
+  //       db.query(adminCountQuery, [CompanyEmail], (error, adminResult) => {
+  //         if (error) {
+  //           console.error('Error fetching admin count:', error);
+  //           throw new Error('Internal server error');
+  //         }
   
-//           const adminCount = adminResult[0].adminCount;
+  //         const adminCount = adminResult[0].adminCount;
   
-//           db.query(deviceCountQuery, [CompanyEmail], (error, deviceResult) => {
-//             if (error) {
-//               console.error('Error fetching device count:', error);
-//               throw new Error('Internal server error');
-//             }
+  //         db.query(deviceCountQuery, [CompanyEmail], (error, deviceResult) => {
+  //           if (error) {
+  //             console.error('Error fetching device count:', error);
+  //             throw new Error('Internal server error');
+  //           }
   
-//             const deviceCount = deviceResult[0].deviceCount;
+  //           const deviceCount = deviceResult[0].deviceCount;
   
-//             db.query(userCountQuery, [CompanyEmail], (error, userResult) => {
-//               if (error) {
-//                 console.error('Error fetching user count:', error);
-//                 throw new Error('Internal server error');
-//               }
+  //           db.query(userCountQuery, [CompanyEmail], (error, userResult) => {
+  //             if (error) {
+  //               console.error('Error fetching user count:', error);
+  //               throw new Error('Internal server error');
+  //             }
   
-//               const userCount = userResult[0].userCount;
+  //             const userCount = userResult[0].userCount;
   
-//               res.json({
-//                 standardUserCount: standardUserCount,
-//                 adminCount: adminCount,
-//                 deviceCount: deviceCount,
-//                 userCount: userCount,
-//               });
-//             });
-//           });
-//         });
-//       });
-//     } catch (error) {
-//       console.error('Error occurred:', error);
-//       res.status(500).json({ message: 'Internal server error' });
-//     }
-//   }
-  
-  
-  // function usermanagement(req, res) {
-  //   const userQuery = 'SELECT userid,username,companyname, designation,personalemail,location,contactno FROM ems.ems_users';
-  
-  //   db.query(userQuery, (error, userResult) => {
-  //     if (error) {
-  //       console.error('Error fetching user details:', error);
-  //       return res.status(500).json({ message: 'Internal server error' });
-  //     }
-  
-  //     if (userResult.length === 0) {
-  //       console.log('users not found!');
-  //       return res.status(404).json({ message: 'users not found!' });
-  //     }
-  
-  //     const users = userResult;
-  //     res.json({ userDetails: users });
-  //   });
+  //             res.json({
+  //               SuperAdminCount: SuperAdminCount,
+  //               adminCount: adminCount,
+  //               deviceCount: deviceCount,
+  //               userCount: userCount,
+  //             });
+  //           });
+  //         });
+  //       });
+  //     });
+  //   } catch (error) {
+  //     console.error('Error occurred:', error);
+  //     res.status(500).json({ message: 'Internal server error' });
+  //   }
   // }
+  
+  
   function usermanagement(req, res) {
     const userQuery = 'SELECT userid, username, companyname, designation, personalemail, location, contactno , block FROM ems.ems_users';
   
@@ -728,28 +710,28 @@ function fetchLogs(req, res) {
 
 // runCode();
     
-//     function deleteDevice(req, res) {
-//       try {
-//         const deviceUID = req.params.deviceUID;
-//         const deleteDeviceQuery = 'DELETE FROM ems_devices WHERE deviceuid = ?';
+    function deleteDevice(req, res) {
+      try {
+        const deviceUID = req.params.deviceUID;
+        const deleteDeviceQuery = 'DELETE FROM ems.ems_devices WHERE deviceuid = $1';
     
-//         db.query(deleteDeviceQuery, [deviceUID], (error, result) => {
-//           if (error) {
-//             console.error('Error deleting device:', error);
-//             return res.status(500).json({ message: 'Internal server error' });
-//           }
+        db.query(deleteDeviceQuery, [deviceUID], (error, result) => {
+          if (error) {
+            console.error('Error deleting device:', error);
+            return res.status(500).json({ message: 'Internal server error' });
+          }
     
-//           if (result.affectedRows === 0) {
-//             return res.status(404).json({ message: 'Device not found' });
-//           }
+          if (result.affectedRows === 0) {
+            return res.status(404).json({ message: 'Device not found' });
+          }
     
-//           res.json({ message: 'Device deleted successfully' });
-//         });
-//       } catch (error) {
-//         console.error('Error deleting device:', error);
-//         res.status(500).json({ message: 'Internal server error' });
-//       }
-//     }
+          res.json({ message: 'Device deleted successfully' });
+        });
+      } catch (error) {
+        console.error('Error deleting device:', error);
+        res.status(500).json({ message: 'Internal server error' });
+      }
+    }
 
 //     function removeUser(req, res) {
 //       const userId = req.params.userId; 
@@ -836,11 +818,11 @@ function fetchLogs(req, res) {
 module.exports = {
   fetchAllUsers,
   fetchAllDevices,
-  // fetchCompanyDetails,
+  fetchCompanyDetails,
   // addDevice,
   // getDeviceByUID,
   // updateDevice,
-  // fetchCounts,
+  //fetchCounts,
   usermanagement,
   // logExecution,
   apilogs,
@@ -851,7 +833,7 @@ module.exports = {
   // notification,
   // log, 
   fetchLogs,
-  // deleteDevice,
+  deleteDevice,
   // removeUser,
   //deviceCount
   // graph1,
