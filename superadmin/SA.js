@@ -761,7 +761,25 @@ function companyinfo(req, res) {
         }
       });
     }
-
+    function companyinfo(req, res) {
+      try {
+        const query = 'SELECT * FROM ems.company_info';
+        db.query(query, (error, result) => {
+          if (error) {
+            console.error('Error fetching logs:', error);
+            res.status(500).json({ message: 'Internal server error' });
+            return;
+          }
+          
+          const logs = result.rows;
+          
+          res.json({ logs });
+        });
+      } catch (error) {
+        console.error('Error fetching logs:', error);
+        res.status(500).json({ message: 'Internal server error' });
+      }
+    }
    
 
 module.exports = {
@@ -771,7 +789,7 @@ module.exports = {
   addDevice,
   getDeviceByUID,
   updateDevice,
-  // fetchCounts,
+  //fetchCounts,
   usermanagement,
   logExecution,
   apilogs,
