@@ -84,6 +84,5 @@ router.get('/userInfo', SA.userInfo);
 router.get('/compInfo', SA.companyinfo);
  router.get('/alarms', SA.alarms);
 // router.get('/notification', SA.notification);
-
 router.get('/userByCompanyname/:company_name', SA.userByCompanyname);
 module.exports = router;

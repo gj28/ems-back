@@ -151,6 +151,145 @@ function register(req, res) {
   });
 }
 
+function register_dashboard(req, res) {
+  const {
+    companyName,
+    companyEmail,
+    contact,
+    location,
+    firstName,
+    lastName,
+    personalEmail,
+    designation,
+    password,
+  } = req.body;
+
+  // Generate a UUID for tenant_id
+  const tenantId = uuidv4();
+
+  // Log the start of the registration process
+  logExecution('register', tenantId, 'INFO', 'Registration process started');
+
+  // Check if the company email is already registered
+  const emailCheckQuery = 'SELECT * FROM ems.ems_users WHERE CompanyEmail = $1';
+  db.query(emailCheckQuery, [companyEmail], (error, emailCheckResult) => {
+    if (error) {
+      console.error('Error during email check:', error);
+      // Log the error
+      logExecution('register', tenantId, 'ERROR', 'Error during email check');
+      return res.status(500).json({ message: 'Internal server error' });
+    }
+
+    try {
+      if (emailCheckResult.length > 0) {
+        console.log('Company email already exists');
+        // Log the error
+        logExecution('register', tenantId, 'ERROR', 'Company email already exists');
+        return res.status(400).json({ message: 'Company email already exists' });
+      }
+
+      // Check if the username (company email) is already registered
+      const personalEmailCheckQuery = 'SELECT * FROM ems.ems_users WHERE personalemail = $1';
+      db.query(personalEmailCheckQuery, [personalEmail], (error, personalEmailCheckResult) => {
+        if (error) {
+          console.error('Error during username check:', error);
+          // Log the error
+          logExecution('register', tenantId, 'ERROR', 'Error during username check');
+          return res.status(500).json({ message: 'Internal server error' });
+        }
+
+        try {
+          if (personalEmailCheckResult.length > 0) {
+            console.log('Username already exists');
+            // Log the error
+            logExecution('register', tenantId, 'ERROR', 'Username already exists');
+            return res.status(400).json({ message: 'User already exists' });
+          }
+
+          // Generate a unique 10-digit user ID
+          const userId = generateUserId();
+
+          // Hash the password
+          bcrypt.hash(password, 10, (error, hashedPassword) => {
+            if (error) {
+              console.error('Error during password hashing:', error);
+              // Log the error
+              logExecution('register', tenantId, 'ERROR', 'Error during password hashing');
+              return res.status(500).json({ message: 'Internal server error' });
+            }
+
+            try {
+              // Generate a verification token
+              const verificationToken = jwtUtils.generateToken({ personalEmail: personalEmail });
+
+              // Insert the user into the database
+              const insertQuery =
+                'INSERT INTO ems.ems_users (UserId, Username, FirstName, LastName, CompanyName, CompanyEmail, ContactNo, Location, UserType, personalemail, Password, Designation, VerificationToken, verified) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)';
+              db.query(
+                insertQuery,
+                [
+                  userId,
+                  personalEmail,
+                  firstName,
+                  lastName,
+                  companyName,
+                  companyEmail,
+                  contact,
+                  location,
+                  'Admin',
+                  personalEmail,
+                  hashedPassword,
+                  designation,
+                  verificationToken,
+                  '0',
+                ],
+                (error, insertResult) => {
+                  if (error) {
+                    console.error('Error during user insertion:', error);
+                    // Log the error
+                    logExecution('register', tenantId, 'ERROR', 'Error during user insertion');
+                    return res.status(500).json({ message: 'Internal server error' });
+                  }
+
+                  // Log the registration success
+                  logExecution('register', tenantId, 'SUCCESS', 'User registered successfully');
+
+                  try {
+                    // Send the verification token to the user's email
+                    sendTokenEmail(personalEmail, verificationToken);
+
+                    console.log('User registered successfully');
+                    res.json({ message: 'Registration successful. Check your email for the verification token.' });
+                  } catch (error) {
+                    console.error('Error sending verification token:', error);
+                    // Log the error
+                    logExecution('register', tenantId, 'ERROR', 'Error sending verification token');
+                    res.status(500).json({ message: 'Internal server error' });
+                  }
+                }
+              );
+            } catch (error) {
+              console.error('Error during registration:', error);
+              // Log the error
+              logExecution('register', tenantId, 'ERROR', 'Error during registration');
+              res.status(500).json({ message: 'Internal server error' });
+            }
+          });
+        } catch (error) {
+          console.error('Error during registration:', error);
+          // Log the error
+          logExecution('register', tenantId, 'ERROR', 'Error during registration');
+          res.status(500).json({ message: 'Internal server error' });
+        }
+      });
+    } catch (error) {
+      console.error('Error during registration:', error);
+      // Log the error
+      logExecution('register', tenantId, 'ERROR', 'Error during registration');
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+}
 
 
   // Helper function to generate a unique 10-digit user ID
@@ -790,221 +929,334 @@ function resendToken(req, res) {
 }
 
 
-function register_dashboard(req, res) {
-  const {
-    companyName,
-    companyEmail,
-    contact,
-    location,
-    firstName,
-    lastName,
-    personalEmail,
-    designation,
-    password,
-    userType
-  } = req.body;
+// function register_dashboard(req, res) {
+//   const {
+//     companyName,
+//     companyEmail,
+//     contact,
+//     location,
+//     firstName,
+//     lastName,
+//     personalEmail,
+//     designation,
+//     password,
+//     userType
+//   } = req.body;
 
-  // Generate a UUID for tenant_id
-  const tenantId = uuidv4();
+//   // Generate a UUID for tenant_id
+//   const tenantId = uuidv4();
 
-  // Log the start of the function execution
-  logExecution('register_dashboard', tenantId, 'INFO', 'User registration started');
+//   // Log the start of the function execution
+//   logExecution('register_dashboard', tenantId, 'INFO', 'User registration started');
 
-  // Check if the username (company email) is already registered
-  const personalEmailCheckQuery = 'SELECT * FROM ems.ems_users WHERE PersonalEmail = $1';
-  db.query(personalEmailCheckQuery, [personalEmail], (error, personalEmailCheckResult) => {
-    if (error) {
-      console.error('Error during username check:', error);
-      // Log the error
-      logExecution('register_dashboard', tenantId, 'ERROR', 'Error during username check');
-      return res.status(500).json({ message: 'Internal server error' });
-    }
+//   // Check if the username (company email) is already registered
+//   const personalEmailCheckQuery = 'SELECT * FROM ems.ems_users WHERE PersonalEmail = $1';
+//   db.query(personalEmailCheckQuery, [personalEmail], (error, personalEmailCheckResult) => {
+//     if (error) {
+//       console.error('Error during username check:', error);
+//       // Log the error
+//       logExecution('register_dashboard', tenantId, 'ERROR', 'Error during username check');
+//       return res.status(500).json({ message: 'Internal server error' });
+//     }
 
-    try {
-      if (personalEmailCheckResult.length > 0) {
-        console.log('Username already exists');
-        // Log the end of the function execution with an error message
-        logExecution('register_dashboard', tenantId, 'ERROR', 'Username already exists');
-        return res.status(400).json({ message: 'User already exists' });
-      }
+//     try {
+//       if (personalEmailCheckResult.length > 0) {
+//         console.log('Username already exists');
+//         // Log the end of the function execution with an error message
+//         logExecution('register_dashboard', tenantId, 'ERROR', 'Username already exists');
+//         return res.status(400).json({ message: 'User already exists' });
+//       }
 
-      // Generate a unique 10-digit user ID
-      const userId = generateUserId();
+//       // Generate a unique 10-digit user ID
+//       const userId = generateUserId();
 
-      // Hash the password
-      bcrypt.hash(password, 10, (error, hashedPassword) => {
-        if (error) {
-          console.error('Error during password hashing:', error);
-          // Log the error
-          logExecution('register_dashboard', tenantId, 'ERROR', 'Error during password hashing');
-          return res.status(500).json({ message: 'Internal server error' });
-        }
+//       // Hash the password
+//       bcrypt.hash(password, 10, (error, hashedPassword) => {
+//         if (error) {
+//           console.error('Error during password hashing:', error);
+//           // Log the error
+//           logExecution('register_dashboard', tenantId, 'ERROR', 'Error during password hashing');
+//           return res.status(500).json({ message: 'Internal server error' });
+//         }
 
-        try {
-          // Generate a verification token
-          const verificationToken = jwtUtils.generateToken({ personalEmail: personalEmail });
+//         try {
+//           // Generate a verification token
+//           const verificationToken = jwtUtils.generateToken({ personalEmail: personalEmail });
 
-          // Insert the user into the database
-          const insertQuery =
-            'INSERT INTO ems.ems_users (UserId, Username, FirstName, LastName, CompanyName, CompanyEmail, ContactNo, Location, UserType, PersonalEmail, Password, Designation, VerificationToken, Verified) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)';
-          db.query(
-            insertQuery,
-            [
-              userId,
-              personalEmail,
-              firstName,
-              lastName,
-              companyName,
-              companyEmail,
-              contact,
-              location,
-              userType,
-              personalEmail,
-              hashedPassword,
-              designation,
-              verificationToken,
-              '0'
-            ],
-            (error, insertResult) => {
-              if (error) {
-                console.error('Error during user insertion:', error);
-                // Log the error
-                logExecution('register_dashboard', tenantId, 'ERROR', 'Error during user insertion');
-                return res.status(500).json({ message: 'Internal server error' });
-              }
+//           // Insert the user into the database
+//           const insertQuery =
+//             'INSERT INTO ems.ems_users (UserId, Username, FirstName, LastName, CompanyName, CompanyEmail, ContactNo, Location, UserType, PersonalEmail, Password, Designation, VerificationToken, Verified) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)';
+//           db.query(
+//             insertQuery,
+//             [
+//               userId,
+//               personalEmail,
+//               firstName,
+//               lastName,
+//               companyName,
+//               companyEmail,
+//               contact,
+//               location,
+//               userType,
+//               personalEmail,
+//               hashedPassword,
+//               designation,
+//               verificationToken,
+//               '0'
+//             ],
+//             (error, insertResult) => {
+//               if (error) {
+//                 console.error('Error during user insertion:', error);
+//                 // Log the error
+//                 logExecution('register_dashboard', tenantId, 'ERROR', 'Error during user insertion');
+//                 return res.status(500).json({ message: 'Internal server error' });
+//               }
 
-              try {
-                // Send the verification token to the user's email
-                sendTokenDashboardEmail(personalEmail, verificationToken);
+//               try {
+//                 // Send the verification token to the user's email
+//                 sendTokenDashboardEmail(personalEmail, verificationToken);
 
-                console.log('User registered successfully');
-                // Log the end of the function execution with a success message
-                logExecution('register_dashboard', tenantId, 'INFO', 'User registered successfully');
-                res.json({ message: 'Registration successful. Check your email for the verification token.' });
-              } catch (error) {
-                console.error('Error sending verification token:', error);
-                res.status(500).json({ message: 'Internal server error' });
-              }
-            }
-          );
-        } catch (error) {
-          console.error('Error during registration:', error);
-          res.status(500).json({ message: 'Internal server error' });
-        }
-      });
-    } catch (error) {
-      console.error('Error during registration:', error);
-      res.status(500).json({ message: 'Internal server error' });
-    }
-  });
-}
+//                 console.log('User registered successfully');
+//                 // Log the end of the function execution with a success message
+//                 logExecution('register_dashboard', tenantId, 'INFO', 'User registered successfully');
+//                 res.json({ message: 'Registration successful. Check your email for the verification token.' });
+//               } catch (error) {
+//                 console.error('Error sending verification token:', error);
+//                 res.status(500).json({ message: 'Internal server error' });
+//               }
+//             }
+//           );
+//         } catch (error) {
+//           console.error('Error during registration:', error);
+//           res.status(500).json({ message: 'Internal server error' });
+//         }
+//       });
+//     } catch (error) {
+//       console.error('Error during registration:', error);
+//       res.status(500).json({ message: 'Internal server error' });
+//     }
+//   });
+// }
+// function register_dashboard(req, res) {
+//   const {
+//     companyName,
+//     companyEmail,
+//     contact,
+//     location,
+//     firstName,
+//     lastName,
+//     personalEmail,
+//     designation,
+//     password,
+//     userType
+//   } = req.body;
 
+//   // Generate a UUID for tenant_id
+//   const tenantId = uuidv4();
 
-function register_dashboard(req, res) {
-  const {
-    companyName,
-    companyEmail,
-    contact,
-    location,
-    firstName,
-    lastName,
-    personalEmail,
-    designation,
-    password,
-    userType
-  } = req.body;
+//   // Log the start of the function execution
+//   logExecution('register_dashboard', tenantId, 'INFO', 'User registration attempt');
 
-  // Generate a UUID for tenant_id
-  const tenantId = uuidv4();
+//   // Check if the username (company email) is already registered
+//   const personalEmailCheckQuery = 'SELECT * FROM tms_users WHERE PersonalEmail = ?';
+//   db.query(personalEmailCheckQuery, [personalEmail], (error, personalEmailCheckResult) => {
+//     try {
+//       if (error) {
+//         console.error('Error during username check:', error);
+//         // Log the error
+//         logExecution('register_dashboard', tenantId, 'ERROR', 'Error during username check');
+//         throw new Error('Error during username check');
+//       }
 
-  // Check if the username (company email) is already registered
-  const personalEmailCheckQuery = 'SELECT * FROM ems.ems_users WHERE PersonalEmail = $1';
-  db.query(personalEmailCheckQuery, [personalEmail], (error, personalEmailCheckResult) => {
-    if (error) {
-      console.error('Error during username check:', error);
-      // Log the error
-      logExecution('register_dashboard', tenantId, 'ERROR', 'Error during username check');
-      return res.status(500).json({ message: 'Internal server error' });
-    }
+//       if (personalEmailCheckResult.length > 0) {
+//         // Log the end of the function execution with an error message
+//         logExecution('register_dashboard', tenantId, 'ERROR', 'User already exists');
+//         console.log('Username already exists');
+//         return res.status(400).json({ message: 'User already exists' });
+//       }
 
-    try {
-      if (personalEmailCheckResult.length > 0) {
-        console.log('Username already exists');
-        // Log the end of the function execution with an error message
-        logExecution('register_dashboard', tenantId, 'ERROR', 'Username already exists');
-        return res.status(400).json({ message: 'User already exists' });
-      }
+//       // Generate a unique 10-digit user ID
+//       const userId = generateUserId();
 
-      // Generate a unique 10-digit user ID
-      const userId = generateUserId();
+//       // Hash the password
+//       bcrypt.hash(password, 10, (error, hashedPassword) => {
+//         try {
+//           if (error) {
+//             console.error('Error during password hashing:', error);
+//             // Log the error
+//             logExecution('register_dashboard', tenantId, 'ERROR', 'Error during password hashing');
+//             throw new Error('Error during password hashing');
+//           }
 
-      // Hash the password
-      bcrypt.hash(password, 10, (error, hashedPassword) => {
-        if (error) {
-          console.error('Error during password hashing:', error);
-          // Log the error
-          logExecution('register_dashboard', tenantId, 'ERROR', 'Error during password hashing');
-          return res.status(500).json({ message: 'Internal server error' });
-        }
+//           // Generate a verification token
+//           const verificationToken = jwtUtils.generateToken({ personalEmail: personalEmail });
 
-        try {
-          // Generate a verification token
-          const verificationToken = jwtUtils.generateToken({ personalEmail: personalEmail });
+//           // Insert the user into the database
+//           const insertQuery =
+//             'INSERT INTO tms_users (UserId, Username, FirstName, LastName, CompanyName, CompanyEmail, ContactNo, Location, UserType, PersonalEmail, Password, Designation, VerificationToken, Verified) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+//           db.query(
+//             insertQuery,
+//             [
+//               userId,
+//               personalEmail,
+//               firstName,
+//               lastName,
+//               companyName,
+//               companyEmail,
+//               contact,
+//               location,
+//               userType,
+//               personalEmail,
+//               hashedPassword,
+//               designation,
+//               verificationToken,
+//               '0'
+//             ],
+//             (error, insertResult) => {
+//               try {
+//                 if (error) {
+//                   console.error('Error during user insertion:', error);
+//                   // Log the error
+//                   logExecution('register_dashboard', tenantId, 'ERROR', 'Error during user insertion');
+//                   throw new Error('Error during user insertion');
+//                 }
 
-          // Insert the user into the database
-          const insertQuery =
-            'INSERT INTO ems.ems_users (UserId, Username, FirstName, LastName, CompanyName, CompanyEmail, ContactNo, Location, UserType, PersonalEmail, Password, Designation, VerificationToken, Verified) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)';
-          db.query(
-            insertQuery,
-            [
-              userId,
-              personalEmail,
-              firstName,
-              lastName,
-              companyName,
-              companyEmail,
-              contact,
-              location,
-              userType,
-              personalEmail,
-              hashedPassword,
-              designation,
-              verificationToken,
-              '0'
-            ],
-            (error, insertResult) => {
-              if (error) {
-                console.error('Error during user insertion:', error);
-                // Log the error
-                logExecution('register_dashboard', tenantId, 'ERROR', 'Error during user insertion');
-                return res.status(500).json({ message: 'Internal server error' });
-              }
+//                 // Send the verification token to the user's email
+//                 sendTokenDashboardEmail(personalEmail, verificationToken);
 
-              try {
-                // Send the verification token to the user's email
-                sendTokenDashboardEmail(personalEmail, verificationToken);
+//                 // Log the end of the function execution with a success message
+//                 logExecution('register_dashboard', tenantId, 'INFO', 'User registered successfully');
+//                 console.log('User registered successfully');
+//                 res.json({ message: 'Registration successful. Check your email for the verification token.' });
+//               } catch (error) {
+//                 console.error('Error sending verification token:', error);
+//                 // Log the error
+//                 logExecution('register_dashboard', tenantId, 'ERROR', 'Error sending verification token');
+//                 res.status(500).json({ message: 'Internal server error' });
+//               }
+//             }
+//           );
+//         } catch (error) {
+//           console.error('Error during registration:', error);
+//           // Log the error
+//           logExecution('register_dashboard', tenantId, 'ERROR', 'Internal server error');
+//           res.status(500).json({ message: 'Internal server error' });
+//         }
+//       });
+//     } catch (error) {
+//       console.error('Error during registration:', error);
+//       // Log the error
+//       logExecution('register_dashboard', tenantId, 'ERROR', 'Internal server error');
+//       res.status(500).json({ message: 'Internal server error' });
+//     }
+//   });
+// }
 
-                console.log('User registered successfully');
-                // Log the end of the function execution with a success message
-                logExecution('register_dashboard', tenantId, 'INFO', 'User registered successfully');
-                res.json({ message: 'Registration successful. Check your email for the verification token.' });
-              } catch (error) {
-                console.error('Error sending verification token:', error);
-                res.status(500).json({ message: 'Internal server error' });
-              }
-            }
-          );
-        } catch (error) {
-          console.error('Error during registration:', error);
-          res.status(500).json({ message: 'Internal server error' });
-        }
-      });
-    } catch (error) {
-      console.error('Error during registration:', error);
-      res.status(500).json({ message: 'Internal server error' });
-    }
-  });
-}
+// function register_dashboard(req, res) {
+//   const {
+//     companyName,
+//     companyEmail,
+//     contact,
+//     location,
+//     firstName,
+//     lastName,
+//     personalEmail,
+//     designation,
+//     password,
+//     userType
+//   } = req.body;
+
+//   // Generate a UUID for tenant_id
+//   const tenantId = uuidv4();
+
+//   // Check if the username (company email) is already registered
+//   const personalEmailCheckQuery = 'SELECT * FROM ems.ems_users WHERE PersonalEmail = $1';
+//   db.query(personalEmailCheckQuery, [personalEmail], (error, personalEmailCheckResult) => {
+//     if (error) {
+//       console.error('Error during username check:', error);
+//       // Log the error
+//       logExecution('register_dashboard', tenantId, 'ERROR', 'Error during username check');
+//       return res.status(500).json({ message: 'Internal server error' });
+//     }
+
+//     try {
+//       if (personalEmailCheckResult.length > 0) {
+//         console.log('Username already exists');
+//         // Log the end of the function execution with an error message
+//         logExecution('register_dashboard', tenantId, 'ERROR', 'Username already exists');
+//         return res.status(400).json({ message: 'User already exists' });
+//       }
+
+//       // Generate a unique 10-digit user ID
+//       const userId = generateUserId();
+
+//       // Hash the password
+//       bcrypt.hash(password, 10, (error, hashedPassword) => {
+//         if (error) {
+//           console.error('Error during password hashing:', error);
+//           // Log the error
+//           logExecution('register_dashboard', tenantId, 'ERROR', 'Error during password hashing');
+//           return res.status(500).json({ message: 'Internal server error' });
+//         }
+
+//         try {
+//           // Generate a verification token
+//           const verificationToken = jwtUtils.generateToken({ personalEmail: personalEmail });
+
+//           // Insert the user into the database
+//           const insertQuery =
+//             'INSERT INTO ems.ems_users (UserId, Username, FirstName, LastName, CompanyName, CompanyEmail, ContactNo, Location, UserType, PersonalEmail, Password, Designation, VerificationToken, Verified) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)';
+//           db.query(
+//             insertQuery,
+//             [
+//               userId,
+//               personalEmail,
+//               firstName,
+//               lastName,
+//               companyName,
+//               companyEmail,
+//               contact,
+//               location,
+//               userType,
+//               personalEmail,
+//               hashedPassword,
+//               designation,
+//               verificationToken,
+//               '0'
+//             ],
+//             (error, insertResult) => {
+//               if (error) {
+//                 console.error('Error during user insertion:', error);
+//                 // Log the error
+//                 logExecution('register_dashboard', tenantId, 'ERROR', 'Error during user insertion');
+//                 return res.status(500).json({ message: 'Internal server error' });
+//               }
+
+//               try {
+//                 // Send the verification token to the user's email
+//                 sendTokenDashboardEmail(personalEmail, verificationToken);
+
+//                 console.log('User registered successfully');
+//                 // Log the end of the function execution with a success message
+//                 logExecution('register_dashboard', tenantId, 'INFO', 'User registered successfully');
+//                 res.json({ message: 'Registration successful. Check your email for the verification token.' });
+//               } catch (error) {
+//                 console.error('Error sending verification token:', error);
+//                 res.status(500).json({ message: 'Internal server error' });
+//               }
+//             }
+//           );
+//         } catch (error) {
+//           console.error('Error during registration:', error);
+//           res.status(500).json({ message: 'Internal server error' });
+//         }
+//       });
+//     } catch (error) {
+//       console.error('Error during registration:', error);
+//       res.status(500).json({ message: 'Internal server error' });
+//     }
+//   });
+// }
 function Block(req, res) {
   const { userid } = req.params;
   const { action } = req.body;

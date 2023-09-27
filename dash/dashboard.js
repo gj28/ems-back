@@ -702,7 +702,31 @@ function getLiveStatusDetails(req, res) {
     res.status(500).json({ message: 'Internal server error' });
   }
 }
+// function getUserData(req, res) {
+//   try {
+//     const userId = req.params.userId;
 
+//     // Validate the deviceId parameter if necessary
+
+//     const userDetailsQuery = 'SELECT * FROM ems.ems_users WHERE userid = $1';
+//     db.query(userDetailsQuery, [userId], (error, userDetail) => {
+//       if (error) {
+//         console.error('Error fetching User:', error);
+//         return res.status(500).json({ message: 'Internal server error' });
+//       }
+
+//       if (userDetail.length === 0) {
+//         // Handle the case when no device details are found
+//         return res.status(404).json({ message: 'User details not found' });
+//       }
+
+//       res.status(200).json(userDetail);
+//     });
+//   } catch (error) {
+//     console.error('An error occurred:', error);
+//     res.status(500).json({ message: 'Internal server error' });
+//   }
+// }
 function getUserData(req, res) {
   try {
     const userId = req.params.userId;
@@ -719,7 +743,7 @@ function getUserData(req, res) {
       }
 
       const userData = userDetail.rows[0];
-      res.status(200).json(userData);
+      res.status(200).json([userData]);
     });
   } catch (error) {
     console.error('An error occurred:', error);
