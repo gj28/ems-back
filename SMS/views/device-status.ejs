@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Device Status Update</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f2f2f2;
+      color: #333;
+    }
+
+    h1 {
+      color: #008080;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    li {
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin: 10px 0;
+      background-color: #fff;
+    }
+
+    strong {
+      color: #006400;
+    }
+
+    em {
+      color: #800000;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <h1>Device Status Update</h1>
+  <ul>
+    <% for(let i = 0; i < devices.length; i++) { %>
+      <li>
+        <strong>Device Name:</strong> <%= devices[i].DeviceName %><br>
+        <strong>Phone Number:</strong> <%= devices[i].phone_number %><br>
+        <strong>Email:</strong> <%= devices[i].email %><br>
+        <% if (devices[i].status === 'online') { %>
+          <p><em><%= devices[i].DeviceName %> is online.</em></p>
+        <% } else if (devices[i].status === 'offline') { %>
+          <p><em><%= devices[i].DeviceName %> is offline.</em></p>
+        <% } else if (devices[i].status === 'heating') { %>
+          <p><em><%= devices[i].DeviceName %> is heating.</em></p>
+        <% } else { %>
+          <p><em><%= devices[i].DeviceName %> has an unknown status: <%= devices[i].status %></em></p>
+        <% } %>
+      </li>
+      <hr>
+    <% } %>
+  </ul>
+</body>
+</html>
