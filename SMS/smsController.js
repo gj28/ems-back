@@ -1,11 +1,9 @@
 const twilio = require('twilio');
-//const mysql = require('mysql2');
 const nodemailer = require('nodemailer');
 const ejs = require('ejs');
 const fs = require('fs');
 const path = require('path');
 const uuid = require('uuid');
-
 const { Pool } = require('pg');
 
 const dbConfig = {
@@ -25,10 +23,7 @@ const twilioClient = twilio(accountSid, authToken);
 const previousDeviceStates = {};
 
 function insertInfo(createdTime, type, subject, message, recipient, messageId) {
-  const connection = pool.createConnection(dbConfig);
-  
-
-  connection.connect((err) => {
+  pool.connect((err, client, done) => {
     if (err) {
       console.error('Error connecting to the database:', err);
       return;
@@ -36,43 +31,40 @@ function insertInfo(createdTime, type, subject, message, recipient, messageId) {
 
     const isRead = Math.random() < 0.5 ? 0 : 1;
 
-    const sql = 'INSERT INTO ems.info_twi (created_time, type, subject, message, recipient, message_id, isRead) VALUES ($1, $2, $3, $4, $5, $6, $7)';
+    const sql =
+      'INSERT INTO ems.info_twi (created_time, type, subject, message, recipient, message_id, isRead) VALUES ($1, $2, $3, $4, $5, $6, $7)';
     const values = [createdTime, type, subject, message, recipient, messageId, isRead];
 
-    connection.query(sql, values, (err, result) => {
-      if (err) {
-        console.error('Error inserting data into the database:', err);
+    client.query(sql, values, (queryErr) => {
+      done(); // Release the client back to the pool.
+      if (queryErr) {
+        console.error('Error inserting data into the database:', queryErr);
       } else {
-        //console.log('Data inserted into the database successfully.');
+        // Data inserted into the database successfully.
       }
-
-      connection.end();
     });
   });
 }
 
-
-
 function checkState() {
-  const connection = pool.createConnection(dbConfig);
-
-  connection.connect((err) => {
+  pool.connect((err, client, done) => {
     if (err) {
       console.error('Error connecting to the database:', err);
       return;
     }
 
-    connection.query('SELECT entryid, deviceuid, devicename, phone_number, email, status FROM ems.ems_devices', (err, queryResults) => {
-      if (err) {
-        console.error('Error fetching data from the database:', err);
-        connection.end();
+    client.query('SELECT entryid, deviceuid, devicename, phone_number, email, status FROM ems.ems_devices', (queryErr, queryResults) => {
+      done(); // Release the client back to the pool.
+
+      if (queryErr) {
+        console.error('Error fetching data from the database:', queryErr);
         return;
       }
 
-      const devices = queryResults;
+      const devices = queryResults.rows;
 
       devices.forEach((device) => {
-        const deviceId = device.EntryId;
+        const deviceId = device.entryid;
         const previousState = previousDeviceStates[deviceId] || { status: 'unknown' };
         const currentState = {
           status: device.status,
@@ -83,26 +75,24 @@ function checkState() {
 
           let message;
           if (currentState.status === 'online') {
-            message = `${device.DeviceName} is online.`;
+            message = `${device.devicename} is online.`;
           } else if (currentState.status === 'offline') {
-            message = `${device.DeviceName} is offline.`;
+            message = `${device.devicename} is offline.`;
           } else if (currentState.status === 'heating') {
-            message = `${device.DeviceName} is heating.`;
+            message = `${device.devicename} is heating.`;
           } else {
-            message = `${device.DeviceName} has an unknown status: ${currentState.status}`;
+            message = `${device.devicename} has an unknown status: ${currentState.status}`;
           }
 
           sendSMS(device.phone_number, message);
           sendEmail(device.email, renderEmailTemplate(devices), 'Device Status Update', message);
         }
       });
-
-      connection.end();
     });
   });
 }
 
-function sendSMS(to, body, time, message) {
+function sendSMS(to, body) {
   const subject = 'Device Status Update';
 
   const messageId = uuid.v4();
@@ -114,12 +104,13 @@ function sendSMS(to, body, time, message) {
     })
     .then(() => {
       console.log('SMS sent successfully:', body);
-      insertInfo(new Date(), 'SMS', subject, message, to, messageId);
+      insertInfo(new Date(), 'SMS', subject, body, to, messageId);
     })
     .catch((err) => {
       console.error('Error sending SMS:', err);
     });
 }
+
 
 function sendEmail(to, body, time, message) {
   const subject = 'Device Status Update';
