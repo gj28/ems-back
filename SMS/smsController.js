@@ -15,9 +15,9 @@ const dbConfig = {
 
 const pool = new Pool(dbConfig);
 
-const accountSid = 'AC0d478e22325d6f2a719c3cdb78060b63';
-const authToken = '30573a2b8cb6918f0d530c8120417b99';
-const twilioPhoneNumber = '+12187182899';
+const accountSid = 'ACb8754fe2a8a8139f772c8681da354639';
+const authToken = '42fdd26013e50a0b3c5495f3bd26825e';
+const twilioPhoneNumber = '+18148134128';
 const twilioClient = twilio(accountSid, authToken);
 
 const previousDeviceStates = {};
@@ -33,7 +33,8 @@ function insertInfo(createdTime, type, subject, message, recipient, messageId) {
 
     const sql =
       'INSERT INTO ems.info_twi (created_time, type, subject, message, recipient, message_id, isRead) VALUES ($1, $2, $3, $4, $5, $6, $7)';
-    const values = [createdTime, type, subject, message, recipient, messageId, isRead];
+    const values = [createdTime, 
+      , subject, message, recipient, messageId, isRead];
 
     client.query(sql, values, (queryErr) => {
       done(); // Release the client back to the pool.

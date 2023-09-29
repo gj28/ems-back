@@ -83,6 +83,7 @@ router.delete('/removeUser/:userId', SA.removeUser);
 router.get('/userInfo', SA.userInfo);
 router.get('/compInfo', SA.companyinfo);
  router.get('/alarms', SA.alarms);
-// router.get('/notification', SA.notification);
+router.get('/allnotification', SA.allnotification);
+router.get('/unreadnotification', SA.unreadnotification);
 router.get('/userByCompanyname/:company_name', SA.userByCompanyname);
 module.exports = router;

@@ -426,21 +426,45 @@ function companyinfo(req, res) {
     
   
   
-//     function notification(req, res) {
-//       try {
-//         const query = 'SELECT * FROM messages';
-//         db.query(query, (error, rows) => {
-//           if (error) {
-//             throw new Error('Error fetching logs');
-//           }
-//           res.json({ logs: rows });
-//         });
-//       } catch (error) {
-//         console.error('Error fetching logs:', error);
-//         res.status(500).json({ message: 'Internal server error' });
-//       }
-//     }
-  
+function allnotification(req, res) {
+  try {
+    const query = 'SELECT * FROM ems.info_twi';
+    db.query(query, (error, result) => {
+      if (error) {
+        console.error('Error fetching logs:', error);
+        res.status(500).json({ message: 'Internal server error' });
+        return;
+      }
+      
+      const logs = result.rows;
+      
+      res.json({ logs });
+    });
+  } catch (error) {
+    console.error('Error fetching logs:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}
+
+function unreadnotification(req, res) {
+  try {
+    const query = 'SELECT * FROM ems.info_twi where isread=0';
+    db.query(query, (error, result) => {
+      if (error) {
+        console.error('Error fetching logs:', error);
+        res.status(500).json({ message: 'Internal server error' });
+        return;
+      }
+      
+      const logs = result.rows;
+      
+      res.json({ logs });
+    });
+  } catch (error) {
+    console.error('Error fetching logs:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}
 //     function extractIPv4(ipv6MappedAddress) {
 //       const parts = ipv6MappedAddress.split(':');
 //       return parts[parts.length - 1];
@@ -782,6 +806,40 @@ function companyinfo(req, res) {
     }
    
 
+    function DeviceTriggerlogs(req, res) {
+      try {
+        const { deviceId, triggerValue } = req.body;
+    
+        // Check if trigger condition is met (e.g., triggerValue > someThreshold)
+        if (triggerValue > someThreshold) {
+          // Insert a log into the database
+          const logEntry = {
+            device_id: deviceId,
+            trigger_value: triggerValue,
+            timestamp: new Date(),
+          };
+    
+          const sql = 'INSERT INTO logs (device_id, trigger_value, timestamp) VALUES ($1, $2, $3)';
+    
+          pool.query(sql, [logEntry.device_id, logEntry.trigger_value, logEntry.timestamp], (error, result) => {
+            if (error) {
+              console.error('Error inserting log:', error);
+              res.status(500).json({ message: 'Internal server error' });
+            } else {
+              console.log('Log inserted successfully.');
+              res.status(200).json({ message: 'Log inserted successfully.' });
+            }
+          });
+        } else {
+          res.status(200).json({ message: 'Trigger condition not met.' });
+        }
+      } catch (error) {
+        console.error('Error handling device trigger:', error);
+        res.status(500).json({ message: 'Internal server error' });
+      }
+    }
+    
+
 module.exports = {
   fetchAllUsers,
   fetchAllDevices,
@@ -797,7 +855,8 @@ module.exports = {
   userInfo,
  companyinfo,
   alarms,
-  // notification,
+  allnotification,
+  unreadnotification,
   // log, 
   fetchLogs,
   deleteDevice,
