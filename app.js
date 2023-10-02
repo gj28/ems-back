@@ -6,7 +6,7 @@ const fs = require('fs');
 const bodyParser = require('body-parser');
 const audit_logs = require('./audit_logs');
 const SA=require('./superadmin/SA');
-const { checkState } = require('./SMS/smsController');
+//const { checkState } = require('./SMS/smsController');
 // const mqtt_pub = require('./pub');
 // const mqtt_sub = require('./sub');
 // const MinuteData = require('./dash/interval_min');
@@ -58,4 +58,4 @@ app.use(router);
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
-setInterval(checkState,  1000);
+//setInterval(checkState,  1000);
