@@ -72,44 +72,50 @@ function fetchAllUsers(req, res) {
  
   function apilogs(req, res) {
     try {
-      const query = 'SELECT * FROM ems.api_usage';
-      db.query(query, (error, result) => {
+      const timeInterval = req.params.interval;
+      if (!timeInterval) {
+        return res.status(400).json({ message: 'Invalid time interval' });
+      }
+  
+      let duration;
+      switch (timeInterval) {
+        case '10hour':
+          duration = '10 hours';
+          break;
+        case '12hour':
+          duration = '12 hours';
+          break;
+        case '1day':
+          duration = '1 day';
+          break;
+        case '7day':
+          duration = '7 days';
+          break;
+        case '30day':
+          duration = '30 days';
+          break;
+        case '1year':
+          duration = '1 year';
+          break;
+        default:
+          return res.status(400).json({ message: 'Invalid time interval' });
+      }
+  
+      const sql = `SELECT * FROM ems.logs WHERE timestamp >= NOW() - INTERVAL '${duration}'`;
+      
+      db.query(sql, (error, results) => {
         if (error) {
-          console.error('Error fetching devices:', error);
-          res.status(500).json({ message: 'Error fetching devices', error: error.message });
-          return;
+          console.error('Error fetching data:', error);
+          return res.status(500).json({ message: 'Internal server error' });
         }
-        
-        const devices = result.rows; // Assuming your devices are in rows
-        
-        res.json({ devices });
+        res.json({ data: results.rows });
       });
     } catch (error) {
-      console.error('Error fetching devices:', error);
+      console.error('An error occurred:', error);
       res.status(500).json({ message: 'Internal server error' });
     }
   }
   
-  
-  function para(req, res) {
-    try {
-      const query = 'SELECT * FROM ems.ems_actual_data';
-      db.query(query, (error, result) => {
-        if (error) {
-          console.error('Error fetching devices:', error);
-          res.status(500).json({ message: 'Error fetching devices', error: error.message });
-          return;
-        }
-        
-        const devices = result.rows; // Assuming your devices are in rows
-        
-        res.json({ devices });
-      });
-    } catch (error) {
-      console.error('Error fetching devices:', error);
-      res.status(500).json({ message: 'Internal server error' });
-    }
-  }
   
   function userByCompanyname(req, res) {
     try {
@@ -354,20 +360,7 @@ function fetchCompanyDetails(req, res) {
       }
     });
   }
-//   function apilogs(req, res) {
-//       try {
-//         const query = 'SELECT * FROM tmp_api_usage';
-//         db.query(query, (error, rows) => {
-//           if (error) {
-//             throw new Error('Error fetching logs');
-//           }
-//           res.json({ logs: rows });
-//         });
-//       } catch (error) {
-//         console.error('Error fetching logs:', error);
-//         res.status(500).json({ message: 'Internal server error' });
-//       }
-//     }
+//   
   
     function devicelogs(req, res) {
       try {
@@ -407,23 +400,50 @@ function userInfo(req, res) {
 
 function fetchLogs(req, res) {
   try {
-    const query = 'SELECT * FROM logs';
-    db.query(query, (error, result) => {
+    const timeInterval = req.params.interval;
+    if (!timeInterval) {
+      return res.status(400).json({ message: 'Invalid time interval' });
+    }
+
+    let duration;
+    switch (timeInterval) {
+      case '10hour':
+        duration = '10 hours';
+        break;
+      case '12hour':
+        duration = '12 hours';
+        break;
+      case '1day':
+        duration = '1 day';
+        break;
+      case '7day':
+        duration = '7 days';
+        break;
+      case '30day':
+        duration = '30 days';
+        break;
+      case '1year':
+        duration = '1 year';
+        break;
+      default:
+        return res.status(400).json({ message: 'Invalid time interval' });
+    }
+
+    const sql = `SELECT * FROM ems.logs WHERE timestamp >= NOW() - INTERVAL '${duration}'`;
+    
+    db.query(sql, (error, results) => {
       if (error) {
-        console.error('Error fetching logs:', error);
-        res.status(500).json({ message: 'Internal server error' });
-        return;
+        console.error('Error fetching data:', error);
+        return res.status(500).json({ message: 'Internal server error' });
       }
-      
-      const logs = result.rows;
-      
-      res.json({ logs });
+      res.json({ data: results.rows });
     });
   } catch (error) {
-    console.error('Error fetching logs:', error);
+    console.error('An error occurred:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 }
+
 
 function companyinfo(req, res) {
   try {
@@ -886,8 +906,7 @@ module.exports = {
   // graph2,
   // graph3,
   // graph4,
-  userByCompanyname,
-  para
+  userByCompanyname
 
   
 };
