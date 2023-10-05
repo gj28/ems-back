@@ -33,8 +33,7 @@ function insertInfo(createdTime, type, subject, message, recipient, messageId) {
 
     const sql =
       'INSERT INTO ems.info_twi (created_time, type, subject, message, recipient, message_id, isRead) VALUES ($1, $2, $3, $4, $5, $6, $7)';
-    const values = [createdTime, 
-      , subject, message, recipient, messageId, isRead];
+    const values = [createdTime, type, subject, message, recipient, messageId, isRead];
 
     client.query(sql, values, (queryErr) => {
       done(); // Release the client back to the pool.
