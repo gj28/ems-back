@@ -90,6 +90,27 @@ function fetchAllUsers(req, res) {
     }
   }
   
+  
+  function para(req, res) {
+    try {
+      const query = 'SELECT * FROM ems.ems_actual_data';
+      db.query(query, (error, result) => {
+        if (error) {
+          console.error('Error fetching devices:', error);
+          res.status(500).json({ message: 'Error fetching devices', error: error.message });
+          return;
+        }
+        
+        const devices = result.rows; // Assuming your devices are in rows
+        
+        res.json({ devices });
+      });
+    } catch (error) {
+      console.error('Error fetching devices:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  }
+  
   function userByCompanyname(req, res) {
     try {
       const company_name = req.params.company_name;
@@ -865,7 +886,8 @@ module.exports = {
   // graph2,
   // graph3,
   // graph4,
-  userByCompanyname
+  userByCompanyname,
+  para
 
   
 };
