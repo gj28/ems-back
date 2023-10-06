@@ -31,7 +31,7 @@ router.post('/reset-password', authentication.resetPassword);
 // router.put('/setUserOnline/:UserId', authentication.setUserOnline);
 // router.put('/setUserOffline/:UserId', authentication.setUserOffline);
 
-router.put('/users/:userid/block', authentication.Block);
+router.put('/blockuser/:userid/', authentication.Block);
 
 
 // // //Dashboard
@@ -86,4 +86,11 @@ router.get('/compInfo', SA.companyinfo);
 router.get('/allnotification', SA.allnotification);
 router.get('/unreadnotification', SA.unreadnotification);
 router.get('/userByCompanyname/:company_name', SA.userByCompanyname);
+
+
+router.get('/graph1/', SA.graph1);
+router.get('/graph2/', SA.graph2);
+router.get('/graph3/', SA.graph3);
+router.get('/graph4/', SA.graph4);
+
 module.exports = router;

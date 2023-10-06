@@ -880,7 +880,85 @@ function unreadnotification(req, res) {
       }
     }
     
+    function graph4(req, res) {
+      try {
+        const query = 'SELECT * FROM ems.graph1';
+        db.query(query, (error, result) => {
+          if (error) {
+            console.error('Error fetching logs:', error);
+            res.status(500).json({ message: 'Internal server error' });
+            return;
+          }
+          
+          const logs = result.rows;
+          
+          res.json({ logs });
+        });
+      } catch (error) {
+        console.error('Error fetching logs:', error);
+        res.status(500).json({ message: 'Internal server error' });
+      }
+    }
 
+    function graph3(req, res) {
+      try {
+        const query = 'SELECT * FROM ems.graph1';
+        db.query(query, (error, result) => {
+          if (error) {
+            console.error('Error fetching logs:', error);
+            res.status(500).json({ message: 'Internal server error' });
+            return;
+          }
+          
+          const logs = result.rows;
+          
+          res.json({ logs });
+        });
+      } catch (error) {
+        console.error('Error fetching logs:', error);
+        res.status(500).json({ message: 'Internal server error' });
+      }
+    }
+
+    function graph2(req, res) {
+      try {
+        const query = 'SELECT * FROM ems.graph1';
+        db.query(query, (error, result) => {
+          if (error) {
+            console.error('Error fetching logs:', error);
+            res.status(500).json({ message: 'Internal server error' });
+            return;
+          }
+          
+          const logs = result.rows;
+          
+          res.json({ logs });
+        });
+      } catch (error) {
+        console.error('Error fetching logs:', error);
+        res.status(500).json({ message: 'Internal server error' });
+      }
+    }
+
+    function graph1(req, res) {
+      try {
+        const query = 'SELECT * FROM ems.graph1';
+        db.query(query, (error, result) => {
+          if (error) {
+            console.error('Error fetching logs:', error);
+            res.status(500).json({ message: 'Internal server error' });
+            return;
+          }
+          
+          const logs = result.rows;
+          
+          res.json({ logs });
+        });
+      } catch (error) {
+        console.error('Error fetching logs:', error);
+        res.status(500).json({ message: 'Internal server error' });
+      }
+    }
 module.exports = {
   fetchAllUsers,
   fetchAllDevices,
@@ -902,10 +980,10 @@ module.exports = {
   fetchLogs,
   deleteDevice,
    removeUser,
-  // graph1,
-  // graph2,
-  // graph3,
-  // graph4,
+  graph1,
+  graph2,
+  graph3,
+  graph4,
   userByCompanyname
 
   
