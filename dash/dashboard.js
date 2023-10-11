@@ -293,138 +293,6 @@ function updatePassword(req, res) {
 }
 
 
-
-function fetchDeviceTrigger(req, res) {
-  const deviceId = req.params.deviceId;
-
-  // Generate a UUID for tenant_id
-  const tenantId = uuidv4();
-
-  // Log the start of the function execution
-  logExecution('fetchDeviceTrigger', tenantId, 'INFO', `Fetching triggers for device ${deviceId}`);
-
-  const deviceTriggerQuery = 'SELECT * FROM ems_trigger WHERE DeviceUID = $1';
-
-  try {
-    db.query(deviceTriggerQuery, [deviceId], (error, deviceTriggerResult) => {
-      if (error) {
-        console.error('Error during device check:', error);
-        // Log the error
-        logExecution('fetchDeviceTrigger', tenantId, 'ERROR', 'Error during device check');
-        return res.status(500).json({ message: 'Internal server error' });
-      }
-
-      // Log the end of the function execution
-      logExecution('fetchDeviceTrigger', tenantId, 'INFO', `Fetched triggers for device ${deviceId}`);
-
-      res.status(200).json(deviceTriggerResult);
-    });
-  } catch (error) {
-    console.error('Error in device check:', error);
-    // Log the error
-    logExecution('fetchDeviceTrigger', tenantId, 'ERROR', 'Error in device check');
-    res.status(500).json({ message: 'Internal server error' });
-  }
-}
-
-
-function fetchAllDeviceTrigger(req, res) {
-  const CompanyEmail = req.params.CompanyEmail;
-
-  // Generate a UUID for tenant_id
-  const tenantId = uuidv4();
-
-  // Log the start of the function execution
-  logExecution('fetchAllDeviceTrigger', tenantId, 'INFO', `Fetching all triggers for CompanyEmail ${CompanyEmail}`);
-
-  const deviceTriggerQuery = 'SELECT * FROM ems_trigger WHERE CompanyEmail = $1';
-
-  try {
-    db.query(deviceTriggerQuery, [CompanyEmail], (error, triggers) => {
-      if (error) {
-        console.error('Error during device check:', error);
-        // Log the error
-        logExecution('fetchAllDeviceTrigger', tenantId, 'ERROR', 'Error during device check');
-        return res.status(500).json({ message: 'Internal server error' });
-      }
-
-      // Log the end of the function execution
-      logExecution('fetchAllDeviceTrigger', tenantId, 'INFO', `Fetched all triggers for CompanyEmail ${CompanyEmail}`);
-
-      res.status(200).json({ triggers });
-    });
-  } catch (error) {
-    console.error('Error in device check:', error);
-    // Log the error
-    logExecution('fetchAllDeviceTrigger', tenantId, 'ERROR', 'Error in device check');
-    res.status(500).json({ message: 'Internal server error' });
-  }
-}
-
-
-function editDeviceTrigger(req, res) {
-  const deviceId = req.params.deviceId;
-  const { TriggerValue, CompanyEmail } = req.body;
-
-  // Generate a UUID for tenant_id
-  const tenantId = uuidv4();
-
-  // Log the start of the function execution
-  logExecution('editDeviceTrigger', tenantId, 'INFO', `Editing device trigger for DeviceUID ${deviceId}`);
-
-  const deviceCheckQuery = 'SELECT * FROM ems_trigger WHERE DeviceUID = $1';
-
-  db.query(deviceCheckQuery, [deviceId], (error, deviceCheckResult) => {
-    if (error) {
-      console.error('Error during device check:', error);
-      // Log the error
-      logExecution('editDeviceTrigger', tenantId, 'ERROR', 'Error during device check');
-      return res.status(500).json({ message: 'Internal server error' });
-    }
-
-    try {
-      if (deviceCheckResult.length === 0) {
-        const insertTriggerQuery = 'INSERT INTO ems_trigger (DeviceUID, TriggerValue, CompanyEmail) VALUES ($1,$2,$3)';
-
-        db.query(insertTriggerQuery, [deviceId, TriggerValue, CompanyEmail], (error, insertResult) => {
-          if (error) {
-            console.error('Error while inserting device:', error);
-            // Log the error
-            logExecution('editDeviceTrigger', tenantId, 'ERROR', 'Error while inserting device');
-            return res.status(500).json({ message: 'Internal server error' });
-          }
-
-          // Log the end of the function execution
-          logExecution('editDeviceTrigger', tenantId, 'INFO', 'Device added successfully');
-
-          return res.json({ message: 'Device added successfully!' });
-        });
-      } else {
-        const updateDeviceTriggerQuery = 'UPDATE ems_trigger SET TriggerValue = $1, CompanyEmail = $2 WHERE DeviceUID = $3';
-
-        db.query(updateDeviceTriggerQuery, [TriggerValue, CompanyEmail, deviceId], (error, updateResult) => {
-          if (error) {
-            console.error('Error updating device trigger:', error);
-            // Log the error
-            logExecution('editDeviceTrigger', tenantId, 'ERROR', 'Error updating device trigger');
-            return res.status(500).json({ message: 'Internal server error' });
-          }
-
-          // Log the end of the function execution
-          logExecution('editDeviceTrigger', tenantId, 'INFO', 'Device updated successfully');
-
-          return res.json({ message: 'Device updated successfully' });
-        });
-      }
-    } catch (error) {
-      console.error('Error in device check:', error);
-      // Log the error
-      logExecution('editDeviceTrigger', tenantId, 'ERROR', 'Error in device check');
-      res.status(500).json({ message: 'Internal server error' });
-    }
-  });
-}
-
 function getDataByTimeInterval(req, res) {
   try {
     const deviceId = req.params.deviceuid;
@@ -508,85 +376,6 @@ function getDataByTimeInterval(req, res) {
   }
 }
 
-       
-
-function getDataByTimeIntervalStatus(req, res) {
-  const deviceId = req.params.deviceId;
-  const timeInterval = req.query.interval;
-  if (!timeInterval) {
-    return res.status(400).json({ message: 'Invalid time interval' });
-  }
-
-  let duration;
-  switch (timeInterval) {
-    case '30sec':
-      duration = 'INTERVAL 30 SECOND';
-      break;
-    case '1min':
-      duration = 'INTERVAL 1 MINUTE';
-      break;
-    case '2min':
-      duration = 'INTERVAL 2 MINUTE';
-      break;
-    case '5min':
-      duration = 'INTERVAL 5 MINUTE';
-      break;
-    case '10min':
-      duration = 'INTERVAL 10 MINUTE';
-      break;
-    case '30min':
-      duration = 'INTERVAL 30 MINUTE';
-      break;
-    case '1hour':
-      duration = 'INTERVAL 1 HOUR';
-      break;
-    case '2hour':
-      duration = 'INTERVAL 2 HOUR';
-      break;
-    case '10hour':
-      duration = 'INTERVAL 10 HOUR';
-      break;
-    case '12hour':
-      duration = 'INTERVAL 12 HOUR';
-      break;
-    case '1day':
-      duration = 'INTERVAL 1 DAY';
-      break;
-    case '7day':
-      duration = 'INTERVAL 7 DAY';
-      break;
-    case '30day':
-      duration = 'INTERVAL 30 DAY';
-      break;
-    default:
-      return res.status(400).json({ message: 'Invalid time interval' });
-  }
-
-  const sql = `SELECT Status, COUNT(*) as count FROM ems_trigger_logs WHERE DeviceUID = $1 AND TimeStamp >= DATE_SUB(NOW(), ${duration}) GROUP BY Status`;
-  db.query(sql, [deviceId], (error, results) => {
-    if (error) {
-      console.error('Error fetching data:', error);
-      return res.status(500).json({ message: 'Internal server error' });
-    }
-
-    try {
-      // Calculate total count
-      const totalCount = results.reduce((total, entry) => total + entry.count, 0);
-
-      // Calculate percentage for each status
-      const dataWithPercentage = results.map((entry) => ({
-        status: entry.Status,
-        count: entry.count,
-        percentage: (entry.count / totalCount) * 100
-      }));
-
-      res.json({ dataStatus: dataWithPercentage });
-    } catch (error) {
-      console.error('An error occurred:', error);
-      res.status(500).json({ message: 'Internal server error' });
-    }
-  });
-}
 
 
 function getDataByCustomDate(req, res) {
@@ -607,41 +396,6 @@ function getDataByCustomDate(req, res) {
       }
 
       res.json({ data: results });
-    });
-  } catch (error) {
-    console.error('An error occurred:', error);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-}
-
-function getDataByCustomDateStatus(req, res) {
-  try {
-    const deviceId = req.params.deviceId;
-    const startDate = req.query.start;
-    const endDate = req.query.end;
-
-    if (!startDate || !endDate) {
-      return res.status(400).json({ message: 'Invalid parameters' });
-    }
-
-    const sql = `SELECT Status, COUNT(*) as count FROM ems_trigger_logs WHERE DeviceUID = $1 AND TimeStamp >= $2 AND TimeStamp <= $3 GROUP BY Status`;
-    db.query(sql, [deviceId, startDate + 'T00:00:00.000Z', endDate + 'T23:59:59.999Z'], (error, results) => {
-      if (error) {
-        console.error('Error fetching data:', error);
-        return res.status(500).json({ message: 'Internal server error' });
-      }
-
-      // Calculate total count
-      const totalCount = results.reduce((total, entry) => total + entry.count, 0);
-
-      // Calculate percentage for each status
-      const dataWithPercentage = results.map((entry) => ({
-        status: entry.Status,
-        count: entry.count,
-        percentage: (entry.count / totalCount) * 100
-      }));
-
-      res.json({ dataStatus: dataWithPercentage });
     });
   } catch (error) {
     console.error('An error occurred:', error);
@@ -676,57 +430,6 @@ function getDeviceDetails(req, res) {
   }
 }
 
-
-function getLiveStatusDetails(req, res) {
-  try {
-    const deviceId = req.params.deviceId;
-
-    // Validate the deviceId parameter if necessary
-
-    const liveStatusQuery = 'SELECT * FROM ems_trigger_logs WHERE DeviceUID = $1 ORDER BY TimeStamp DESC LIMIT 1';
-    db.query(liveStatusQuery, [deviceId], (error, liveStatus) => {
-      if (error) {
-        console.error('Error fetching data:', error);
-        return res.status(500).json({ message: 'Internal server error' });
-      }
-
-      if (liveStatus.length === 0) {
-        // Handle the case when no live status details are found
-        return res.status(404).json({ message: 'Live status details not found' });
-      }
-
-      res.status(200).json(liveStatus);
-    });
-  } catch (error) {
-    console.error('An error occurred:', error);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-}
-// function getUserData(req, res) {
-//   try {
-//     const userId = req.params.userId;
-
-//     // Validate the deviceId parameter if necessary
-
-//     const userDetailsQuery = 'SELECT * FROM ems.ems_users WHERE userid = $1';
-//     db.query(userDetailsQuery, [userId], (error, userDetail) => {
-//       if (error) {
-//         console.error('Error fetching User:', error);
-//         return res.status(500).json({ message: 'Internal server error' });
-//       }
-
-//       if (userDetail.length === 0) {
-//         // Handle the case when no device details are found
-//         return res.status(404).json({ message: 'User details not found' });
-//       }
-
-//       res.status(200).json(userDetail);
-//     });
-//   } catch (error) {
-//     console.error('An error occurred:', error);
-//     res.status(500).json({ message: 'Internal server error' });
-//   }
-// }
 function getUserData(req, res) {
   try {
     const userId = req.params.userId;
@@ -894,26 +597,6 @@ function fetchCompanyUser(req, res) {
 
 
 
-function addDeviceTrigger(req, res) {
-  const { DeviceUID, TriggerValue, CompanyEmail } = req.body;
-    try {
-        const insertTriggerQuery = 'INSERT INTO ems_trigger (DeviceUID, TriggerValue, CompanyEmail) VALUES ($1,$2,$3)';
-
-        db.query(insertTriggerQuery, [DeviceUID, TriggerValue, CompanyEmail], (error, insertResult) => {
-          if (error) {
-            console.error('Error while inserting device:', error);
-            return res.status(500).json({ message: 'Internal server error' });
-          }
-
-          return res.json({ message: 'Device Trigger added successfully!' });
-        });
-
-    } catch (error) {
-      console.error('Error in device check:', error);
-      res.status(500).json({ message: 'Internal server error' });
-    }
-}
-
 function addDevice(req, res) {
   const { DeviceUID, DeviceLocation, DeviceName, CompanyEmail, CompanyName } = req.body;
   try {
@@ -949,18 +632,12 @@ function addDevice(req, res) {
 module.exports = {
 	userDevices,
   editDevice,
-  fetchDeviceTrigger,
-  fetchAllDeviceTrigger,
   companyDetails,
   personalDetails,
   updatePassword,
-  editDeviceTrigger,
   getDataByTimeInterval,
   getDataByCustomDate,
-  getDataByTimeIntervalStatus,
-  getDataByCustomDateStatus,
   getDeviceDetails,
-  getLiveStatusDetails,
   getUserData,
   insertNewMessage,
   markMessageAsRead,
@@ -968,6 +645,5 @@ module.exports = {
   countUnreadMessages,
   getUserMessages,
   fetchCompanyUser,
-  addDeviceTrigger,
   addDevice
 };

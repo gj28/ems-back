@@ -43,16 +43,9 @@ router.put('/personalDetails/:UserId', dashboard.personalDetails);
 router.put('/updatePassword/:UserId', dashboard.updatePassword);
 
 // router.put('/personalDetails/:UserId', authentication.personalDetails);
-
-router.put('/editDeviceTrigger/:deviceId', dashboard.editDeviceTrigger);
-router.get('/device-trigger/:deviceId', dashboard.fetchDeviceTrigger);
-router.get('/user-devices-trigger/:CompanyEmail', dashboard.fetchAllDeviceTrigger);
 router.get('/data/:deviceuid/intervals', dashboard.getDataByTimeInterval);
 router.get('/data/:deviceId', dashboard.getDataByCustomDate);
-router.get('/dataStatus/:deviceId/intervals', dashboard.getDataByTimeIntervalStatus);
-router.get('/dataStatus/:deviceId', dashboard.getDataByCustomDateStatus);
 router.get('/live-device-detail/:deviceId', dashboard.getDeviceDetails);
-router.get('/live-device-status/:deviceId', dashboard.getLiveStatusDetails);
 router.get('/user-data/:userId', dashboard.getUserData);
 router.post('/new-message', dashboard.insertNewMessage);
 router.put('/mark-read-message/:messageId', dashboard.markMessageAsRead);
@@ -60,7 +53,6 @@ router.delete('/delete-message/:messageId', dashboard.deleteMessage);
 router.get('/unread-message/:receiver', dashboard.countUnreadMessages);
 router.get('/messages/:receiver', dashboard.getUserMessages);
 router.get('/Company-users/:CompanyEmail', dashboard.fetchCompanyUser);
-router.post('/addDeviceTrigger', dashboard.addDeviceTrigger)
 router.post('/addDevice', dashboard.addDevice);
 router.get('/logs', logs.fetchLogs);
 
@@ -77,7 +69,6 @@ router.get('/getDeviceByUID/:deviceUID', SA.getDeviceByUID);
 router.put('/updateDevice/:deviceUID', SA.updateDevice);
 router.get('/logs/:interval', SA.fetchLogs);
 router.get('/apilogs/:interval', SA.apilogs);
-router.get('/devicelogs', SA.devicelogs);
 router.delete('/removeUser/:userId', SA.removeUser);
  router.get('/usermanagement', SA.usermanagement);
 router.get('/userInfo', SA.userInfo);
