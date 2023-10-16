@@ -101,7 +101,7 @@ function fetchAllUsers(req, res) {
           return res.status(400).json({ message: 'Invalid time interval' });
       }
   
-      const sql = `SELECT * FROM ems.api_usage WHERE timestamp >= NOW() - INTERVAL '${duration}'`;
+      const sql = `SELECT * FROM ems.api_usage WHERE created_time >= NOW() - INTERVAL '${duration}'`;
       
       db.query(sql, (error, results) => {
         if (error) {

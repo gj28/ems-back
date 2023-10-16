@@ -9,7 +9,7 @@ function RequestCounts() {
   const startTime = fifteenMinutesAgo.toISOString();
 
   const countQuery = {
-    text: 'SELECT COUNT(*) FROM ems.info_twi WHERE timestamp >= $1 AND timestamp < $2',
+    text: 'SELECT COUNT(*) FROM ems.info_twi WHERE created_time >= $1 AND created_time < $2',
     values: [startTime, currentTime],
   };
 
@@ -20,7 +20,7 @@ function RequestCounts() {
       const requestCount = result.rows[0].count;
 
       const insertQuery = {
-        text: 'INSERT INTO ems.info_twi_log (timestamp, count) VALUES ($1, $2)',
+        text: 'INSERT INTO ems.info_twi_log (timestamp, request_count) VALUES ($1, $2)',
         values: [currentTime, requestCount],
       };
 
@@ -34,4 +34,5 @@ function RequestCounts() {
     }
   });
 }
-setInterval(RequestCounts, 1000);
+
+setInterval(RequestCounts,15 * 60 * 1000);

@@ -49,7 +49,7 @@ function logExecution(functionName, tenantId, status, message) {
     const startTime = fifteenMinutesAgo.toISOString();
   
     const countQuery = {
-      text: 'SELECT COUNT(*) FROM  ems.tmp_api_usage WHERE timestamp >= $1 AND timestamp < $2',
+      text: 'SELECT COUNT(*) FROM ems.tmp_api_usage WHERE created_time >= $1 AND created_time <= $2',
       values: [startTime, currentTime],
     };
   
@@ -68,12 +68,14 @@ function logExecution(functionName, tenantId, status, message) {
           if (insertError) {
             console.error('Error inserting request count:', insertError);
           } else {
-            //console.log(`Request count (${requestCount}) inserted into request_counts table.`);
+            console.log(`Request count (${requestCount}) inserted into log_table.`);
           }
         });
       }
     });
   }
-  setInterval(RequestCounts, 1000);
   
-module.exports = {logExecution};
+  setInterval(RequestCounts, 15 * 60 * 1000);
+  
+  module.exports = { logExecution };
+  

@@ -3,7 +3,7 @@ const router = express.Router();
 const authentication = require('./auth/authentication');
 const dashboard = require('./dash/dashboard.js');
 const limitter = require('express-rate-limit');
-const logs = require('./graph logs');
+const logs = require('./graphlogs');
 const SA = require('./superadmin/SA.js');
 
 const registerLimitter = limitter({
