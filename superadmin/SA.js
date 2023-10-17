@@ -9,6 +9,52 @@ const path = require('path');
 const ejs = require('ejs');
 
 
+function parametersFilter(req, res) {
+  try {
+    const timeInterval = req.params.interval;
+    if (!timeInterval) {
+      return res.status(400).json({ message: 'Invalid time interval' });
+    }
+
+    let duration;
+    switch (timeInterval) {
+      case '1hour':
+        duration = '1 hours';
+        break;
+      case '12hour':
+        duration = '12 hours';
+        break;
+      case '1day':
+        duration = '1 day';
+        break;
+      case '7day':
+        duration = '7 days';
+        break;
+      case '30day':
+        duration = '30 days';
+        break;
+      case '1year':
+        duration = '1 year';
+        break;
+      default:
+        return res.status(400).json({ message: 'Invalid time interval' });
+    }
+
+    const sql = `SELECT * FROM ems.ems_actual_data WHERE timestamp >= NOW() - INTERVAL '${duration}'`;
+    
+    db.query(sql, (error, results) => {
+      if (error) {
+        console.error('Error fetching data:', error);
+        return res.status(500).json({ message: 'Internal server error' });
+      }
+      res.json({ data: results.rows });
+    });
+  } catch (error) {
+    console.error('An error occurred:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}
+
 
 function alarms(req, res) {
   try {
@@ -672,5 +718,6 @@ module.exports = {
   graph2,
   graph3,
   graph4,
-  userByCompanyname
+  userByCompanyname,
+  parametersFilter
 };
