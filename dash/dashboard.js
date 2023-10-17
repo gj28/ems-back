@@ -430,6 +430,30 @@ function getDeviceDetails(req, res) {
   }
 }
 
+// function getUserData(req, res) {
+//   try {
+//     const userId = req.params.userId;
+
+//     const userDetailsQuery = 'SELECT * FROM ems.ems_users WHERE UserId = $1';
+//     db.query(userDetailsQuery, [userId], (error, userDetail) => {
+//       if (error) {
+//         console.error('Error fetching User:', error);
+//         return res.status(500).json({ message: 'Internal server error' });
+//       }
+
+//       if (userDetail.rows.length === 0) {
+//         return res.status(404).json({ message: 'User details not found' });
+//       }
+
+//       const userData = userDetail.rows[0];
+//       res.status(200).json([userData]);
+//     });
+//   } catch (error) {
+//     console.error('An error occurred:', error);
+//     res.status(500).json({ message: 'Internal server error' });
+//   }
+// }
+
 function getUserData(req, res) {
   try {
     const userId = req.params.userId;
@@ -446,14 +470,13 @@ function getUserData(req, res) {
       }
 
       const userData = userDetail.rows[0];
-      res.status(200).json([userData]);
+      res.status(200).json(userData);
     });
   } catch (error) {
     console.error('An error occurred:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 }
-
 
 
 function insertNewMessage(req, res) {
@@ -577,20 +600,16 @@ function getUserMessages(req, res) {
 function fetchCompanyUser(req, res) {
   const CompanyEmail = req.params.CompanyEmail;
   try {
-    const query = 'SELECT * FROM ems.ems_users where CompanyEmail = $1';
+    const query = 'SELECT * FROM ems.ems_users where companyemail = $1';
     db.query(query, [CompanyEmail], (error, result) => {
       if (error) {
-        throw new Error('Error fetching user');
+        throw new Error('Error fetching users');
       }
-      if (result.rows.length === 1) {
-        const user = result.rows[0];
-        res.status(200).json(user);
-      } else {
-        res.status(404).json({ message: 'User not found' });
-      }
+
+      res.status(200).json(result.rows);
     });
   } catch (error) {
-    console.error('Error fetching user:', error);
+    console.error('Error fetching devices:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 }

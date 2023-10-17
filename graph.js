@@ -68,7 +68,7 @@ function logExecution(functionName, tenantId, status, message) {
           if (insertError) {
             console.error('Error inserting request count:', insertError);
           } else {
-            console.log(`Request count (${requestCount}) inserted into log_table.`);
+            //console.log(`Request count (${requestCount}) inserted into log_table.`);
           }
         });
       }
