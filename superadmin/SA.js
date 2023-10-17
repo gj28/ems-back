@@ -18,6 +18,12 @@ function parametersFilter(req, res) {
 
     let duration;
     switch (timeInterval) {
+      case '15min':
+        duration = '15 minutes';
+        break;
+        case '30min':
+        duration = '30 minutes';
+        break;
       case '1hour':
         duration = '1 hours';
         break;
