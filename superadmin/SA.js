@@ -12,8 +12,10 @@ const ejs = require('ejs');
 function parametersFilter(req, res) {
   try {
     const timeInterval = req.params.interval;
-    if (!timeInterval) {
-      return res.status(400).json({ message: 'Invalid time interval' });
+    const parameter = req.params.parameter; 
+
+    if (!timeInterval || !parameter) {
+      return res.status(400).json({ message: 'Invalid time interval or parameter' });
     }
 
     let duration;
@@ -38,22 +40,88 @@ function parametersFilter(req, res) {
         break;
       default:
         return res.status(400).json({ message: 'Invalid time interval' });
+      }
+
+      const parameterColumn = parameter.toLowerCase(); 
+  
+      const sql = `SELECT "timestamp", "${parameterColumn}" FROM ems.ems_actual_data WHERE timestamp >= NOW() - INTERVAL '${duration}'`;
+  
+      db.query(sql, (error, results) => {
+        if (error) {
+          console.error('Error fetching data:', error);
+          return res.status(500).json({ message: 'Internal server error' });
+        }
+        const data = results.rows.map(row => ({
+          name: parameter,
+          data: row[parameterColumn]
+        }));
+  
+        res.json(data);
+      });
+    } catch (error) {
+      console.error('An error occurred:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  }
+
+function parameter(req, res) {
+  try {
+    const timeInterval = req.params.interval;
+    const parameter = req.params.parameter;
+
+    if (!timeInterval || !parameter) {
+      return res.status(400).json({ message: 'Invalid time interval or parameter' });
     }
 
-    const sql = `SELECT * FROM ems.ems_actual_data WHERE timestamp >= NOW() - INTERVAL '${duration}'`;
-    
+    let duration;
+    switch (timeInterval) {
+      case '1hour':
+        duration = '1 hours';
+        break;
+      case '12hour':
+        duration = '12 hours';
+        break;
+      case '1day':
+        duration = '1 day';
+        break;
+      case '7day':
+        duration = '7 days';
+        break;
+      case '30day':
+        duration = '30 days';
+        break;
+      case '1year':
+        duration = '1 year';
+        break;
+      default:
+        return res.status(400).json({ message: 'Invalid time interval' });
+      }
+
+
+    const parameterColumn = parameter.toLowerCase();
+
+    const sql = `
+      SELECT "${parameterColumn}" 
+      FROM ems.ems_actual_data 
+      WHERE "timestamp" >= NOW() - INTERVAL '${duration}' 
+      ORDER BY "timestamp" ASC
+    `;
+
     db.query(sql, (error, results) => {
       if (error) {
         console.error('Error fetching data:', error);
         return res.status(500).json({ message: 'Internal server error' });
       }
-      res.json({ data: results.rows });
+      const data = results.rows.map(row => row[parameterColumn]);
+
+      res.json(data);
     });
   } catch (error) {
     console.error('An error occurred:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 }
+
 
 
 function alarms(req, res) {
@@ -719,5 +787,6 @@ module.exports = {
   graph3,
   graph4,
   userByCompanyname,
-  parametersFilter
+  parametersFilter,
+  parameter
 };

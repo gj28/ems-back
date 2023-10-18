@@ -78,7 +78,9 @@ router.get('/allnotification', SA.allnotification);
 router.get('/unreadnotification', SA.unreadnotification);
 router.get('/userByCompanyname/:company_name', SA.userByCompanyname);
 
-router.get('/parametersFilter/:interval', SA.parametersFilter);
+//router.get('/parametersFilter/:interval', SA.parametersFilter);
+router.get('/parametersFilter/:interval/:parameter', SA.parametersFilter);
+router.get('/parameters/:interval/:parameter', SA.parameter);
 
 router.get('/graph1/', SA.graph1);
 router.get('/graph2/', SA.graph2);

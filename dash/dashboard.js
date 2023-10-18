@@ -458,7 +458,7 @@ function getUserData(req, res) {
   try {
     const userId = req.params.userId;
 
-    const userDetailsQuery = 'SELECT * FROM ems.ems_users WHERE UserId = $1';
+    const userDetailsQuery = 'SELECT * FROM ems.ems_users WHERE userid = $1';
     db.query(userDetailsQuery, [userId], (error, userDetail) => {
       if (error) {
         console.error('Error fetching User:', error);
