@@ -264,10 +264,37 @@ function fetchAllUsers(req, res) {
   //DEVICES
   function addDevice(req, res) {
     try {
-      const { EntryId, DeviceUID, DeviceLocation, DeviceName, CompanyEmail, CompanyName } = req.body;
-      const createDeviceQuery = 'INSERT INTO ems_devices (entryid, deviceuid, devicelocation, devicename, companyemail, companyname) VALUES (?, ?, ?, ?, ?, ?)';
+      const {
+        EntryId,
+        DeviceUID,
+        DeviceLocation,
+        DeviceName,
+        CompanyEmail,
+        CompanyName,
+        SMS,
+        email,
+        type,
+      } = req.body;
   
-      db.query(createDeviceQuery, [EntryId, DeviceUID, DeviceLocation, DeviceName, CompanyEmail, CompanyName], (error, result) => {
+      const createDeviceQuery = `
+        INSERT INTO tms_devices (
+          EntryId, DeviceUID, DeviceLocation, DeviceName, CompanyEmail, CompanyName, SMS, email, type, "endDate"
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW() + interval '1 year')
+      `;
+  
+      const values = [
+        EntryId,
+        DeviceUID,
+        DeviceLocation,
+        DeviceName,
+        CompanyEmail,
+        CompanyName,
+        SMS,
+        email,
+        type,
+      ];
+  
+      db.query(createDeviceQuery, values, (error, result) => {
         if (error) {
           console.error('Error adding device:', error);
           return res.status(500).json({ message: 'Internal server error' });
@@ -280,6 +307,7 @@ function fetchAllUsers(req, res) {
       res.status(500).json({ message: 'Internal server error' });
     }
   }
+  
 
   function getDeviceByUID(req, res) {
     try {

@@ -8,6 +8,7 @@ const audit_logs = require('./graphlogs');
 const SA = require('./superadmin/SA');
 const graph1=require('./graph_sms');
 const graph2=require('./graph');
+const sum=require('./sum');
 
 //const { checkState } = require('./SMS/smsController');
 // const mqtt_sub = require('./sub');
