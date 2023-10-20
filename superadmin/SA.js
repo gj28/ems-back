@@ -150,6 +150,26 @@ function alarms(req, res) {
   }
 }
 
+function SumData(req, res) {
+  try {
+    const query = 'SELECT * FROM ems.sum_table ORDER BY id DESC LIMIT 1';
+    db.query(query, (error, result) => {
+      if (error) {
+        console.error('Error fetching data:', error);
+        res.status(500).json({ message: 'Internal server error' });
+        return;
+      }
+      const latestSumData = result.rows[0];
+
+      res.json({ latestSumData });
+    });
+  } catch (error) {
+    console.error('Error fetching data:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}
+
+
 function fetchAllUsers(req, res) {
   try {
     const query = 'SELECT * FROM ems.ems_users';
@@ -822,5 +842,6 @@ module.exports = {
   graph4,
   userByCompanyname,
   parametersFilter,
-  parameter
+  parameter,
+  SumData
 };
