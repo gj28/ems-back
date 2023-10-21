@@ -189,14 +189,26 @@ function dwSumData(req, res) {
 }
 function kwSumData(req, res) {
   try {
-    const query = 'SELECT * FROM ems.sum_kw ORDER BY id DESC LIMIT 1';
+    const subquery = `
+      SELECT MAX(id) as max_id, deviceid
+      FROM ems.sum_kw
+      GROUP BY deviceid
+    `;
+    
+    const query = `
+      SELECT s.*
+      FROM ems.sum_kw s
+      JOIN (${subquery}) m
+      ON s.id = m.max_id
+    `;
+    
     db.query(query, (error, result) => {
       if (error) {
         console.error('Error fetching data:', error);
         res.status(500).json({ message: 'Internal server error' });
         return;
       }
-      const latestSumData = result.rows[0];
+      const latestSumData = result.rows;
 
       res.json({ latestSumData });
     });
@@ -205,6 +217,7 @@ function kwSumData(req, res) {
     res.status(500).json({ message: 'Internal server error' });
   }
 }
+
 
 
 function fetchAllUsers(req, res) {
@@ -854,6 +867,22 @@ function unreadnotification(req, res) {
       }
     }
 
+    function dev(req, res) {
+      const CompanyEmail = req.params.CompanyEmail;
+      try {
+        const query = 'SELECT * FROM ems.ems_devices where companyemail = $1';
+        db.query(query, [CompanyEmail], (error, result) => {
+          if (error) {
+            throw new Error('Error fetching users');
+          }
+    
+          res.status(200).json(result.rows);
+        });
+      } catch (error) {
+        console.error('Error fetching devices:', error);
+        res.status(500).json({ message: 'Internal server error' });
+      }
+    }
     function dev(req, res) {
       const CompanyEmail = req.params.CompanyEmail;
       try {
