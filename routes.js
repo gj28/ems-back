@@ -53,6 +53,7 @@ router.delete('/delete-message/:messageId', dashboard.deleteMessage);
 router.get('/unread-message/:receiver', dashboard.countUnreadMessages);
 router.get('/messages/:receiver', dashboard.getUserMessages);
 router.get('/Company-users/:CompanyEmail', dashboard.fetchCompanyUser);
+router.get('/Company/:CompanyEmail', SA.dev);
 router.post('/addDevice', dashboard.addDevice);
 router.get('/logs', logs.fetchLogs);
 

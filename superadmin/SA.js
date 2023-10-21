@@ -835,6 +835,24 @@ function unreadnotification(req, res) {
         res.status(500).json({ message: 'Internal server error' });
       }
     }
+
+    function dev(req, res) {
+      const CompanyEmail = req.params.CompanyEmail;
+      try {
+        const query = 'SELECT * FROM ems.ems_devices where companyemail = $1';
+        db.query(query, [CompanyEmail], (error, result) => {
+          if (error) {
+            throw new Error('Error fetching users');
+          }
+    
+          res.status(200).json(result.rows);
+        });
+      } catch (error) {
+        console.error('Error fetching devices:', error);
+        res.status(500).json({ message: 'Internal server error' });
+      }
+    }
+
 module.exports = {
   fetchAllUsers,
   fetchAllDevices,
@@ -863,5 +881,6 @@ module.exports = {
   parametersFilter,
   parameter,
   SumData,
-  kwSumData
+  kwSumData,
+  dev
 };
