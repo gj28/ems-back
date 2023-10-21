@@ -150,24 +150,24 @@ function alarms(req, res) {
   }
 }
 
-function SumData(req, res) {
-  try {
-    const query = 'SELECT * FROM ems.sum_table ORDER BY id DESC LIMIT 1';
-    db.query(query, (error, result) => {
-      if (error) {
-        console.error('Error fetching data:', error);
-        res.status(500).json({ message: 'Internal server error' });
-        return;
-      }
-      const latestSumData = result.rows[0];
+// function SumData(req, res) {
+//   try {
+//     const query = 'SELECT * FROM ems.sum_table ORDER BY id DESC LIMIT 1';
+//     db.query(query, (error, result) => {
+//       if (error) {
+//         console.error('Error fetching data:', error);
+//         res.status(500).json({ message: 'Internal server error' });
+//         return;
+//       }
+//       const latestSumData = result.rows[0];
 
-      res.json({ latestSumData });
-    });
-  } catch (error) {
-    console.error('Error fetching data:', error);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-}
+//       res.json({ latestSumData });
+//     });
+//   } catch (error) {
+//     console.error('Error fetching data:', error);
+//     res.status(500).json({ message: 'Internal server error' });
+//   }
+// }
 
 function dwSumData(req, res) {
   try {
@@ -899,6 +899,39 @@ function unreadnotification(req, res) {
         res.status(500).json({ message: 'Internal server error' });
       }
     }
+
+
+    function SumData(req, res) {
+      try {
+        const subquery = `
+          SELECT MAX(id) as max_id, deviceid
+          FROM ems.sum_kw
+          GROUP BY deviceid
+        `;
+        
+        const query = `
+          SELECT s.*
+          FROM ems.sum_kw s
+          JOIN (${subquery}) m
+          ON s.id = m.max_id
+        `;
+        
+        db.query(query, (error, result) => {
+          if (error) {
+            console.error('Error fetching data:', error);
+            res.status(500).json({ message: 'Internal server error' });
+            return;
+          }
+          const latestSumData = result.rows;
+    
+          res.json({ latestSumData });
+        });
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        res.status(500).json({ message: 'Internal server error' });
+      }
+    }
+
 
 module.exports = {
   fetchAllUsers,
