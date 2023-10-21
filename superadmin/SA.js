@@ -189,20 +189,24 @@ function dwSumData(req, res) {
 }
 function kwSumData(req, res) {
   try {
+    const { deviceid } = req.params;
+
     const subquery = `
       SELECT MAX(id) as max_id, deviceid
       FROM ems.sum_kw
+      WHERE deviceid = $1
       GROUP BY deviceid
     `;
-    
+
     const query = `
       SELECT s.*
       FROM ems.sum_kw s
       JOIN (${subquery}) m
       ON s.id = m.max_id
+      WHERE s.deviceid = $1
     `;
-    
-    db.query(query, (error, result) => {
+
+    db.query(query, [deviceid], (error, result) => {
       if (error) {
         console.error('Error fetching data:', error);
         res.status(500).json({ message: 'Internal server error' });
@@ -903,7 +907,7 @@ function unreadnotification(req, res) {
 
     function SumData(req, res) {
       try {
-        const { deviceid } = req.params; // Assuming deviceid is provided as a parameter in the request
+        const { deviceid } = req.params;
     
         const subquery = `
           SELECT MAX(id) as max_id, deviceid
