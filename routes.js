@@ -90,5 +90,6 @@ router.get('/graph4/', SA.graph4);
 
 router.get('/sum', SA.SumData);
 router.get('/kwsum', SA.kwSumData);
+router.get('/dwsum', SA.dwSumData);
 
 module.exports = router;
