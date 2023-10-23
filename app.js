@@ -10,7 +10,7 @@ const graph1=require('./graph_sms');
 const graph2=require('./graph');
 const sum=require('./sum');
 const kwsum=require('./kw_sum');
-const dwsum=require('./mdsum');
+//const dwsum=require('./mdsum');
 
 //const { checkState } = require('./SMS/smsController');
 // const mqtt_sub = require('./sub');
