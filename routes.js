@@ -81,7 +81,8 @@ router.get('/userByCompanyname/:company_name', SA.userByCompanyname);
 
 //router.get('/parametersFilter/:interval', SA.parametersFilter);
 //router.get('/parametersFilter/:interval/:parameter', SA.parametersFilter);
-router.get('/parametersFilter/:interval', SA.parametersFilter);
+//router.get('/parametersFilter/:interval', SA.parametersFilter);
+router.get('/parametersFilter/:deviceid/:parameter/:interval', SA.parametersFilter);
 router.get('/parameters/:interval/:parameter', SA.parameter);
 
 router.get('/graph1/', SA.graph1);
