@@ -9,10 +9,12 @@ const dbConfig = {
 
 const pool = new Pool(dbConfig);
 
-function storeLastMonthAndDaySum() {
+function kw_sum() {
     try {
-        const oneMonthAgo = new Date();
-        oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+        const currentDate = new Date();
+        const firstDayOfPreviousMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+        const lastDayOfPreviousMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 0);
+        const last24Hours = new Date(currentDate - 24 * 60 * 60 * 1000);
 
         const deviceIdsQuery = 'SELECT DISTINCT deviceid FROM ems.ems_actual_data;';
 
@@ -28,47 +30,44 @@ function storeLastMonthAndDaySum() {
                 const deviceID = device.deviceid;
 
                 const monthSumQuery = `
-            SELECT
-              SUM(kw) AS total_kw_month,
-              SUM(kvar) AS total_kvar_month
-            FROM ems.ems_actual_data
-            WHERE timestamp >= $1 AND deviceid = $2;`;
+                SELECT
+                    SUM(kw) AS total_kw_month,
+                    SUM(kvar) AS total_kvar_month
+                FROM ems.ems_actual_data
+                WHERE timestamp >= $1 AND timestamp <= $2 AND deviceid = $3;`;
 
-                pool.query(monthSumQuery, [oneMonthAgo, deviceID], (monthError, monthResult) => {
+                pool.query(monthSumQuery, [firstDayOfPreviousMonth, lastDayOfPreviousMonth, deviceID], (monthError, monthResult) => {
                     if (monthError) {
-                        console.error(`Error fetching last month sum for device ${deviceID}:`, monthError);
+                        console.error(`Error fetching data for the previous month for device ${deviceID}:`, monthError);
                         return;
                     }
 
                     const { total_kw_month, total_kvar_month } = monthResult.rows[0];
 
-                    const lastDay = new Date();
-                    lastDay.setHours(0, 0, 0, 0);
-                    lastDay.setTime(lastDay.getTime() - 24 * 60 * 60 * 1000);
+                    const last24HoursSumQuery = `
+                    SELECT
+                        SUM(kw) AS total_kw_24_hours,
+                        SUM(kvar) AS total_kvar_24_hours
+                    FROM ems.ems_actual_data
+                    WHERE timestamp >= $1 AND deviceid = $2;`;
 
-                    const daySumQuery = `
-              SELECT
-                SUM(kw) AS total_kw_day,
-                SUM(kvar) AS total_kvar_day
-              FROM ems.ems_actual_data
-              WHERE timestamp >= $1 AND deviceid = $2;`;
-
-                    pool.query(daySumQuery, [lastDay, deviceID], (dayError, dayResult) => {
-                        if (dayError) {
-                            console.error(`Error fetching last day's sum for device ${deviceID}:`, dayError);
+                    pool.query(last24HoursSumQuery, [last24Hours, deviceID], (last24HoursError, last24HoursResult) => {
+                        if (last24HoursError) {
+                            console.error(`Error fetching data for the last 24 hours for device ${deviceID}:`, last24HoursError);
                             return;
                         }
-                        const { total_kw_day, total_kvar_day } = dayResult.rows[0];
+
+                        const { total_kw_24_hours, total_kvar_24_hours } = last24HoursResult.rows[0];
 
                         const insertQuery = `
-                INSERT INTO ems.sum_kw (deviceid, total_kw_month, total_kvar_month, total_kw_day, total_kvar_day, calculation_date)
-                VALUES ($1, $2, $3, $4, $5, $6);`;
+                            INSERT INTO ems.sum_kw (deviceid, total_kw_month, total_kvar_month, total_kw_day, total_kvar_day, calculation_date)
+                            VALUES ($1, $2, $3, $4, $5, $6);`;
 
                         const currentDate = new Date();
 
-                        pool.query(insertQuery, [deviceID, total_kw_month, total_kvar_month, total_kw_day, total_kvar_day, currentDate], (insertError) => {
+                        pool.query(insertQuery, [deviceID, total_kw_month, total_kvar_month, total_kw_24_hours, total_kvar_24_hours, currentDate], (insertError) => {
                             if (insertError) {
-                                console.error(`Error inserting into sum_table for device ${deviceID}:`, insertError);
+                                console.error(`Error inserting data for device ${deviceID}:`, insertError);
                             }
                         });
                     });
@@ -76,10 +75,9 @@ function storeLastMonthAndDaySum() {
             });
         });
     } catch (error) {
-        console.error('Error fetching and storing last month and last day\'s sum:', error);
+        console.error('Error fetching and storing data:', error);
     }
 }
 
-storeLastMonthAndDaySum();
-
-setInterval(storeLastMonthAndDaySum, 24 * 60 * 60 * 1000);
+kw_sum();
+setInterval(kw_sum, 24 * 60 * 60 * 1000);
