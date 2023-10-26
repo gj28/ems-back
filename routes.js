@@ -44,7 +44,7 @@ router.put('/updatePassword/:UserId', dashboard.updatePassword);
 
 // router.put('/personalDetails/:UserId', authentication.personalDetails);
 router.get('/data/:deviceuid/intervals', dashboard.getDataByTimeInterval);
-router.get('/data/:deviceId', dashboard.getDataByCustomDate);
+router.get('/data/:deviceid/:parameter', dashboard.getDataByCustomDate);
 router.get('/live-device-detail/:deviceId', dashboard.getDeviceDetails);
 router.get('/user-data/:userId', dashboard.getUserData);
 router.post('/new-message', dashboard.insertNewMessage);

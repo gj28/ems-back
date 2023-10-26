@@ -377,25 +377,58 @@ function getDataByTimeInterval(req, res) {
 }
 
 
-
 function getDataByCustomDate(req, res) {
   try {
-    const deviceId = req.params.deviceId;
-    const startDate = req.query.start;
-    const endDate = req.query.end;
+    const deviceid = req.params.deviceid;
+    const parameter = req.params.parameter;
+    const startDate = new Date(req.query.start);
+    const endDate = new Date(req.query.end);
 
-    if (!startDate || !endDate) {
-      return res.status(400).json({ message: 'Invalid parameters' });
+    if (!startDate || !endDate || isNaN(startDate) || isNaN(endDate)) {
+      return res.status(400).json({ message: 'Invalid date parameters' });
     }
 
-    const sql = `SELECT * FROM actual_data WHERE DeviceUID = $1 AND TimeStamp >= $2 AND TimeStamp <= $3`;
-    db.query(sql, [deviceId, startDate + 'T00:00:00.000Z', endDate + 'T23:59:59.999Z'], (error, results) => {
-      if (error) {
-        console.error('Error fetching data:', error);
+    const parameterList = parameter.split(',').map(param => param.trim());
+
+    const parameterExistsQuery = `
+      SELECT column_name
+      FROM information_schema.columns
+      WHERE table_name = 'ems_actual_data'
+      AND column_name = ANY($1::text[])
+    `;
+
+    db.query(parameterExistsQuery, [parameterList], (paramError, paramResult) => {
+      if (paramError) {
+        console.error('Error checking parameters:', paramError);
         return res.status(500).json({ message: 'Internal server error' });
       }
 
-      res.json({ data: results });
+      const existingParams = paramResult.rows.map(row => row.column_name);
+      const missingParams = parameterList.filter(param => !existingParams.includes(param));
+
+      if (missingParams.length > 0) {
+        console.error('Parameters do not exist:', missingParams);
+        return res.status(400).json({ message: 'The following parameters do not exist: ' + missingParams.join(', ') });
+      }
+      const sql = `
+        SELECT "timestamp", ${parameterList.join(', ')}
+        FROM ems.ems_actual_data
+        WHERE timestamp BETWEEN $1 AND $2
+        AND deviceid = $3`;
+
+      db.query(sql, [startDate, endDate, deviceid], (error, results) => {
+        if (error) {
+          console.error('Error fetching data:', error);
+          return res.status(500).json({ message: 'Internal server error' });
+        }
+
+        const data = results.rows.map(row => ({
+          name: parameterList,
+          data: row
+        }));
+
+        res.json(data);
+      });
     });
   } catch (error) {
     console.error('An error occurred:', error);
