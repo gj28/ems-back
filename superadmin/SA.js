@@ -377,8 +377,7 @@ function parameter(req, res) {
         break;
       default:
         return res.status(400).json({ message: 'Invalid time interval' });
-      }
-
+    }
 
     const parameterColumn = parameter.toLowerCase();
 
@@ -394,7 +393,7 @@ function parameter(req, res) {
         console.error('Error fetching data:', error);
         return res.status(500).json({ message: 'Internal server error' });
       }
-      const data = results.rows.map(row => row[parameterColumn]);
+      const data = results.rows.map(row => parseFloat(row[parameterColumn]));
 
       res.json(data);
     });
