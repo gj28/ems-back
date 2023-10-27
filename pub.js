@@ -141,7 +141,6 @@ function generateRandomData(deviceid) {
   return JSON.stringify(data);
 }
 
-
 // Connect to the MQTT broker
 const client = mqtt.connect(broker);
 
