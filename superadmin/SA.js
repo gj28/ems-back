@@ -8,344 +8,6 @@ const fs = require('fs');
 const path = require('path');
 const ejs = require('ejs');
 
-
-// function parametersFilter(req, res) {
-//   try {
-//     const timeInterval = req.params.interval;
-//     const parameter = req.params.parameter; 
-
-//     if (!timeInterval || !parameter) {
-//       return res.status(400).json({ message: 'Invalid time interval or parameter' });
-//     }
-
-//     let duration;
-//     switch (timeInterval) {
-//       case '15min':
-//         duration = '15 minutes';
-//         break;
-//         case '30min':
-//         duration = '30 minutes';
-//         break;
-//       case '1hour':
-//         duration = '1 hours';
-//         break;
-//       case '12hour':
-//         duration = '12 hours';
-//         break;
-//       case '1day':
-//         duration = '1 day';
-//         break;
-//       case '7day':
-//         duration = '7 days';
-//         break;
-//       case '30day':
-//         duration = '30 days';
-//         break;
-//       case '1year':
-//         duration = '1 year';
-//         break;
-//       default:
-//         return res.status(400).json({ message: 'Invalid time interval' });
-//       }
-
-//       const parameterColumn = parameter.toLowerCase(); 
-  
-//       const sql = `SELECT "timestamp", "${parameterColumn}" FROM ems.ems_actual_data WHERE timestamp >= NOW() - INTERVAL '${duration}'`;
-  
-//       db.query(sql, (error, results) => {
-//         if (error) {
-//           console.error('Error fetching data:', error);
-//           return res.status(500).json({ message: 'Internal server error' });
-//         }
-//         const data = results.rows.map(row => ({
-//           name: parameter,
-//           data: row[parameterColumn]
-//         }));
-  
-//         res.json(data);
-//       });
-//     } catch (error) {
-//       console.error('An error occurred:', error);
-//       res.status(500).json({ message: 'Internal server error' });
-//     }
-//   }
-
-// function parametersFilter(req, res) {
-//   try {
-//     const deviceid = req.query.deviceid; 
-//     const timeInterval = req.params.interval;
-//     const parameter = req.params.parameter;
-
-//     if (!timeInterval || !parameter || !deviceid) {
-//       return res.status(400).json({ message: 'Invalid time interval, parameter, or deviceid' });
-//     }
-
-//     let duration;
-//     switch (timeInterval) {
-//       case '15min':
-//         duration = '15 minutes';
-//         break;
-//         case '30min':
-//         duration = '30 minutes';
-//         break;
-//       case '1hour':
-//         duration = '1 hours';
-//         break;
-//       case '12hour':
-//         duration = '12 hours';
-//         break;
-//       case '1day':
-//         duration = '1 day';
-//         break;
-//       case '7day':
-//         duration = '7 days';
-//         break;
-//       case '30day':
-//         duration = '30 days';
-//         break;
-//       case '1year':
-//         duration = '1 year';
-//         break;
-//       default:
-//         return res.status(400).json({ message: 'Invalid time interval' });
-//       }
-
-//     const parameterColumn = parameter.toLowerCase();
-
-//     const parameterExistsQuery = `
-//       SELECT column_name 
-//       FROM information_schema.columns 
-//       WHERE table_name = 'ems_actual_data' 
-//       AND column_name = $1
-//     `;
-
-//     db.query(parameterExistsQuery, [parameterColumn], (paramError, paramResult) => {
-//       if (paramError) {
-//         console.error('Error checking parameter:', paramError);
-//         return res.status(500).json({ message: 'Internal server error' });
-//       }
-
-//       const parameterExists = paramResult.rows.length > 0;
-
-//       if (!parameterExists) {
-//         return res.status(400).json({ message: 'Parameter does not exist' });
-//       }
-
-//       const sql = `
-//         SELECT "timestamp", "${parameterColumn}" 
-//         FROM ems.ems_actual_data 
-//         WHERE timestamp >= NOW() - INTERVAL '${duration}' 
-//         AND deviceid = $1`;
-
-//       db.query(sql, [deviceid], (error, results) => {
-//         if (error) {
-//           console.error('Error fetching data:', error);
-//           return res.status(500).json({ message: 'Internal server error' });
-//         }
-
-//         const data = results.rows.map(row => ({
-//           name: parameter,
-//           data: row[parameterColumn]
-//         }));
-
-//         res.json(data);
-//       });
-//     });
-//   } catch (error) {
-//     console.error('An error occurred:', error);
-//     res.status(500).json({ message: 'Internal server error' });
-//   }
-// }
-
-// function parametersFilter(req, res) {
-//   try {
-//     const deviceid = req.query.deviceid;
-//     const timeInterval = req.params.interval;
-//     const parameters = req.query.parameters;
-
-//     if (!timeInterval || !parameters || !deviceid) {
-//       return res.status(400).json({ message: 'Invalid time interval, parameters, or deviceid' });
-//     }
-
-//     let duration;
-//     switch (timeInterval) {
-//       case '15min':
-//         duration = '15 minutes';
-//         break;
-//         case '30min':
-//         duration = '30 minutes';
-//         break;
-//       case '1hour':
-//         duration = '1 hours';
-//         break;
-//       case '12hour':
-//         duration = '12 hours';
-//         break;
-//       case '1day':
-//         duration = '1 day';
-//         break;
-//       case '7day':
-//         duration = '7 days';
-//         break;
-//       case '30day':
-//         duration = '30 days';
-//         break;
-//       case '1year':
-//         duration = '1 year';
-//         break;
-//       default:
-//         return res.status(400).json({ message: 'Invalid time interval' });
-//       }
-
-
-//     const parameterList = parameters.split(',').map(param => param.trim());
-//     const parameterExistsQuery = `
-//       SELECT column_name
-//       FROM information_schema.columns
-//       WHERE table_name = 'ems_actual_data'
-//       AND column_name = ANY($1::text[])
-//     `;
-
-//     db.query(parameterExistsQuery, [parameterList], (paramError, paramResult) => {
-//       if (paramError) {
-//         console.error('Error checking parameters:', paramError);
-//         return res.status(500).json({ message: 'Internal server error' });
-//       }
-
-//       const existingParameters = paramResult.rows.map(row => row.column_name);
-
-//       const validParameters = parameterList.filter(param => existingParameters.includes(param));
-//       const invalidParameters = parameterList.filter(param => !existingParameters.includes(param));
-
-//       if (invalidParameters.length > 0) {
-//         console.error('Invalid parameters:', invalidParameters);
-//         return res.status(400).json({ message: 'Invalid parameters' });
-//       }
-
-//       const parameterColumns = validParameters.map(param => `"${param.trim().toLowerCase()}"`).join(', ');
-
-//       const sql = `
-//         SELECT "timestamp", ${parameterColumns}
-//         FROM ems.ems_actual_data
-//         WHERE timestamp >= NOW() - INTERVAL '${duration}'
-//         AND deviceid = $1`;
-
-//       db.query(sql, [deviceid], (error, results) => {
-//         if (error) {
-//           console.error('Error fetching data:', error);
-//           return res.status(500).json({ message: 'Internal server error' });
-//         }
-
-//         const data = results.rows.map(row => ({
-//           name: validParameters,
-//           data: row
-//         }));
-
-//         res.json(data);
-//       });
-//     });
-//   } catch (error) {
-//     console.error('An error occurred:', error);
-//     res.status(500).json({ message: 'Internal server error' });
-//   }
-// }
-
-function parametersFilter(req, res) {
-  try {
-    const deviceid = req.params.deviceid;
-    const parameter = req.params.parameter;
-    const timeInterval = req.params.interval;
-
-    if (!deviceid || !parameter || !timeInterval) {
-      return res.status(400).json({ message: 'Invalid device ID, parameter, or time interval' });
-    }
-
-    let duration;
-    switch (timeInterval) {
-      case '15min':
-        duration = '15 minutes';
-        break;
-        case '30min':
-        duration = '30 minutes';
-        break;
-      case '1hour':
-        duration = '1 hours';
-        break;
-      case '12hour':
-        duration = '12 hours';
-        break;
-      case '1day':
-        duration = '1 day';
-        break;
-      case '7day':
-        duration = '7 days';
-        break;
-      case '30day':
-        duration = '30 days';
-        break;
-      case '1year':
-        duration = '1 year';
-        break;
-      default:
-        return res.status(400).json({ message: 'Invalid time interval' });
-      }
-
-    const parameterList = parameter.split(',').map(param => param.trim());
-
-    const parameterExistsQuery = `
-      SELECT column_name
-      FROM information_schema.columns
-      WHERE table_name = 'ems_actual_data'
-      AND column_name = ANY($1::text[])
-    `;
-
-    db.query(parameterExistsQuery, [parameterList], (paramError, paramResult) => {
-      if (paramError) {
-        console.error('Error checking parameters:', paramError);
-        return res.status(500).json({ message: 'Internal server error' });
-      }
-
-      const existingParameters = paramResult.rows.map(row => row.column_name);
-
-      const validParameters = parameterList.filter(param => existingParameters.includes(param));
-      const invalidParameters = parameterList.filter(param => !existingParameters.includes(param));
-
-      if (invalidParameters.length > 0) {
-        console.error('Invalid parameters:', invalidParameters);
-        return res.status(400).json({ message: 'Invalid parameters' });
-      }
-
-      const parameterColumns = validParameters.map(param => `"${param.trim().toLowerCase()}"`).join(', ');
-
-      const sql = `
-        SELECT "timestamp", ${parameterColumns}
-        FROM ems.ems_actual_data
-        WHERE timestamp >= NOW() - INTERVAL '${duration}'
-        AND deviceid = $1`;
-
-      db.query(sql, [deviceid], (error, results) => {
-        if (error) {
-          console.error('Error fetching data:', error);
-          return res.status(500).json({ message: 'Internal server error' });
-        }
-
-        const data = results.rows.map(row => ({
-          name: validParameters,
-          data: row
-        }));
-
-        res.json(data);
-      });
-    });
-  } catch (error) {
-    console.error('An error occurred:', error);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-}
-
-
-
-  
 function parameter(req, res) {
   try {
     const timeInterval = req.params.interval;
@@ -740,62 +402,6 @@ function fetchCompanyDetails(req, res) {
     res.json({ companyDetails: company });
   });
 }
-
-  // function fetchCounts(req, res) {
-  //   const CompanyEmail = req.params.CompanyEmail;
-  //   const SuperAdminCountQuery = 'SELECT COUNT(*) AS standardUserCount FROM ems.ems_users WHERE companyemail = $1 AND usertype = "SuperAdmin"';
-  //   const adminCountQuery = 'SELECT COUNT(*) AS adminCount FROM ems.ems_users WHERE companyemail = $1 AND usertype = "Admin"';
-  //   const deviceCountQuery = 'SELECT COUNT(*) AS deviceCount FROM ems.ems_devices WHERE companyemail = $1';
-  //   const userCountQuery = 'SELECT COUNT(*) AS userCount FROM ems.ems_users WHERE companyemail = $1';
-  
-  //   try {
-  //     db.query(SuperAdminCountQuery, [CompanyEmail], (error, standardUserResult) => {
-  //       if (error) {
-  //         console.error('Error fetching standard user count:', error);
-  //         throw new Error('Internal server error');
-  //       }
-  
-  //       const SuperAdminCount = standardUserResult[0].SuperAdminCount;
-  
-  //       db.query(adminCountQuery, [CompanyEmail], (error, adminResult) => {
-  //         if (error) {
-  //           console.error('Error fetching admin count:', error);
-  //           throw new Error('Internal server error');
-  //         }
-  
-  //         const adminCount = adminResult[0].adminCount;
-  
-  //         db.query(deviceCountQuery, [CompanyEmail], (error, deviceResult) => {
-  //           if (error) {
-  //             console.error('Error fetching device count:', error);
-  //             throw new Error('Internal server error');
-  //           }
-  
-  //           const deviceCount = deviceResult[0].deviceCount;
-  
-  //           db.query(userCountQuery, [CompanyEmail], (error, userResult) => {
-  //             if (error) {
-  //               console.error('Error fetching user count:', error);
-  //               throw new Error('Internal server error');
-  //             }
-  
-  //             const userCount = userResult[0].userCount;
-  
-  //             res.json({
-  //               SuperAdminCount: SuperAdminCount,
-  //               adminCount: adminCount,
-  //               deviceCount: deviceCount,
-  //               userCount: userCount,
-  //             });
-  //           });
-  //         });
-  //       });
-  //     });
-  //   } catch (error) {
-  //     console.error('Error occurred:', error);
-  //     res.status(500).json({ message: 'Internal server error' });
-  //   }
-  // }
   
   
   function usermanagement(req, res) {
@@ -1215,6 +821,54 @@ function unreadnotification(req, res) {
       }
     }
     
+    function Block(req, res) {
+      const { userid } = req.params;
+      const { action } = req.body;
+      
+      if (action !== 'block' && action !== 'unblock') {
+        return res.status(400).json({ message: 'Invalid action. Use "block" or "unblock".' });
+      }
+    
+      const blockValue = action === 'block' ? 1 : 0;
+    
+      // Check if the user is already blocked or unblocked
+      const checkQuery = 'SELECT block FROM ems.ems_users WHERE userid = $1';
+    
+      db.query(checkQuery, [userid], (checkError, checkResult) => {
+        if (checkError) {
+          console.error(`Error checking user block status:`, checkError);
+          return res.status(500).json({ message: 'Error checking user block status' });
+        }
+    
+        if (!checkResult || checkResult.rows.length === 0) {
+          return res.status(404).json({ message: 'User not found' });
+        }
+    
+        const currentBlockStatus = checkResult.rows[0].block;
+    
+        if (currentBlockStatus === blockValue) {
+          const statusMessage = blockValue === 1 ? 'already blocked' : 'already unblocked';
+          return res.status(200).json({ message: `User is ${statusMessage}` });
+        }
+    
+        // User is not in the desired block state; update the block status
+        const updateQuery = 'UPDATE ems.ems_users SET block = $1 WHERE userid = $2';
+    
+        db.query(updateQuery, [blockValue, userid], (updateError, updateResult) => {
+          if (updateError) {
+            console.error(`Error during user ${action}ing:`, updateError);
+            return res.status(500).json({ message: `Error ${action}ing user` });
+          }
+    
+          if (!updateResult || updateResult.rowCount === 0) {
+            return res.status(404).json({ message: 'User not found' });
+          }
+    
+          const successMessage = `User ${action}ed successfully`;
+          res.status(200).json({ message: successMessage });
+        });
+      });
+    }
 
 
 module.exports = {
@@ -1242,10 +896,10 @@ module.exports = {
   graph3,
   graph4,
   userByCompanyname,
-  parametersFilter,
   parameter,
   SumData,
   kwSumData,
   dev,
-  dwSumData
+  dwSumData,
+  Block
 };

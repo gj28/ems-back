@@ -13,9 +13,6 @@ const { v4: uuidv4 } = require('uuid');
 const { logExecution } = require('../api_usage');
 
 
-
-
-
 function userDevices(req, res) {
   const companyEmail = req.params.companyEmail;
   
@@ -292,90 +289,98 @@ function updatePassword(req, res) {
   });
 }
 
-
-function getDataByTimeInterval(req, res) {
+function parametersFilter(req, res) {
   try {
-    const deviceId = req.params.deviceuid;
-    const timeInterval = req.query.interval;
-    const averageField = req.query.averageField;
+    const deviceid = req.params.deviceid;
+    const parameter = req.params.parameter;
+    const timeInterval = req.params.interval;
 
-    // Define mapping for time intervals to duration and table name
-    const intervalMapping = {
-      '30sec': { duration: 30 * 1000, tableName: 'interval_min' },
-      '1min': { duration: 60 * 1000, tableName: 'interval_min' },
-      // Add other intervals here
-    };
-
-    // Validate the selected time interval
-    const intervalInfo = intervalMapping[timeInterval];
-    if (!intervalInfo) {
-      return res.status(400).json({ message: 'Invalid time interval' });
+    if (!deviceid || !parameter || !timeInterval) {
+      return res.status(400).json({ message: 'Invalid device ID, parameter, or time interval' });
     }
 
-    const { duration, tableName } = intervalInfo;
+    let duration;
+    switch (timeInterval) {
+      case '15min':
+        duration = '15 minutes';
+        break;
+        case '30min':
+        duration = '30 minutes';
+        break;
+      case '1hour':
+        duration = '1 hours';
+        break;
+      case '12hour':
+        duration = '12 hours';
+        break;
+      case '1day':
+        duration = '1 day';
+        break;
+      case '7day':
+        duration = '7 days';
+        break;
+      case '30day':
+        duration = '30 days';
+        break;
+      case '1year':
+        duration = '1 year';
+        break;
+      default:
+        return res.status(400).json({ message: 'Invalid time interval' });
+      }
 
-    const now = new Date();
-    const startTime = new Date(now - duration);
+    const parameterList = parameter.split(',').map(param => param.trim());
 
-    const sql = `SELECT * FROM ems.${tableName} WHERE deviceuid = $1 AND "timestamp" >= $2`;
-    db.query(sql, [deviceId, startTime.toISOString()], (error, results) => {
-      if (error) {
-        console.error('Error fetching data:', error);
+    const parameterExistsQuery = `
+      SELECT column_name
+      FROM information_schema.columns
+      WHERE table_name = 'ems_actual_data'
+      AND column_name = ANY($1::text[])
+    `;
+
+    db.query(parameterExistsQuery, [parameterList], (paramError, paramResult) => {
+      if (paramError) {
+        console.error('Error checking parameters:', paramError);
         return res.status(500).json({ message: 'Internal server error' });
       }
 
-      const dataRows = results.rows;
+      const existingParameters = paramResult.rows.map(row => row.column_name);
 
-      if (averageField) {
-        // Calculate average values within each time interval
-        const aggregatedData = {};
+      const validParameters = parameterList.filter(param => existingParameters.includes(param));
+      const invalidParameters = parameterList.filter(param => !existingParameters.includes(param));
 
-        dataRows.forEach(row => {
-          const timestamp = new Date(row.timestamp).getTime();
-          const intervalStart = Math.floor(timestamp / duration) * duration;
-          const intervalEnd = intervalStart + duration;
+      if (invalidParameters.length > 0) {
+        console.error('Invalid parameters:', invalidParameters);
+        return res.status(400).json({ message: 'Invalid parameters' });
+      }
 
-          if (!aggregatedData[intervalStart]) {
-            aggregatedData[intervalStart] = {
-              count: 0,
-              totalValue: 0,
-            };
-          }
+      const parameterColumns = validParameters.map(param => `"${param.trim().toLowerCase()}"`).join(', ');
 
-          if (timestamp >= intervalStart && timestamp < intervalEnd) {
-            aggregatedData[intervalStart].count++;
-            aggregatedData[intervalStart].totalValue += row[averageField];
-          }
-        });
+      const sql = `
+        SELECT "timestamp", ${parameterColumns}
+        FROM ems.ems_actual_data
+        WHERE timestamp >= NOW() - INTERVAL '${duration}'
+        AND deviceid = $1`;
 
-        // Prepare aggregated response data
-        const aggregatedResponseData = [];
-
-        for (const intervalStart in aggregatedData) {
-          const intervalAverage =
-            aggregatedData[intervalStart].totalValue / aggregatedData[intervalStart].count;
-          aggregatedResponseData.push({
-            intervalStart: new Date(parseInt(intervalStart)).toISOString(),
-            average: intervalAverage,
-          });
+      db.query(sql, [deviceid], (error, results) => {
+        if (error) {
+          console.error('Error fetching data:', error);
+          return res.status(500).json({ message: 'Internal server error' });
         }
 
-        res.json(aggregatedResponseData);
-      } else {
-        // Return raw data within the time range
-        const responseData = {
-          data: dataRows,
-        };
+        const data = results.rows.map(row => ({
+          name: validParameters,
+          data: row
+        }));
 
-        res.json(responseData);
-      }
+        res.json(data);
+      });
     });
   } catch (error) {
     console.error('An error occurred:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 }
-
 
 function getDataByCustomDate(req, res) {
   try {
@@ -384,7 +389,7 @@ function getDataByCustomDate(req, res) {
     const startDate = new Date(req.query.start);
     const endDate = new Date(req.query.end);
 
-    if (!startDate || !endDate || isNaN(startDate) || isNaN(endDate)) {
+    if (!startDate.getTime() || !endDate.getTime()) {
       return res.status(400).json({ message: 'Invalid date parameters' });
     }
 
@@ -436,7 +441,6 @@ function getDataByCustomDate(req, res) {
   }
 }
 
-
 function getDeviceDetails(req, res) {
   try {
     const deviceId = req.params.deviceId;
@@ -463,30 +467,6 @@ function getDeviceDetails(req, res) {
   }
 }
 
-// function getUserData(req, res) {
-//   try {
-//     const userId = req.params.userId;
-
-//     const userDetailsQuery = 'SELECT * FROM ems.ems_users WHERE UserId = $1';
-//     db.query(userDetailsQuery, [userId], (error, userDetail) => {
-//       if (error) {
-//         console.error('Error fetching User:', error);
-//         return res.status(500).json({ message: 'Internal server error' });
-//       }
-
-//       if (userDetail.rows.length === 0) {
-//         return res.status(404).json({ message: 'User details not found' });
-//       }
-
-//       const userData = userDetail.rows[0];
-//       res.status(200).json([userData]);
-//     });
-//   } catch (error) {
-//     console.error('An error occurred:', error);
-//     res.status(500).json({ message: 'Internal server error' });
-//   }
-// }
-
 function getUserData(req, res) {
   try {
     const userId = req.params.userId;
@@ -504,106 +484,6 @@ function getUserData(req, res) {
 
       const userData = userDetail.rows[0];
       res.status(200).json(userData);
-    });
-  } catch (error) {
-    console.error('An error occurred:', error);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-}
-
-
-function insertNewMessage(req, res) {
-  try {
-    const { sender, receiver, message } = req.body;
-    const timestamp = new Date().toISOString();
-    const isRead = 0; // Assuming the initial value for isRead is 0 (false)
-
-    const insertQuery = 'INSERT INTO ems_notifications (sender, receiver, message, timestamp, isRead) VALUES ($1, $2, $3, $4, $5)';
-    db.query(insertQuery, [sender, receiver, message, timestamp, isRead], (error, result) => {
-      if (error) {
-        console.error('Error inserting new message:', error);
-        return res.status(500).json({ message: 'Internal server error' });
-      }
-
-      const insertedMessage = {
-        sender,
-        receiver,
-        message,
-        timestamp,
-        isRead
-      };
-
-      res.status(201).json({message : 'Message Send SuccessFully'});
-    });
-  } catch (error) {
-    console.error('An error occurred:', error);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-}
-
-
-function markMessageAsRead(req, res) {
-  try {
-    const messageId = req.params.messageId;
-
-    const updateQuery = 'UPDATE ems_notifications SET isRead = 1 WHERE msgid = ?';
-    db.query(updateQuery, [messageId], (error, result) => {
-      if (error) {
-        console.error('Error updating message status:', error);
-        return res.status(500).json({ message: 'Internal server error' });
-      }
-
-      if (result.affectedRows === 0) {
-        return res.status(404).json({ message: 'Message not found' });
-      }
-
-      res.status(200).json({ message: 'Message marked as read' });
-    });
-  } catch (error) {
-    console.error('An error occurred:', error);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-}
-
-
-function deleteMessage(req, res) {
-  try {
-    const messageId = req.params.messageId;
-
-    const deleteQuery = 'DELETE FROM ems_notifications WHERE msgid = ?';
-    db.query(deleteQuery, [messageId], (error, result) => {
-      if (error) {
-        console.error('Error deleting message:', error);
-        return res.status(500).json({ message: 'Internal server error' });
-      }
-
-      if (result.affectedRows === 0) {
-        return res.status(404).json({ message: 'Message not found' });
-      }
-
-      res.status(200).json({ message: 'Message deleted' });
-    });
-  } catch (error) {
-    console.error('An error occurred:', error);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-}
-
-
-function countUnreadMessages(req, res) {
-  try {
-    const receiver = req.params.receiver;
-
-    const countQuery = 'SELECT COUNT(*) AS unreadCount FROM ems_notifications WHERE receiver = ? AND isRead = 0';
-    db.query(countQuery, [receiver], (error, result) => {
-      if (error) {
-        console.error('Error counting unread messages:', error);
-        return res.status(500).json({ message: 'Internal server error' });
-      }
-
-      const unreadCount = result[0].unreadCount;
-
-      res.status(200).json({ unreadCount });
     });
   } catch (error) {
     console.error('An error occurred:', error);
@@ -687,14 +567,10 @@ module.exports = {
   companyDetails,
   personalDetails,
   updatePassword,
-  getDataByTimeInterval,
   getDataByCustomDate,
+  parametersFilter,
   getDeviceDetails,
   getUserData,
-  insertNewMessage,
-  markMessageAsRead,
-  deleteMessage,
-  countUnreadMessages,
   getUserMessages,
   fetchCompanyUser,
   addDevice
