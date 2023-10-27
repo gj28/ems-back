@@ -10,7 +10,7 @@ const path = require('path');
 const ejs = require('ejs');
 const moment = require('moment-timezone');
 const { v4: uuidv4 } = require('uuid');
-const { logExecution } = require('../api_usage');
+const { logExecution } = require('../graph/graph');
 
 
 function userDevices(req, res) {

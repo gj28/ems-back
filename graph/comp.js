@@ -1,19 +1,10 @@
-const { Pool } = require('pg');
-
-const dbConfig = {
-  host: 'ec2-3-108-57-100.ap-south-1.compute.amazonaws.com',
-  user: 'gaurav',
-  password: 'gaurav123',
-  database: 'postgres',
-};
-
-const pool = new Pool(dbConfig);
+const db = require('../db');
 
 function updateCompanyInfo() {
   const getCompanyNamesQuery = 'SELECT DISTINCT "companyname" FROM "ems"."ems_users"';
 
   try {
-    pool.connect((err, client, done) => {
+    db.connect((err, client, done) => {
       if (err) {
         console.error('Error getting a database connection:', err);
         return;
@@ -78,7 +69,6 @@ function calculateCompanyStatistics(client, companyName, done) {
             if (err) {
               console.error(`Error inserting company data for ${companyName}:`, err);
             }
-            done(); 
           });
         });
       });

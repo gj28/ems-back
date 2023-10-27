@@ -1,4 +1,4 @@
-const db = require('./db');
+const db = require('../db');
 
 function extractIPv4(ipv6MappedAddress) {
   const parts = ipv6MappedAddress.split(':');

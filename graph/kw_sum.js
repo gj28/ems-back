@@ -1,13 +1,4 @@
-const { Pool } = require('pg');
-
-const dbConfig = {
-  host: 'ec2-3-108-57-100.ap-south-1.compute.amazonaws.com',
-  user: 'gaurav',
-  password: 'gaurav123',
-  database: 'postgres',
-};
-
-const pool = new Pool(dbConfig);
+const db = require('../db');
 
 function kw_sum() {
     try {
@@ -18,7 +9,7 @@ function kw_sum() {
 
         const deviceIdsQuery = 'SELECT DISTINCT deviceid FROM ems.ems_actual_data;';
 
-        pool.query(deviceIdsQuery, (deviceIdsError, deviceIdsResult) => {
+        db.query(deviceIdsQuery, (deviceIdsError, deviceIdsResult) => {
             if (deviceIdsError) {
                 console.error('Error fetching unique device IDs:', deviceIdsError);
                 return;
@@ -36,7 +27,7 @@ function kw_sum() {
                 FROM ems.ems_actual_data
                 WHERE timestamp >= $1 AND timestamp <= $2 AND deviceid = $3;`;
 
-                pool.query(monthSumQuery, [firstDayOfPreviousMonth, lastDayOfPreviousMonth, deviceID], (monthError, monthResult) => {
+                db.query(monthSumQuery, [firstDayOfPreviousMonth, lastDayOfPreviousMonth, deviceID], (monthError, monthResult) => {
                     if (monthError) {
                         console.error(`Error fetching data for the previous month for device ${deviceID}:`, monthError);
                         return;
@@ -51,7 +42,7 @@ function kw_sum() {
                     FROM ems.ems_actual_data
                     WHERE timestamp >= $1 AND deviceid = $2;`;
 
-                    pool.query(last24HoursSumQuery, [last24Hours, deviceID], (last24HoursError, last24HoursResult) => {
+                    db.query(last24HoursSumQuery, [last24Hours, deviceID], (last24HoursError, last24HoursResult) => {
                         if (last24HoursError) {
                             console.error(`Error fetching data for the last 24 hours for device ${deviceID}:`, last24HoursError);
                             return;
@@ -65,7 +56,7 @@ function kw_sum() {
 
                         const currentDate = new Date();
 
-                        pool.query(insertQuery, [deviceID, total_kw_month, total_kvar_month, total_kw_24_hours, total_kvar_24_hours, currentDate], (insertError) => {
+                        db.query(insertQuery, [deviceID, total_kw_month, total_kvar_month, total_kw_24_hours, total_kvar_24_hours, currentDate], (insertError) => {
                             if (insertError) {
                                 console.error(`Error inserting data for device ${deviceID}:`, insertError);
                             }

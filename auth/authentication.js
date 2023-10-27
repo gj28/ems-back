@@ -7,7 +7,7 @@ const nodemailer = require('nodemailer');
 const fs = require('fs');
 const path = require('path');
 const ejs = require('ejs');
-const { logExecution } = require('../api_usage');
+const { logExecution } = require('../graph/graph');
 const { v4: uuidv4 } = require('uuid');
 
 // Function to handle user registration

@@ -4,12 +4,12 @@ const router = require('./routes');
 const limitter = require('express-rate-limit');
 const fs = require('fs');
 const bodyParser = require('body-parser');
-const audit_logs = require('./graphlogs');
+const audit_logs = require('./graph/graphlogs');
 const SA = require('./superadmin/SA');
-const graph1=require('./graph_sms');
-const graph2=require('./graph');
-const sum=require('./sum');
-const kwsum=require('./kw_sum');
+const graph1=require('./graph/graph_sms');
+const graph2=require('./graph/graph');
+const sum=require('./graph/sum');
+const kwsum=require('./graph/kw_sum');
 //const dwsum=require('./mdsum');
 
 //const { checkState } = require('./SMS/smsController');

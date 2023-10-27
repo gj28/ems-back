@@ -1,13 +1,4 @@
-const { Pool } = require('pg');
-
-const dbConfig = {
-  host: 'ec2-3-108-57-100.ap-south-1.compute.amazonaws.com',
-  user: 'gaurav',
-  password: 'gaurav123',
-  database: 'postgres',
-};
-
-const pool = new Pool(dbConfig);
+const db = require('../db');
 
 function storeLastMonthAndDaySum() {
     try {
@@ -16,7 +7,7 @@ function storeLastMonthAndDaySum() {
 
         const deviceIdsQuery = 'SELECT DISTINCT deviceid FROM ems.ems_actual_data;';
 
-        pool.query(deviceIdsQuery, (deviceIdsError, deviceIdsResult) => {
+        db.query(deviceIdsQuery, (deviceIdsError, deviceIdsResult) => {
             if (deviceIdsError) {
                 console.error('Error fetching unique device IDs:', deviceIdsError);
                 return;
@@ -35,7 +26,7 @@ function storeLastMonthAndDaySum() {
             FROM ems.ems_actual_data
             WHERE timestamp >= $1 AND deviceid = $2;`;
 
-                pool.query(monthSumQuery, [oneMonthAgo, deviceID], (monthError, monthResult) => {
+            db.query(monthSumQuery, [oneMonthAgo, deviceID], (monthError, monthResult) => {
                     if (monthError) {
                         console.error(`Error fetching last month sum for device ${deviceID}:`, monthError);
                         return;
@@ -55,7 +46,7 @@ function storeLastMonthAndDaySum() {
               FROM ems.ems_actual_data
               WHERE timestamp >= $1 AND deviceid = $2;`;
 
-                    pool.query(daySumQuery, [lastDay, deviceID], (dayError, dayResult) => {
+              db.query(daySumQuery, [lastDay, deviceID], (dayError, dayResult) => {
                         if (dayError) {
                             console.error(`Error fetching last day's sum for device ${deviceID}:`, dayError);
                             return;
@@ -68,7 +59,7 @@ function storeLastMonthAndDaySum() {
 
                         const currentDate = new Date();
 
-                        pool.query(insertQuery, [deviceID, max_kw, max_kvar, max_kva, max_kw_day, max_kvar_day, max_kva_day, currentDate], (insertError) => {
+                        db.query(insertQuery, [deviceID, max_kw, max_kvar, max_kva, max_kw_day, max_kvar_day, max_kva_day, currentDate], (insertError) => {
                             if (insertError) {
                                 console.error(`Error inserting into sum_table for device ${deviceID}:`, insertError);
                             }

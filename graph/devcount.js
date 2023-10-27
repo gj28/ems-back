@@ -1,4 +1,4 @@
-const db = require('./db');
+const db = require('../db');
 
 function updateDeviceInfo() {
   const activeDeviceCountQuery = 'SELECT COUNT(*) as active_device_count FROM ems.ems_devices WHERE status IN ($1, $2)';

@@ -3,7 +3,7 @@ const router = express.Router();
 const authentication = require('./auth/authentication');
 const dashboard = require('./dash/dashboard.js');
 const limitter = require('express-rate-limit');
-const logs = require('./graphlogs');
+const logs = require('./graph/graphlogs');
 const SA = require('./superadmin/SA.js');
 
 const registerLimitter = limitter({
@@ -67,10 +67,12 @@ router.get('/alarms', SA.alarms);
 router.get('/allnotification', SA.allnotification);
 router.get('/unreadnotification', SA.unreadnotification);
 router.get('/userByCompanyname/:company_name', SA.userByCompanyname);
-router.get('/parameters/:interval/:parameter', SA.parameter);
+//router.get('/parameters/:interval/:parameter/:deviceid', SA.parameter);
+router.get('/parameter/:deviceid/:parameter/:interval', SA.parameter);
 router.get('/sum/:deviceid', SA.SumData);
 router.get('/kwsum/:deviceid', SA.kwSumData);
 router.get('/dwsum', SA.dwSumData);
+router.get('/parametersFilter/:deviceid/:parameter/:interval', dashboard.parametersFilter);
 //router.get('/fetchCounts/:CompanyEmail', SA.fetchCounts);
 
 //SA post/put/delete route
