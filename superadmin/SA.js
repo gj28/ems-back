@@ -8,102 +8,107 @@ const fs = require('fs');
 const path = require('path');
 const ejs = require('ejs');
 
-  function parameter(req, res) {
-      try {
-        const deviceid = req.params.deviceid;
-        const parameter = req.params.parameter;
-        const timeInterval = req.params.interval;
-    
-        if (!deviceid || !parameter || !timeInterval) {
-          return res.status(400).json({ message: 'Invalid device ID, parameter, or time interval' });
-        }
-    
-        let duration;
-        switch (timeInterval) {
-          case '15min':
-            duration = '15 minutes';
-            break;
-          case '30min':
-            duration = '30 minutes';
-            break;
-          case '1hour':
-            duration = '1 hour';
-            break;
-          case '12hour':
-            duration = '12 hours';
-            break;
-          case '1day':
-            duration = '1 day';
-            break;
-          case '7day':
-            duration = '7 days';
-            break;
-          case '30day':
-            duration = '30 days';
-            break;
-          case '1year':
-            duration = '1 year';
-            break;
-          default:
-            return res.status(400).json({ message: 'Invalid time interval' });
-        }
-    
-        const parameterList = parameter.split(',').map(param => param.trim());
-    
-        const parameterExistsQuery = `
-          SELECT column_name
-          FROM information_schema.columns
-          WHERE table_name = 'ems_actual_data'
-          AND column_name = ANY($1::text[])
-        `;
-    
-        db.query(parameterExistsQuery, [parameterList], (paramError, paramResult) => {
-          if (paramError) {
-            console.error('Error checking parameters:', paramError);
-            return res.status(500).json({ message: 'Internal server error' });
-          }
-    
-          const existingParameters = paramResult.rows.map(row => row.column_name);
-    
-          const validParameters = parameterList.filter(param => existingParameters.includes(param));
-          const invalidParameters = parameterList.filter(param => !existingParameters.includes(param));
-    
-          if (invalidParameters.length > 0) {
-            console.error('Invalid parameters:', invalidParameters);
-            return res.status(400).json({ message: 'Invalid parameters' });
-          }
-    
-          const parameterColumns = validParameters.map(param => `"${param.trim().toLowerCase()}"`).join(', ');
-    
-          const sql = `
-            SELECT "timestamp", ${parameterColumns}
-            FROM ems.ems_actual_data
-            WHERE timestamp >= NOW() - INTERVAL '${duration}'
-            AND deviceid = $1`;
-    
-          db.query(sql, [deviceid], (error, results) => {
-            if (error) {
-              console.error('Error fetching data:', error);
-              return res.status(500).json({ message: 'Internal server error' });
-            }
-    
-            const data = results.rows;
-            const parameterValues = {};
-    
-            validParameters.forEach(param => {
-              const paramData = data.map(row => parseFloat(row[param]));
-              parameterValues[param] = paramData;
-            });
-    
-            res.json(parameterValues);
-          });
-        });
-      } catch (error) {
-        console.error('An error occurred:', error);
-        res.status(500).json({ message: 'Internal server error' });
-      }
+function parameter(req, res) {
+  try {
+    const deviceid = req.params.deviceid;
+    const parameter = req.params.parameter;
+    const timeInterval = req.params.interval;
+
+    if (!deviceid || !parameter || !timeInterval) {
+      return res.status(400).json({ message: 'Invalid device ID, parameter, or time interval' });
     }
-    
+
+    let duration;
+    switch (timeInterval) {
+      case '15min':
+        duration = '15 minutes';
+        break;
+      case '30min':
+        duration = '30 minutes';
+        break;
+      case '1hour':
+        duration = '1 hour';
+        break;
+      case '12hour':
+        duration = '12 hours';
+        break;
+      case '1day':
+        duration = '1 day';
+        break;
+      case '7day':
+        duration = '7 days';
+        break;
+      case '30day':
+        duration = '30 days';
+        break;
+      case '1year':
+        duration = '1 year';
+        break;
+      default:
+        return res.status(400).json({ message: 'Invalid time interval' });
+    }
+
+    const parameterList = parameter.split(',').map(param => param.trim());
+
+    const parameterExistsQuery = `
+      SELECT column_name
+      FROM information_schema.columns
+      WHERE table_name = 'ems_actual_data'
+      AND column_name = ANY($1::text[])
+    `;
+
+    db.query(parameterExistsQuery, [parameterList], (paramError, paramResult) => {
+      if (paramError) {
+        console.error('Error checking parameters:', paramError);
+        return res.status(500).json({ message: 'Internal server error' });
+      }
+
+      const existingParameters = paramResult.rows.map(row => row.column_name);
+
+      const validParameters = parameterList.filter(param => existingParameters.includes(param));
+      const invalidParameters = parameterList.filter(param => !existingParameters.includes(param));
+
+      if (invalidParameters.length > 0) {
+        console.error('Invalid parameters:', invalidParameters);
+        return res.status(400).json({ message: 'Invalid parameters' });
+      }
+
+      const parameterColumns = validParameters.map(param => `"${param.trim().toLowerCase()}"`).join(', ');
+
+      const sql = `
+        SELECT "timestamp", ${parameterColumns}
+        FROM ems.ems_actual_data
+        WHERE timestamp >= NOW() - INTERVAL '${duration}'
+        AND deviceid = $1
+      `;
+
+      db.query(sql, [deviceid], (error, results) => {
+        if (error) {
+          console.error('Error fetching data:', error);
+          return res.status(500).json({ message: 'Internal server error' });
+        }
+
+        const data = results.rows;
+        const responseData = [];
+
+        data.forEach(row => {
+          const entry = {
+            timestamp: row.timestamp,
+          };
+          validParameters.forEach(param => {
+            entry[param] = parseFloat(row[param]);
+          });
+          responseData.push(entry);
+        });
+
+        res.json(responseData);
+      });
+    });
+  } catch (error) {
+    console.error('An error occurred:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}
     
 
 function alarms(req, res) {

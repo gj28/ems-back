@@ -51,7 +51,7 @@ mqttClient.on('connect', () => {
 
   for (let i = 1; i <= 9; i++) {
     const deviceid = `SL0120230${i}`;
-    const topic = `ems/data/${deviceid}`;
+    const topic = `ems/${deviceid}`;
     mqttClient.subscribe(topic, (error) => {
       if (error) {
         console.error(`Error subscribing to ${topic}:`, error);
@@ -146,7 +146,7 @@ mqttClient.on('message', (topic, message) => {
 
     pgClient.query(insertQuery, insertValues)
       .then(() => {
-        //console.log('Data inserted into PostgreSQL');
+        console.log('Data inserted into PostgreSQL');
       })
       .catch((error) => {
         console.error('Error inserting data into PostgreSQL:', error);
