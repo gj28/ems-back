@@ -39,15 +39,15 @@ function fetchDataAndPublish(deviceId) {
             if (err) {
               console.error('MQTT publish error:', err);
             } else {
-              console.log(`Published data to topic: ${topic}`);
+              //console.log(`Published data to topic: ${topic}`);
               lastPublishedTableIDs[deviceId] = data.id;
             }
           });
         } else {
-          console.log(`No new data for ${deviceId} or same table ID. Skipping publish.`);
+          //console.log(`No new data for ${deviceId} or same table ID. Skipping publish.`);
         }
       } else {
-        console.log(`No data found for device: ${deviceId}`);
+        //console.log(`No data found for device: ${deviceId}`);
       }
     })
     .catch((error) => {
