@@ -95,7 +95,6 @@ function register(req, res) {
                   companyId,
                   companyEmail,
                   contact,
-                  location,
                   'Admin',
                   personalEmail,
                   hashedPassword,
