@@ -13,7 +13,7 @@ const { v4: uuidv4 } = require('uuid');
 // Function to handle user registration
 function register(req, res) {
   const {
-    companyName,
+    companyId,
     companyEmail,
     contact,
     location,
@@ -84,7 +84,7 @@ function register(req, res) {
 
               // Insert the user into the database
               const insertQuery =
-                'INSERT INTO ems.ems_users (UserId, Username, FirstName, LastName, CompanyName, CompanyEmail, ContactNo, Location, UserType, personalemail, Password, Designation, VerificationToken, verified) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)';
+                'INSERT INTO ems.ems_users (UserId, Username, FirstName, LastName, companyid, CompanyEmail, ContactNo, Location, UserType, personalemail, Password, Designation, VerificationToken, verified) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)';
               db.query(
                 insertQuery,
                 [
@@ -92,7 +92,7 @@ function register(req, res) {
                   personalEmail,
                   firstName,
                   lastName,
-                  companyName,
+                  companyId,
                   companyEmail,
                   contact,
                   location,
@@ -153,10 +153,9 @@ function register(req, res) {
 
 function register_dashboard(req, res) {
   const {
-    companyName,
+    companyId,
     companyEmail,
     contact,
-    location,
     firstName,
     lastName,
     personalEmail,
@@ -224,7 +223,7 @@ function register_dashboard(req, res) {
 
               // Insert the user into the database
               const insertQuery =
-                'INSERT INTO ems.ems_users (UserId, Username, FirstName, LastName, CompanyName, CompanyEmail, ContactNo, Location, UserType, personalemail, Password, Designation, VerificationToken, verified) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)';
+                'INSERT INTO ems.ems_users (UserId, Username, FirstName, LastName, companyid, CompanyEmail, ContactNo, UserType, personalemail, Password, Designation, VerificationToken, verified) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)';
               db.query(
                 insertQuery,
                 [
@@ -232,10 +231,9 @@ function register_dashboard(req, res) {
                   personalEmail,
                   firstName,
                   lastName,
-                  companyName,
+                  companyId,
                   companyEmail,
                   contact,
-                  location,
                   'Admin',
                   personalEmail,
                   hashedPassword,
