@@ -16,7 +16,6 @@ function register(req, res) {
     companyId,
     companyEmail,
     contact,
-    location,
     firstName,
     lastName,
     personalEmail,
@@ -84,7 +83,7 @@ function register(req, res) {
 
               // Insert the user into the database
               const insertQuery =
-                'INSERT INTO ems.ems_users (UserId, Username, FirstName, LastName, companyid, CompanyEmail, ContactNo, Location, UserType, personalemail, Password, Designation, VerificationToken, verified) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)';
+                'INSERT INTO ems.ems_users (UserId, Username, FirstName, LastName, companyid, CompanyEmail, ContactNo, UserType, personalemail, Password, Designation, VerificationToken, verified) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)';
               db.query(
                 insertQuery,
                 [
