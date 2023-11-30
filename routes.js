@@ -80,7 +80,8 @@ router.post('/addDevice', SA.addDevice);
 router.put('/updateDevice/:deviceUID', SA.updateDevice);
 router.put('/blockuser/:userid/', SA.Block);
 router.delete('/deleteDevice/:deviceUID', SA.deleteDevice);
-router.delete('/removeUser/:userId', SA.removeUser);
+router.post('/recoverUser/:userid', SA.recoverUser);
+router.delete('/deleteUser/:userid', SA.deleteUser);
 
 
 //SA graph route

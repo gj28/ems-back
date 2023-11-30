@@ -914,6 +914,136 @@ function unreadnotification(req, res) {
       });
     }
 
+    function deleteUser(req, res) {
+      const { userid } = req.params;
+    
+      const checkQuery = 'SELECT * FROM ems.ems_users WHERE userid = $1';
+    
+      db.query(checkQuery, [userid], (checkError, checkResult) => {
+        if (checkError) {
+          console.error(`Error checking user existence:`, checkError);
+          return res.status(500).json({ message: 'Error checking user existence' });
+        }
+    
+        if (!checkResult || checkResult.rows.length === 0) {
+          return res.status(404).json({ message: 'User not found' });
+        }
+    
+        const userToArchive = checkResult.rows[0];
+        const deleteQuery = 'DELETE FROM ems.ems_users WHERE userid = $1';
+    
+        db.query(deleteQuery, [userid], (deleteError, deleteResult) => {
+          if (deleteError) {
+            console.error(`Error deleting user:`, deleteError);
+            return res.status(500).json({ message: 'Error deleting user' });
+          }
+    
+          if (!deleteResult || deleteResult.rowCount === 0) {
+            return res.status(404).json({ message: 'User not found' });
+          }
+    
+          const archiveQuery =
+            'INSERT INTO ems.ems_del (userid, username, firstname, lastname, companyid, companyemail, contactno, usertype, personalemail, "password", designation, verificationtoken, verified, block, is_online) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)';
+    
+          db.query(
+            archiveQuery,
+            [
+              userToArchive.userid,
+              userToArchive.username,
+              userToArchive.firstname,
+              userToArchive.lastname,
+              userToArchive.companyid,
+              userToArchive.companyemail,
+              userToArchive.contactno,
+              userToArchive.usertype,
+              userToArchive.personalemail,
+              userToArchive.password,
+              userToArchive.designation,
+              userToArchive.verificationtoken,
+              userToArchive.verified,
+              userToArchive.block,
+              userToArchive.is_online,
+            ],
+            (archiveError, archiveResult) => {
+              if (archiveError) {
+                console.error(`Error archiving user:`, archiveError);
+              }
+    
+              const successMessage = 'User deleted and archived successfully';
+              res.status(200).json({ message: successMessage });
+            }
+          );
+        });
+      });
+    }
+    
+
+    function recoverUser(req, res) {
+      const { userid } = req.params;
+    
+      const checkArchiveQuery = 'SELECT * FROM ems.user_archive WHERE userid = $1';
+    
+      db.query(checkArchiveQuery, [userid], (archiveCheckError, archiveCheckResult) => {
+        if (archiveCheckError) {
+          console.error(`Error checking user existence in archive:`, archiveCheckError);
+          return res.status(500).json({ message: 'Error checking user existence in archive' });
+        }
+    
+        if (!archiveCheckResult || archiveCheckResult.rows.length === 0) {
+          return res.status(404).json({ message: 'User not found in the archive' });
+        }
+    
+        const userToRecover = archiveCheckResult.rows[0];
+    
+        const deleteFromArchiveQuery = 'DELETE FROM ems.user_archive WHERE userid = $1';
+    
+        db.query(deleteFromArchiveQuery, [userid], (deleteFromArchiveError, deleteFromArchiveResult) => {
+          if (deleteFromArchiveError) {
+            console.error(`Error deleting user from archive:`, deleteFromArchiveError);
+            return res.status(500).json({ message: 'Error deleting user from archive' });
+          }
+    
+          if (!deleteFromArchiveResult || deleteFromArchiveResult.rowCount === 0) {
+            return res.status(404).json({ message: 'User not found in the archive' });
+          }
+    
+          const recoverQuery =
+            'INSERT INTO ems.ems_users (userid, username, firstname, lastname, companyid, companyemail, contactno, usertype, personalemail, "password", designation, verificationtoken, verified, block, is_online) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)';
+    
+          db.query(
+            recoverQuery,
+            [
+              userToRecover.userid,
+              userToRecover.username,
+              userToRecover.firstname,
+              userToRecover.lastname,
+              userToRecover.companyid,
+              userToRecover.companyemail,
+              userToRecover.contactno,
+              userToRecover.usertype,
+              userToRecover.personalemail,
+              userToRecover.password,
+              userToRecover.designation,
+              userToRecover.verificationtoken,
+              userToRecover.verified,
+              userToRecover.block,
+              userToRecover.is_online,
+            ],
+            (recoverError, recoverResult) => {
+              if (recoverError) {
+                console.error(`Error recovering user:`, recoverError);
+                
+                return res.status(500).json({ message: 'Error recovering user' });
+              }
+    
+              const successMessage = 'User recovered and added back to the main table successfully';
+              res.status(200).json({ message: successMessage });
+            }
+          );
+        });
+      });
+    }
+    
 
 module.exports = {
   fetchAllUsers,
@@ -945,5 +1075,8 @@ module.exports = {
   kwSumData,
   dev,
   dwSumData,
-  Block
+  Block,  
+  recoverUser,
+  deleteUser
+
 };
