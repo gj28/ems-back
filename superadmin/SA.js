@@ -943,7 +943,7 @@ function unreadnotification(req, res) {
           }
     
           const archiveQuery =
-            'INSERT INTO ems.ems_del (userid, username, firstname, lastname, companyid, companyemail, contactno, usertype, personalemail, "password", designation, verificationtoken, verified, block, is_online) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)';
+            'INSERT INTO ems.ems_archived (userid, username, firstname, lastname, companyid, companyemail, contactno, usertype, personalemail, "password", designation, verificationtoken, verified, block, is_online) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)';
     
           db.query(
             archiveQuery,

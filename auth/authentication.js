@@ -367,10 +367,6 @@ function sendTokenEmail(email, token) {
   function login(req, res) {
     const { Username, Password } = req.body;
   
-    // Generate a UUID for tenant_id
-    const tenantId = uuidv4();
-    let errorOccurred = false;
-  
     // Check if the user exists in the database
     const query = 'SELECT * FROM ems.ems_users WHERE username = $1';
     db.query(query, [Username], (error, result) => {
@@ -380,20 +376,12 @@ function sendTokenEmail(email, token) {
         }
         const user = result.rows[0];
         if (!user) {
-          // Log the error and response
           console.error('User does not exist!');
-          logExecution('login', tenantId, 'ERROR', 'User does not exist!');
-          errorOccurred = true;
-  
           return res.status(401).json({ message: 'User does not exist!' });
         }
   
         if (user.verified === 0) {
-          // Log the error and response
           console.error('User is not verified. Please verify your account.');
-          logExecution('login', tenantId, 'ERROR', 'User is not verified. Please verify your account.');
-          errorOccurred = true; 
-  
           return res.status(401).json({ message: 'User is not verified. Please verify your account.' });
         }
   
@@ -405,40 +393,27 @@ function sendTokenEmail(email, token) {
             }
   
             if (!isPasswordValid) {
-              // Log the error and response
               console.error('Invalid credentials');
-              logExecution('login', tenantId, 'ERROR', 'Invalid credentials'); 
-              errorOccurred = true; 
-  
               return res.status(401).json({ message: 'Invalid credentials' });
             }
   
             // Generate a JWT token
             const token = jwtUtils.generateToken({ Username: user.username });
   
-            // Log the success and token generation if no error occurred
-            if (!errorOccurred) {
-              logExecution('login', tenantId, 'SUCCESS', 'Login successful');
-            }
-  
+            // Log the success if no error occurred
             res.json({ token });
           } catch (error) {
-            // Log the error and response
             console.error(error);
-            logExecution('login', tenantId, 'ERROR', 'Internal server error');
-  
             res.status(500).json({ message: 'Internal server error' });
           }
         });
       } catch (error) {
-        // Log the error and response
         console.error(error);
-        logExecution('login', tenantId, 'ERROR', 'Internal server error'); 
-  
         res.status(500).json({ message: 'Internal server error' });
       }
     });
   }
+  
   
   //working for specific user 
 
