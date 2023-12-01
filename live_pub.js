@@ -1,14 +1,15 @@
 const mqtt = require('mqtt');
+require('dotenv').config();
 const { Client } = require('pg');
 
 const broker = 'mqtt://broker.emqx.io';
 
 const dbConfig = {
-  host: '64.227.181.131',
-  user: 'postgres',
-  password: 'iotsenselive',
-  database: 'senselive_db',
-  port: 12440,
+  host: process.env.pub_host,
+  user: process.env.pub_user,
+  password: process.env.pub_password,
+  database: process.env.pub_database,
+  port: process.env.pub_port,
 };
 
 const pgClient = new Client(dbConfig);

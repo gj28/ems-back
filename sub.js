@@ -1,17 +1,18 @@
 const mqtt = require('mqtt');
 const { Client } = require('pg');
 const os = require('os');
+require('dotenv').config();
 
 // MQTT broker URL
 const broker = 'mqtt://broker.emqx.io';
 
 // PostgreSQL configuration
 const pgConfig = {
-  host: 'ec2-3-108-57-100.ap-south-1.compute.amazonaws.com',
-  user: 'gaurav',
-  password: 'gaurav123',
-  database: 'postgres',
-  port: 5432,
+  host: process.env.pub_host,
+  user: process.env.pub_user,
+  password: process.env.pub_password,
+  database: process.env.pub_database,
+  port: process.env.pub_port,
 };
 
 // Create a PostgreSQL client
