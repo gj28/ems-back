@@ -587,58 +587,37 @@ function temp(req, res) {
   });
 }
 
-function fetchFeeder(req, res) {
-  const CompanyName = req.params.CompanyName;
-  try {
-    const query = 'SELECT * FROM ems.ems_energy_usage where group_name = $1';
-    db.query(query, [CompanyName], (error, result) => {
-      if (error) {
-        throw new Error('Error fetching feeder');
-      }
-
-      res.status(200).json(result.rows);
-    });
-  } catch (error) {
-    console.error('Error fetching feeder:', error);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-}
-
-function fetchGroup(req, res) {
+function feeder(req, res) {
   const CompanyName = req.params.CompanyName;
   const Userid = req.query.Userid;
 
   try {
-    const query = 'SELECT * FROM ems.ems_energy_usage WHERE group_name = $1 and virtual_group = $2';
-    db.query(query, [CompanyName, Userid], (error, result) => {
-      if (error) {
-        console.error('Error fetching feeder:', error);
-        return res.status(500).json({ message: 'Internal server error' });
-      }
+    let query;
 
-      res.status(200).json(result.rows);
-    });
-  } catch (error) {
-    console.error('Error fetching feeder:', error);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-}
-
-function feeder(req, res) {
-  try {
-    const query = 'SELECT * FROM ems.ems_energy_usage';
-    db.query(query, (error, result) => {
-      if (error) {
-        throw new Error('Error fetching data');
-      }
-
-      res.status(200).json(result.rows);
-    });
+    if (Userid) {
+      query = 'SELECT * FROM ems.ems_energy_usage WHERE group_name = $1 and virtual_group = $2';
+      db.query(query, [CompanyName, Userid], handleQueryResponse(res));
+    } else {
+      query = 'SELECT * FROM ems.ems_energy_usage where group_name = $1';
+      db.query(query, [CompanyName], handleQueryResponse(res));
+    }
   } catch (error) {
     console.error('Error fetching data:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 }
+
+function handleQueryResponse(res) {
+  return (error, result) => {
+    if (error) {
+      console.error('Error fetching data:', error);
+      return res.status(500).json({ message: 'Internal server error' });
+    }
+
+    res.status(200).json(result.rows);
+  };
+}
+
 
 
 
@@ -656,7 +635,5 @@ module.exports = {
   fetchCompanyUser,
   addDevice,
   temp,
-  fetchFeeder,
-  fetchGroup,
   feeder
 };
