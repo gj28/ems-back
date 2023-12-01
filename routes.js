@@ -31,6 +31,10 @@ router.put('/companyDetails/:UserId', dashboard.companyDetails);
 router.put('/personalDetails/:UserId', dashboard.personalDetails);
 router.put('/updatePassword/:UserId', dashboard.updatePassword);
 
+router.get('/fetchFeeder/:CompanyName', dashboard.fetchFeeder);
+router.get('/fetchGroup/:CompanyName', dashboard.fetchGroup);
+router.get('/feeder', dashboard.feeder);
+
 // router.put('/setUserOnline/:UserId', authentication.setUserOnline);
 // router.put('/setUserOffline/:UserId', authentication.setUserOffline);
 
@@ -47,6 +51,7 @@ router.get('/user-data/:userId', dashboard.getUserData);
 router.get('/messages/:receiver', dashboard.getUserMessages);
 router.get('/Company-users/:CompanyEmail', dashboard.fetchCompanyUser);
 router.get('/logs', logs.fetchLogs);
+router.get('/temp', dashboard.temp);
 // router.put('/personalDetails/:UserId', authentication.personalDetails);
 // router.get('/data/:deviceuid/intervals', dashboard.getDataByTimeInterval);
 

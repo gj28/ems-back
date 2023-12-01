@@ -981,7 +981,7 @@ function unreadnotification(req, res) {
     function recoverUser(req, res) {
       const { userid } = req.params;
     
-      const checkArchiveQuery = 'SELECT * FROM ems.user_archive WHERE userid = $1';
+      const checkArchiveQuery = 'SELECT * FROM ems.ems_archive WHERE userid = $1';
     
       db.query(checkArchiveQuery, [userid], (archiveCheckError, archiveCheckResult) => {
         if (archiveCheckError) {
@@ -995,7 +995,7 @@ function unreadnotification(req, res) {
     
         const userToRecover = archiveCheckResult.rows[0];
     
-        const deleteFromArchiveQuery = 'DELETE FROM ems.user_archive WHERE userid = $1';
+        const deleteFromArchiveQuery = 'DELETE FROM ems.ems_archive WHERE userid = $1';
     
         db.query(deleteFromArchiveQuery, [userid], (deleteFromArchiveError, deleteFromArchiveResult) => {
           if (deleteFromArchiveError) {

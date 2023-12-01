@@ -527,8 +527,6 @@ function fetchCompanyUser(req, res) {
   }
 }
 
-
-
 function addDevice(req, res) {
   const { DeviceUID, DeviceLocation, DeviceName, CompanyEmail, CompanyName } = req.body;
   try {
@@ -560,6 +558,89 @@ function addDevice(req, res) {
   }
 }
 
+function temp(req, res) {
+  const userId = req.params.userId;
+  const currentDate = new Date();
+  const formattedDate = currentDate.toISOString().split('T')[0];
+
+  const fetchInternInfoQuery = 'SELECT * FROM power_data WHERE deviceid = ? AND date = ?';
+
+  db.query(fetchInternInfoQuery, [userId, formattedDate], (queryError, queryResult) => {
+    if (queryError) {
+      console.error(queryError);
+      return res.status(500).json({ message: 'Internal server error while fetching  information' });
+    }
+
+    if (queryResult.length === 0) {
+      return res.status(200).json({ message: 'No data for today' });
+    }
+    const internInfo = {
+      userId: queryResult[0].UserId,
+      inTime: queryResult[0].InTime,
+      outTime: queryResult[0].OutTime,
+      totalHours: queryResult[0].TotalHours,
+      attendance: queryResult[0].Attendence,
+      date: queryResult[0].Date,
+    };
+
+    return res.status(200).json({ message: 'Information for today', internInfo });
+  });
+}
+
+function fetchFeeder(req, res) {
+  const CompanyName = req.params.CompanyName;
+  try {
+    const query = 'SELECT * FROM ems.ems_energy_usage where group_name = $1';
+    db.query(query, [CompanyName], (error, result) => {
+      if (error) {
+        throw new Error('Error fetching feeder');
+      }
+
+      res.status(200).json(result.rows);
+    });
+  } catch (error) {
+    console.error('Error fetching feeder:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}
+
+function fetchGroup(req, res) {
+  const CompanyName = req.params.CompanyName;
+  const Userid = req.query.Userid;
+
+  try {
+    const query = 'SELECT * FROM ems.ems_energy_usage WHERE group_name = $1 and virtual_group = $2';
+    db.query(query, [CompanyName, Userid], (error, result) => {
+      if (error) {
+        console.error('Error fetching feeder:', error);
+        return res.status(500).json({ message: 'Internal server error' });
+      }
+
+      res.status(200).json(result.rows);
+    });
+  } catch (error) {
+    console.error('Error fetching feeder:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}
+
+function feeder(req, res) {
+  try {
+    const query = 'SELECT * FROM ems.ems_energy_usage';
+    db.query(query, (error, result) => {
+      if (error) {
+        throw new Error('Error fetching data');
+      }
+
+      res.status(200).json(result.rows);
+    });
+  } catch (error) {
+    console.error('Error fetching data:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}
+
+
 
 module.exports = {
 	userDevices,
@@ -573,5 +654,9 @@ module.exports = {
   getUserData,
   getUserMessages,
   fetchCompanyUser,
-  addDevice
+  addDevice,
+  temp,
+  fetchFeeder,
+  fetchGroup,
+  feeder
 };
