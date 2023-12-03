@@ -607,6 +607,46 @@ function feeder(req, res) {
   }
 }
 
+// function feeder(req, res) {
+//   const CompanyName = req.params.CompanyName;
+//   const Userid = req.query.Userid;
+//   const startDate = req.query.startDate; // Added start date parameter
+//   const endDate = req.query.endDate;     // Added end date parameter
+
+//   try {
+//     let query;
+//     const queryParams = [CompanyName];
+
+//     if (Userid) {
+//       query = 'SELECT * FROM ems.ems_energy_usage WHERE group_name = $1 AND virtual_group = $2';
+//       queryParams.push(Userid);
+//     } else {
+//       query = 'SELECT * FROM ems.ems_energy_usage WHERE group_name = $1';
+//     }
+
+//     if (startDate && endDate) {
+//       // Add conditions for start and end date if both are provided
+//       query += ' AND "timestamp" BETWEEN $' + queryParams.length + ' AND $' + (queryParams.length + 1);
+//       queryParams.push(startDate);
+//       queryParams.push(endDate);
+//     } else if (startDate) {
+//       // Add condition for start date if provided
+//       query += ' AND "timestamp" >= $' + queryParams.length;
+//       queryParams.push(startDate);
+//     } else if (endDate) {
+//       // Add condition for end date if provided
+//       query += ' AND "timestamp" <= $' + queryParams.length;
+//       queryParams.push(endDate);
+//     }
+
+//     db.query(query, queryParams, handleQueryResponse(res));
+//   } catch (error) {
+//     console.error('Error fetching data:', error);
+//     res.status(500).json({ message: 'Internal server error' });
+//   }
+// }
+
+
 function handleQueryResponse(res) {
   return (error, result) => {
     if (error) {
@@ -616,6 +656,45 @@ function handleQueryResponse(res) {
 
     res.status(200).json(result.rows);
   };
+}
+
+function feeder(req, res) {
+  const CompanyName = req.params.CompanyName;
+  const Userid = req.query.Userid;
+  const startDate = req.query.startDate; // Added start date parameter
+  const endDate = req.query.endDate;     // Added end date parameter
+
+  try {
+    let query;
+    const queryParams = [CompanyName];
+
+    if (Userid) {
+      query = 'SELECT * FROM ems.ems_energy_usage WHERE group_name = $1 AND virtual_group = $2';
+      queryParams.push(Userid);
+    } else {
+      query = 'SELECT * FROM ems.ems_energy_usage WHERE group_name = $1';
+    }
+
+    if (startDate && endDate) {
+      // Add conditions for start and end date if both are provided
+      query += ' AND "timestamp" BETWEEN $' + queryParams.length + '::timestamp AND $' + (queryParams.length + 1) + '::timestamp';
+      queryParams.push(startDate);
+      queryParams.push(endDate);
+    } else if (startDate) {
+      // Add condition for start date if provided
+      query += ' AND "timestamp" >= $' + queryParams.length + '::timestamp';
+      queryParams.push(startDate);
+    } else if (endDate) {
+      // Add condition for end date if provided
+      query += ' AND "timestamp" <= $' + queryParams.length + '::timestamp';
+      queryParams.push(endDate);
+    }
+
+    db.query(query, queryParams, handleQueryResponse(res));
+  } catch (error) {
+    console.error('Error fetching data:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
 }
 
 

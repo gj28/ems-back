@@ -149,9 +149,9 @@ client.on('connect', () => {
   //console.log('Connected to MQTT broker');
 
   // Publish random data for each device ID every 20 seconds
-  for (let i = 1; i <= 9; i++) {
+  for (let i = 1; i <= 30; i++) {
     const deviceid = `SL0120230${i}`;
-    const topic = `ems/${deviceid}`;
+    const topic = `emst/${deviceid}`;
 
     setInterval(() => {
       const message = generateRandomData(deviceid);
