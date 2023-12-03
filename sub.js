@@ -48,19 +48,22 @@ const mqttClient = mqtt.connect(broker);
 
 // Handle MQTT connection event
 mqttClient.on('connect', () => {
-  //console.log('Connected to MQTT broker');
+  // console.log('Connected to MQTT broker');
 
-  for (let i = 1; i <= 30; i++) {
-    const deviceid = `SL0120230${i}`;
+  // Specify the device IDs for the four meters
+  const deviceIDs = ['main_pcc', 'Ht_meter', 'LT_meter', 'LT_hiltop_incomer'];
+
+  // Subscribe to topics for each specified device ID
+  deviceIDs.forEach((deviceid) => {
     const topic = `emst/${deviceid}`;
     mqttClient.subscribe(topic, (error) => {
       if (error) {
         console.error(`Error subscribing to ${topic}:`, error);
       } else {
-        //console.log(`Subscribed to ${topic}`);
+        // console.log(`Subscribed to ${topic}`);
       }
     });
-  }
+  });
 });
 
 mqttClient.on('message', (topic, message) => {
@@ -68,7 +71,7 @@ mqttClient.on('message', (topic, message) => {
     const data = JSON.parse(message);
 
     const insertQuery = `
-    INSERT INTO ems.ems_actual_data (deviceid, voltage_1n, voltage_2n, voltage_3n, voltage_N, voltage_12, voltage_23, voltage_31, 
+    INSERT INTO ems.ems_livedata (deviceid, voltage_1n, voltage_2n, voltage_3n, voltage_N, voltage_12, voltage_23, voltage_31, 
     voltage_L, current_1, current_2, current_3, current, kw_1, kw_2, kw_3, kvar_1, kvar_2, kvar_3, kva_1, kva_2, kva_3, 
     pf_1, pf_2, pf_3, pf, freq, kw, kvar, kva, max_kw, min_kw, max_kvar, min_kvar, max_kva, max_int_v1n, max_int_v2n, 
     max_int_v3n, max_int_v12, max_int_v23, max_int_v31, max_int_i1, max_int_i2, max_int_i3, imp_kwh, exp_kwh, kwh, 

@@ -148,16 +148,18 @@ const client = mqtt.connect(broker);
 client.on('connect', () => {
   //console.log('Connected to MQTT broker');
 
-  // Publish random data for each device ID every 20 seconds
-  for (let i = 1; i <= 30; i++) {
-    const deviceid = `SL0120230${i}`;
+  // Specify the device IDs for the four meters
+  const deviceIDs = ['main_pcc', 'Ht_meter', 'LT_meter', 'LT_hiltop_incomer'];
+
+  // Publish random data for each specified device ID every 20 seconds
+  deviceIDs.forEach((deviceid) => {
     const topic = `emst/${deviceid}`;
 
     setInterval(() => {
       const message = generateRandomData(deviceid);
       client.publish(topic, message);
     }, 1000);
-  }
+  });
 });
 
 // Handle MQTT error event
