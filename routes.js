@@ -43,7 +43,7 @@ router.get('/user', authentication.getUserDetails);
 // Dashboard get route
 router.get('/userdevices/:companyEmail', dashboard.userDevices);
 router.get('/data/:deviceid/:parameter', dashboard.getDataByCustomDate);
-router.get('/parametersFilter/:deviceid/:parameter/:interval', dashboard.parametersFilter);
+router.get('/parametersFilter/:CompanyName/:interval', dashboard.filter);
 router.get('/live-device-detail/:deviceId', dashboard.getDeviceDetails);
 router.get('/user-data/:userId', dashboard.getUserData);
 router.get('/messages/:receiver', dashboard.getUserMessages);
@@ -75,7 +75,7 @@ router.get('/parameter/:deviceid/:parameter/:interval', SA.parameter);
 router.get('/sum/:deviceid', SA.SumData);
 router.get('/kwsum/:deviceid', SA.kwSumData);
 router.get('/dwsum', SA.dwSumData);
-router.get('/parametersFilter/:deviceid/:parameter/:interval', dashboard.parametersFilter);
+//router.get('/parametersFilter/:deviceid/:parameter/:interval', dashboard.parametersFilter);
 //router.get('/fetchCounts/:CompanyEmail', SA.fetchCounts);
 
 //SA post/put/delete route
