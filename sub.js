@@ -34,7 +34,7 @@ const meaters = ['main_pcc', 'Ht_meter', 'LT_meter', 'LT_hiltop_incomer'];
 
 // Handle MQTT connection event
 mqttClient.on('connect', () => {
-  for (let i = 1; i <= 8; i++) {
+  for (let i = 1; i <= 16; i++) {
     const deviceid = `SL0120230${i}`;
     const topic = `ems/${deviceid}`;
 
