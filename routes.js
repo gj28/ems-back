@@ -32,6 +32,7 @@ router.put('/personalDetails/:UserId', dashboard.personalDetails);
 router.put('/updatePassword/:UserId', dashboard.updatePassword);
 
 router.get('/feeder/:CompanyName', dashboard.feeder);
+router.get('/getdata/:meters', dashboard.getdata);
 
 // router.put('/setUserOnline/:UserId', authentication.setUserOnline);
 // router.put('/setUserOffline/:UserId', authentication.setUserOffline);

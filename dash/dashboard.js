@@ -706,6 +706,36 @@ function handleResponse(res) {
   };
 }
 
+function getdata(req, res) {
+  const meters = req.params.meters;
+
+  const fetchInfoQuery = 'SELECT * FROM ems.active WHERE meters = $1 ORDER BY id DESC LIMIT 1';
+
+  db.query(fetchInfoQuery, [meters], (queryError, queryResult) => {
+    if (queryError) {
+      console.error(queryError);
+      return res.status(500).json({ message: 'Internal server error while fetching information' });
+    }
+
+    if (queryResult.rows.length === 0) {
+      return res.status(200).json({ message: 'No data for today' });
+    }
+
+    const Info = {
+      kwh: queryResult.rows[0].kwh,
+      kvarh: queryResult.rows[0].kvarh,
+      pf: queryResult.rows[0].pf,
+      kva: queryResult.rows[0].kva,
+      kw: queryResult.rows[0].kw,
+      kvr: queryResult.rows[0].kvr,
+      current: queryResult.rows[0].current,
+      voltage_l: queryResult.rows[0].voltage_l,
+    };
+
+    return res.status(200).json({ message: 'Data for today', Info });
+  });
+}
+
 
 
 module.exports = {
@@ -722,5 +752,6 @@ module.exports = {
   fetchCompanyUser,
   addDevice,
   temp,
-  feeder
+  feeder,
+  getdata
 };
