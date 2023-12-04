@@ -151,12 +151,12 @@ client.on('connect', () => {
   // Publish random data for each device ID every 20 seconds
   for (let i = 1; i <= 16; i++) {
     const deviceid = `SL0120230${i}`;
-    const topic = `ems/${deviceid}`;
+    const topic = `gj28/${deviceid}`;
 
     setInterval(() => {
       const message = generateRandomData(deviceid);
       client.publish(topic, message);
-    }, 1000);
+    }, 15*1000);
   }
 });
 
