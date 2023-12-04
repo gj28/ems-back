@@ -1,3 +1,4 @@
+
 const mqtt = require('mqtt');
 const { Client } = require('pg');
 const os = require('os');
@@ -25,18 +26,16 @@ pgClient.connect().then(() => {
   console.error('Error connecting to PostgreSQL:', error);
 });
 
-
 // Connect to the MQTT broker
 const mqttClient = mqtt.connect(broker);
 
 // Initial meter names
 const meaters = ['main_pcc', 'Ht_meter', 'LT_meter', 'LT_hiltop_incomer'];
 
-
 mqttClient.on('connect', () => {
   for (let i = 1; i <= 16; i++) {
     const deviceid = `SL0120230${i}`;
-    const topic = `ems/${deviceid}`;
+    const topic = `gj28/${deviceid}`;
 
     const meterIndex = (i - 1) % meaters.length;
     const meterName = meaters[meterIndex];
@@ -56,7 +55,7 @@ mqttClient.on('message', (receivedTopic, message) => {
   try {
     for (let i = 1; i <= 16; i++) {
       const deviceid = `SL0120230${i}`;
-      const topic = `ems/${deviceid}`;
+      const topic = `gj28/${deviceid}`;
 
       if (receivedTopic === topic) {
         const meterIndex = (i - 1) % meaters.length;
@@ -64,9 +63,6 @@ mqttClient.on('message', (receivedTopic, message) => {
         const meterNameWithNumber = `${meterName} ${i}`;
 
         const data = JSON.parse(message);
-
-        
-      
 
         const insertQuery = `INSERT INTO ems.active (deviceid,meters, voltage_1n, voltage_2n, voltage_3n, voltage_N, voltage_12, voltage_23, voltage_31, 
           voltage_L, current_1, current_2, current_3, current, kw_1, kw_2, kw_3, kvar_1, kvar_2, kvar_3, kva_1, kva_2, kva_3, 
@@ -146,7 +142,6 @@ mqttClient.on('message', (receivedTopic, message) => {
           data.THDI3,
         ];
 
-
         pgClient.query(insertQuery, insertValues)
           .then(() => {
             console.log('Data inserted into PostgreSQL');
@@ -161,33 +156,7 @@ mqttClient.on('message', (receivedTopic, message) => {
   }
 });
 
-    mqttClient.on('message', (topic, message) => {
-      try {
-        const data = JSON.parse(message);
-
-        
-        pgClient.query(insertQuery, insertValues)
-          .then(() => {
-            console.log('Data inserted into PostgreSQL');
-          })
-          .catch((error) => {
-            console.error('Error inserting data into PostgreSQL:', error);
-          });
-      } catch (error) {
-        console.error('Error processing message:', error);
-      }
-    });
-  
-
-    
-    
-
-      
-
 process.on('exit', () => {
   pgClient.end();
 });
 
-
-
-// Handle MQTT message event outside the loop
