@@ -61,7 +61,7 @@ mqttClient.on('message', (receivedTopic, message) => {
       if (receivedTopic === topic) {
         const meterIndex = (i - 1) % meaters.length;
         const meterName = meaters[meterIndex];
-        const meterNameWithNumber = `${meterName} ${i}`;
+        const meterNameWithNumber = `${meterName}${i}`;
 
         const data = JSON.parse(message);
 
@@ -160,34 +160,8 @@ mqttClient.on('message', (receivedTopic, message) => {
     console.error('Error processing message:', error);
   }
 });
-
-    mqttClient.on('message', (topic, message) => {
-      try {
-        const data = JSON.parse(message);
-
-        
-        pgClient.query(insertQuery, insertValues)
-          .then(() => {
-            console.log('Data inserted into PostgreSQL');
-          })
-          .catch((error) => {
-            console.error('Error inserting data into PostgreSQL:', error);
-          });
-      } catch (error) {
-        console.error('Error processing message:', error);
-      }
-    });
   
-
-    
-    
-
-      
-
 process.on('exit', () => {
   pgClient.end();
 });
 
-
-
-// Handle MQTT message event outside the loop

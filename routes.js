@@ -33,6 +33,7 @@ router.put('/updatePassword/:UserId', dashboard.updatePassword);
 
 router.get('/feeder/:CompanyName', dashboard.feeder);
 router.get('/getdata/:meters', dashboard.getdata);
+router.get('/parametersFilter/:deviceid/:parameter/:interval', dashboard.parametersFilter);
 
 // router.put('/setUserOnline/:UserId', authentication.setUserOnline);
 // router.put('/setUserOffline/:UserId', authentication.setUserOffline);
@@ -76,7 +77,7 @@ router.get('/parameter/:deviceid/:parameter/:interval', SA.parameter);
 router.get('/sum/:deviceid', SA.SumData);
 router.get('/kwsum/:deviceid', SA.kwSumData);
 router.get('/dwsum', SA.dwSumData);
-//router.get('/parametersFilter/:deviceid/:parameter/:interval', dashboard.parametersFilter);
+
 //router.get('/fetchCounts/:CompanyEmail', SA.fetchCounts);
 
 //SA post/put/delete route
