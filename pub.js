@@ -142,55 +142,22 @@ function generateRandomData(deviceid) {
 }
 
 // Connect to the MQTT broker
-// const client = mqtt.connect(broker);
-
-// // Handle MQTT connection event
-// client.on('connect', () => {
-//   //console.log('Connected to MQTT broker');
-
-//   // Specify the device IDs for the four meters
-//   const deviceIDs = ['main_pcc', 'Ht_meter', 'LT_meter', 'LT_hiltop_incomer'];
-
-//   // Publish random data for each specified device ID every 20 seconds
-//   deviceIDs.forEach((deviceid) => {
-//     const topic = `emst/${deviceid}`;
-
-//     setInterval(() => {
-//       const message = generateRandomData(deviceid);
-//       client.publish(topic, message);
-//     }, 1000);
-//   });
-// });
-
-// // Handle MQTT error event
-// client.on('error', (error) => {
-//   console.error('MQTT error:', error);
-// });
 const client = mqtt.connect(broker);
-
-// Device names
-const deviceNames = ['main_pcc', 'Ht_meter', 'LT_meter', 'LT_hiltop_incomer'];
-
-// Array of devices with their respective device IDs
-const devices = deviceNames.map((name, index) => ({
-  name,
-  id: `SL0120230${index + 1}`
-}));
 
 // Handle MQTT connection event
 client.on('connect', () => {
-  console.log('Connected to MQTT broker');
+  //console.log('Connected to MQTT broker');
 
-  // Publish random data for each specified device ID every 20 seconds
-  devices.forEach((device) => {
-    const { id } = device;
-    const topic = `emst/${id}`;
+  // Publish random data for each device ID every 20 seconds
+  for (let i = 1; i <= 8; i++) {
+    const deviceid = `SL0120230${i}`;
+    const topic = `ems/${deviceid}`;
 
     setInterval(() => {
-      const message = generateRandomData(id);
+      const message = generateRandomData(deviceid);
       client.publish(topic, message);
-    }, 20000); // Publish every 20 seconds
-  });
+    }, 20000);
+  }
 });
 
 // Handle MQTT error event
