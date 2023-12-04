@@ -156,7 +156,7 @@ client.on('connect', () => {
     setInterval(() => {
       const message = generateRandomData(deviceid);
       client.publish(topic, message);
-    }, 20000);
+    }, 1000);
   }
 });
 
