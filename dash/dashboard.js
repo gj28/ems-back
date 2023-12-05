@@ -737,6 +737,81 @@ function parametersFilter(req, res) {
   }
 }
 
+
+//userdetails
+
+function getUserDetails(req, res) {
+  try {
+    const userId = req.params.userId;
+    const userDetailsQuery = 'SELECT * FROM ems.ems_user_profile WHERE userid = $1';
+    db.query(userDetailsQuery, [userId], (error, userDetail) => {
+      if (error) {
+        console.error('Error fetching data:', error);
+        return res.status(500).json({ message: 'Internal server error' });
+      }
+
+      if (userDetail.length === 0) {
+        return res.status(404).json({ message: 'user details not found' });
+      }
+
+      res.status(200).json(userDetail);
+    });
+  } catch (error) {
+    console.error('An error occurred:', error);
+    res.status(500).jsonno({ message: 'Internal server error' });
+  }
+}
+
+
+
+//feeder configuration
+
+
+function getFeederDetails(req, res) {
+  try {
+    const deviceId = req.params.deviceId;
+    const feederDetailsQuery = 'SELECT * FROM ems.ems_feeder WHERE deviceuid = $1';
+    db.query(feederDetailsQuery, [deviceId], (error, feederDetail) => {
+      if (error) {
+        console.error('Error fetching data:', error);
+        return res.status(500).json({ message: 'Internal server error' });
+      }
+
+      if (feederDetail.length === 0) {
+        return res.status(404).json({ message: 'Feeder details not found' });
+      }
+
+      res.status(200).json(feederDetail);
+    });
+  } catch (error) {
+    console.error('An error occurred:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 module.exports = {
 	userDevices,
   editDevice,
@@ -753,5 +828,7 @@ module.exports = {
   temp,
   feeder,
   getdata,
-  parametersFilter
+  parametersFilter,
+  getUserDetails,
+  getFeederDetails,
 };
