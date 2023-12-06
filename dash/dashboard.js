@@ -789,9 +789,27 @@ function getFeederDetails(req, res) {
   }
 }
 
+function alerteventDetails(req, res) {
+  try {
+    const alertId = req.params.alertId;
+    const alerteventsQuery = 'SELECT * FROM ems.ems_alerts WHERE feedername = $1';
+    db.query(alerteventsQuery, [alertId], (error, alerteventsDetail) => {
+      if (error) {
+        console.error('Error fetching data:', error);
+        return res.status(500).json({ message: 'Internal server error' });
+      }
 
+      if (alerteventsDetail.length === 0) {
+        return res.status(404).json({ message: 'alerts details not found' });
+      }
 
-
+      res.status(200).json(alerteventsDetail);
+    });
+  } catch (error) {
+    console.error('An error occurred:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}
 
 
 
@@ -831,4 +849,5 @@ module.exports = {
   parametersFilter,
   getUserDetails,
   getFeederDetails,
+  alerteventDetails,
 };

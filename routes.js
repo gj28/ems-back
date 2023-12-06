@@ -54,6 +54,8 @@ router.get('/logs', logs.fetchLogs);
 router.get('/temp', dashboard.temp);
 router.get('/userdetails/:userid', dashboard.getUserDetails);
 router.get('/feederdetails/:deviceid', dashboard.getFeederDetails);
+router.get('/alerteventsDetail/:feedername', dashboard.alerteventDetails);
+
 // router.put('/personalDetails/:UserId', authentication.personalDetails);
 // router.get('/data/:deviceuid/intervals', dashboard.getDataByTimeInterval);
 
