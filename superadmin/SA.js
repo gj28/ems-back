@@ -362,7 +362,6 @@ function fetchAllUsers(req, res) {
       res.status(500).json({ message: 'Internal server error' });
     }
   }
-  
 
   function getDeviceByUID(req, res) {
     try {
@@ -1077,6 +1076,7 @@ module.exports = {
   dwSumData,
   Block,  
   recoverUser,
-  deleteUser
+  deleteUser,
+  
 
 };

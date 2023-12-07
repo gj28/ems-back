@@ -436,12 +436,12 @@ function fetchCompanyUser(req, res) {
 }
 
 function addDevice(req, res) {
-  const { DeviceUID, DeviceLocation, DeviceName, CompanyEmail, CompanyName } = req.body;
+  const { entryid, deviceid, devicelocation, metername, shift, company, virtualgroup } = req.body;
   try {
-    const checkDeviceQuery = 'SELECT * FROM ems.ems_devices WHERE DeviceUID = $1';
-    const insertDeviceQuery = 'INSERT INTO ems.ems_devices (DeviceUID, DeviceLocation, DeviceName, CompanyEmail, CompanyName) VALUES ($1,$2,$3,$4,$5)';
+    const checkDeviceQuery = 'SELECT * FROM ems.ems_devices WHERE entryid = $1';
+    const insertDeviceQuery = 'INSERT INTO ems.ems_devices (entryid, timestamp, deviceid, devicelocation, metername, shift, company, virtualgroup) VALUES ($1, NOW(), $2, $3, $4, $5, $6, $7)';
 
-    db.query(checkDeviceQuery, [DeviceUID], (error, checkResult) => {
+    db.query(checkDeviceQuery, [entryid], (error, checkResult) => {
       if (error) {
         console.error('Error while checking device:', error);
         return res.status(500).json({ message: 'Internal server error' });
@@ -451,7 +451,7 @@ function addDevice(req, res) {
         return res.status(400).json({ message: 'Device already added' });
       }
 
-      db.query(insertDeviceQuery, [DeviceUID, DeviceLocation, DeviceName, CompanyEmail, CompanyName], (insertError, insertResult) => {
+      db.query(insertDeviceQuery, [entryid, deviceid, devicelocation, metername, shift, company, virtualgroup], (insertError, insertResult) => {
         if (insertError) {
           console.error('Error while inserting device:', insertError);
           return res.status(500).json({ message: 'Internal server error' });
@@ -465,6 +465,9 @@ function addDevice(req, res) {
     res.status(500).json({ message: 'Internal server error' });
   }
 }
+
+
+
 
 function temp(req, res) {
   const userId = req.params.userId;
@@ -737,6 +740,26 @@ function parametersFilter(req, res) {
   }
 }
 
+function addDeviceTrigger(req, res) {
+  const { DeviceUID, TriggerValue, CompanyEmail } = req.body;
+    try {
+        const insertTriggerQuery = 'INSERT INTO ems.ems_trigger (deviceid, triggervalue, companyemail) VALUES ($1,$2,$3)';
+
+        db.query(insertTriggerQuery, [DeviceUID, TriggerValue, CompanyEmail], (error, insertResult) => {
+          if (error) {
+            console.error('Error while inserting device:', error);
+            return res.status(500).json({ message: 'Internal server error' });
+          }
+
+          return res.json({ message: 'Device Trigger added successfully!' });
+        });
+
+    } catch (error) {
+      console.error('Error in device check:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+}
+
 module.exports = {
 	userDevices,
   editDevice,
@@ -753,5 +776,6 @@ module.exports = {
   temp,
   feeder,
   getdata,
-  parametersFilter
+  parametersFilter,
+  addDeviceTrigger
 };
