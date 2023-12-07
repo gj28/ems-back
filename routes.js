@@ -53,6 +53,8 @@ router.get('/messages/:receiver', dashboard.getUserMessages);
 router.get('/Company-users/:CompanyEmail', dashboard.fetchCompanyUser);
 router.get('/logs', logs.fetchLogs);
 router.get('/temp', dashboard.temp);
+router.get('/userdetails/:userid', dashboard.getUserDetails);
+router.get('/feederdetails/:deviceid', dashboard.getFeederDetails);
 // router.put('/personalDetails/:UserId', authentication.personalDetails);
 // router.get('/data/:deviceuid/intervals', dashboard.getDataByTimeInterval);
 
