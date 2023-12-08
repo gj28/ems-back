@@ -696,7 +696,7 @@ function parametersFilter(req, res) {
     const parameterExistsQuery = `
       SELECT column_name
       FROM information_schema.columns
-      WHERE table_name = 'active'
+      WHERE table_name = 'ems_live'
       AND column_name = ANY($1::text[])
     `;
 
@@ -719,10 +719,10 @@ function parametersFilter(req, res) {
       const parameterColumns = validParameters.map(param => `"${param.trim().toLowerCase()}"`).join(', ');
 
       const sql = `
-        SELECT "timestamp", ${parameterColumns}
-        FROM ems.active
-        WHERE timestamp >= NOW() - INTERVAL '${duration}'
-        AND deviceid = $1`;
+        SELECT "date_time", ${parameterColumns}
+        FROM ems.ems_live
+        WHERE date_time >= NOW() - INTERVAL '${duration}'
+        AND device_uid = $1`;
 
       db.query(sql, [deviceid], (error, results) => {
         if (error) {
@@ -846,7 +846,7 @@ function deleteuser(req, res) {
 function getFeederDetails(req, res) {
   try {
     const deviceId = req.params.deviceId;
-    const feederDetailsQuery = 'SELECT * FROM ems.ems_feeder WHERE deviceuid = $1';
+    const feederDetailsQuery = 'SELECT * FROM ems.ems_devices WHERE device_uid = $1';
     db.query(feederDetailsQuery, [deviceId], (error, feederDetail) => {
       if (error) {
         console.error('Error fetching data:', error);
