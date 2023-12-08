@@ -355,7 +355,7 @@ function getDeviceDetails(req, res) {
 
     // Validate the deviceId parameter if necessary
 
-    const deviceDetailsQuery = 'SELECT * FROM ems.ems_devices WHERE DeviceUID = $1';
+    const deviceDetailsQuery = 'SELECT * FROM ems.ems_devices WHERE deviceid = $1';
     db.query(deviceDetailsQuery, [deviceId], (error, deviceDetail) => {
       if (error) {
         console.error('Error fetching data:', error);
@@ -367,7 +367,7 @@ function getDeviceDetails(req, res) {
         return res.status(404).json({ message: 'Device details not found' });
       }
 
-      res.status(200).json(deviceDetail);
+      res.status(200).json(deviceDetail.rows);
     });
   } catch (error) {
     console.error('An error occurred:', error);
