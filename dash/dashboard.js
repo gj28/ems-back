@@ -744,6 +744,185 @@ function parametersFilter(req, res) {
   }
 }
 
+function piechart(req, res) {
+  try {
+    const timeInterval = req.params.interval;
+    const companyName = req.params.companyName;
+
+    if (!timeInterval || !companyName) {
+      return res.status(400).json({ message: 'Invalid time interval or company name' });
+    }
+
+    let duration;
+    switch (timeInterval) {
+      case '15min':
+        duration = '15 minutes';
+        break;
+      case '30min':
+        duration = '30 minutes';
+        break;
+      case '1hour':
+        duration = '1 hours';
+        break;
+      case '12hour':
+        duration = '12 hours';
+        break;
+      case '1day':
+        duration = '1 day';
+        break;
+      case '7day':
+        duration = '7 days';
+        break;
+      case '30day':
+        duration = '30 days';
+        break;
+      case '1year':
+        duration = '1 year';
+        break;
+      default:
+        return res.status(400).json({ message: 'Invalid time interval' });
+    }
+
+    // Fetch device IDs associated with the company
+    const deviceIdsQuery = `
+      SELECT deviceid
+      FROM ems.ems_devices
+      WHERE company = $1
+    `;
+
+    db.query(deviceIdsQuery, [companyName], (deviceIdsError, deviceIdsResult) => {
+      if (deviceIdsError) {
+        console.error('Error fetching device IDs for company:', deviceIdsError);
+        return res.status(500).json({ message: 'Internal server error' });
+      }
+
+      const deviceIds = deviceIdsResult.rows.map(row => row.deviceid);
+
+      if (deviceIds.length === 0) {
+        return res.status(404).json({ message: 'No devices found for the given company name' });
+      }
+      const sql = `
+        SELECT device_uid, SUM("kvah") as total_kvah
+        FROM ems.ems_live
+        WHERE date_time >= NOW() - INTERVAL '${duration}'
+        AND device_uid = ANY($1::varchar[])
+        GROUP BY device_uid
+      `;
+
+      const queryParameters = [deviceIds];
+
+      db.query(sql, queryParameters, (error, results) => {
+        if (error) {
+          console.error('Error fetching data:', error);
+          return res.status(500).json({ message: 'Internal server error' });
+        }
+
+        const data = results.rows.map(row => ({
+          company: companyName,
+          device: row.device_uid,
+          data: { kvah: row.total_kvah }
+        }));
+
+        res.json(data);
+      });
+    });
+  } catch (error) {
+    console.error('An error occurred:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}
+
+// function piechart(req, res) {
+//   try {
+//     const timeInterval = req.params.interval;
+//     const companyName = req.params.companyName; // Assuming company name is part of the URL parameters
+
+//     if (!timeInterval || !companyName) {
+//       return res.status(400).json({ message: 'Invalid time interval or company name' });
+//     }
+
+//     let duration;
+//     switch (timeInterval) {
+//       case '15min':
+//         duration = '15 minutes';
+//         break;
+//       case '30min':
+//         duration = '30 minutes';
+//         break;
+//       case '1hour':
+//         duration = '1 hours';
+//         break;
+//       case '12hour':
+//         duration = '12 hours';
+//         break;
+//       case '1day':
+//         duration = '1 day';
+//         break;
+//       case '7day':
+//         duration = '7 days';
+//         break;
+//       case '30day':
+//         duration = '30 days';
+//         break;
+//       case '1year':
+//         duration = '1 year';
+//         break;
+//       default:
+//         return res.status(400).json({ message: 'Invalid time interval' });
+//     }
+
+//     // Fetch device IDs associated with the company
+//     const deviceIdsQuery = `
+//       SELECT deviceid
+//       FROM ems.ems_devices
+//       WHERE company = $1
+//     `;
+
+//     db.query(deviceIdsQuery, [companyName], (deviceIdsError, deviceIdsResult) => {
+//       if (deviceIdsError) {
+//         console.error('Error fetching device IDs for company:', deviceIdsError);
+//         return res.status(500).json({ message: 'Internal server error' });
+//       }
+
+//       const deviceIds = deviceIdsResult.rows.map(row => row.deviceid);
+
+//       // Check if there are device IDs to avoid an empty array causing issues
+//       if (deviceIds.length === 0) {
+//         return res.status(404).json({ message: 'No devices found for the given company name' });
+//       }
+
+//       // Fetch all kvah values for the selected device IDs within the specified time interval
+//       const sql = `
+//         SELECT device_uid, "date_time", "kvah"
+//         FROM ems.ems_live
+//         WHERE date_time >= NOW() - INTERVAL '${duration}'
+//         AND device_uid = ANY($1::varchar[])
+//       `;
+
+//       const queryParameters = [deviceIds];
+
+//       db.query(sql, queryParameters, (error, results) => {
+//         if (error) {
+//           console.error('Error fetching data:', error);
+//           return res.status(500).json({ message: 'Internal server error' });
+//         }
+
+//         const data = results.rows.map(row => ({
+//           company: companyName,
+//           device: row.device_uid,
+//           data: { kvah: row.kvah, date_time: row.date_time }
+//         }));
+
+//         res.json(data);
+//       });
+//     });
+//   } catch (error) {
+//     console.error('An error occurred:', error);
+//     res.status(500).json({ message: 'Internal server error' });
+//   }
+// }
+
+
 function addDeviceTrigger(req, res) {
   const { DeviceUID, TriggerValue, CompanyEmail } = req.body;
     try {
@@ -1072,4 +1251,5 @@ module.exports = {
   editfeeder,
   alerteventDetails,
   editalert,
+  piechart
 };
