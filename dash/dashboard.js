@@ -817,7 +817,52 @@ function alerteventDetails(req, res) {
 
 
 
+function edituserDetails(req, res) {
+  const UserId = req.params.UserId;
+  const { name, userid, designation, mobile, plants, privileges } = req.body;
 
+  const tenantId = uuidv4();
+
+  logExecution('userDetails', tenantId, 'INFO', `Updating user details for user ${UserId}`);
+
+  const userCheckQuery = 'SELECT * FROM ems.ems_user_profile WHERE userid = $1';
+
+  db.query(userCheckQuery, [UserId], (error, useridCheckResult) => {
+    if (error) {
+      console.error('Error during UserId check:', error);
+      logExecution('userrDetails', tenantId, 'ERROR', 'Error during UserId check');
+      return res.status(500).json({ message: 'Internal server error' });
+    }
+
+    try {
+      if (useridCheckResult.length === 0) {
+        console.log('User not found!');
+        logExecution('userDetails', tenantId, 'ERROR', 'User not found');
+        return res.status(400).json({ message: 'User not found!' });
+      }
+
+      const userdetailQuery = 'UPDATE ems.ems_edit_user_profile SET name = $1, userid = $2 , designation = $3, mobile = $4, plants = $5, privileges = $6 WHERE userid = $7';
+
+      db.query(userdetailQuery, [name, userid, designation, mobile, plants, privileges, userId], (error, details) => {
+        if (error) {
+          console.error('Error updating user details:', error);
+
+          logExecution('userDetails', tenantId, 'ERROR', 'Error updating user details');
+          return res.status(500).json({ message: 'Internal server error' });
+        }
+
+        logExecution('userDetails', tenantId, 'INFO', `Personal details updated successfully for user ${UserId}`);
+
+        res.json({ message: 'user Details Updated Successfully' });
+        console.log(details);
+      });
+    } catch (error) {
+      console.error('Error updating user details:', error);
+      logExecution('userDetails', tenantId, 'ERROR', 'Error updating user details');
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+}
 
 
 
@@ -850,4 +895,5 @@ module.exports = {
   getUserDetails,
   getFeederDetails,
   alerteventDetails,
+  edituserDetails,
 };
