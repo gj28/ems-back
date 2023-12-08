@@ -57,7 +57,7 @@ router.get('/userdetails/:userId', dashboard.getUserDetails);
 router.get('/feederdetails/:deviceId', dashboard.getFeederDetails);
 router.get('/alerteventsDetail/:alertId', dashboard.alerteventDetails);
 // router.put('/UpdateuserDetail/:userid' , dashboard.UpdateuserDetails);
-router.put('/edituser/:userid', dashboard.edituser);
+router.put('/edituser/:userId', dashboard.edituser);
 
 
 // router.put('/personalDetails/:UserId', authentication.personalDetails);

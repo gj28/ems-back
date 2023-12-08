@@ -775,7 +775,7 @@ function getUserDetails(req, res) {
       if (userDetail.length === 0) {
         return res.status(404).json({ message: 'user details not found' });
       }
-      res.status(200).json(userDetail.rows.rows);
+      res.status(200).json(userDetail.rows);
      });
   } catch (error) {
     console.error('An error occurred:', error);
