@@ -621,7 +621,9 @@ function feeder(req, res) {
     const CompanyName = req.params.CompanyName;
     const Userid = req.query.Userid;
     const DeviceId = req.query.DeviceId;
+    const Shift = req.query.Shift;
     const TimeInterval = req.query.TimeInterval;
+
 
     if (!CompanyName) {
       return res.status(400).json({ message: 'Company name is required' });
@@ -639,11 +641,13 @@ function feeder(req, res) {
     } else if (DeviceId) {
       query = 'SELECT * FROM ems.ems_devices WHERE company = $1 and deviceid = $2';
       parameters = [CompanyName, DeviceId];
+    } else if (Shift) {  
+      query = 'SELECT * FROM ems.ems_devices WHERE company = $1 and shift = $2';
+      parameters = [CompanyName, Shift];
     } else {
       query = 'SELECT * FROM ems.ems_devices WHERE company = $1';
       parameters = [CompanyName];
     }
-
     db.query(query, parameters, (error, devicesResult) => {
       if (error) {
         console.error('Error fetching devices:', error);
