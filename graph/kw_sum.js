@@ -1,13 +1,13 @@
 const db = require('../db');
 
-function kw_sum() {
+function maxdemand() {
     try {
         const currentDate = new Date();
-        const firstDayOfPreviousMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
-        const lastDayOfPreviousMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 0);
-        const last24Hours = new Date(currentDate - 24 * 60 * 60 * 1000);
+        currentDate.setHours(0, 0, 0, 0);
 
-        const deviceIdsQuery = 'SELECT DISTINCT deviceid FROM ems.ems_actual_data;';
+        const deviceIdsQuery = `
+            SELECT DISTINCT device_uid
+            FROM ems.ems_live;`;
 
         db.query(deviceIdsQuery, (deviceIdsError, deviceIdsResult) => {
             if (deviceIdsError) {
@@ -18,47 +18,51 @@ function kw_sum() {
             const uniqueDeviceIds = deviceIdsResult.rows;
 
             uniqueDeviceIds.forEach((device) => {
-                const deviceID = device.deviceid;
+                const deviceID = device.device_uid;
 
-                const monthSumQuery = `
-                SELECT
-                    SUM(kw) AS total_kw_month,
-                    SUM(kvar) AS total_kvar_month
-                FROM ems.ems_actual_data
-                WHERE timestamp >= $1 AND timestamp <= $2 AND deviceid = $3;`;
+                const deviceHighestKVAQuery = `
+                    SELECT
+                        MAX(kva) AS highest_kva
+                    FROM ems.ems_live
+                    WHERE date_time >= $1 AND device_uid = $2;`;
 
-                db.query(monthSumQuery, [firstDayOfPreviousMonth, lastDayOfPreviousMonth, deviceID], (monthError, monthResult) => {
-                    if (monthError) {
-                        console.error(`Error fetching data for the previous month for device ${deviceID}:`, monthError);
+                db.query(deviceHighestKVAQuery, [currentDate, deviceID], (error, result) => {
+                    if (error) {
+                        console.error(`Error fetching highest KVA for device ${deviceID}:`, error);
                         return;
                     }
 
-                    const { total_kw_month, total_kvar_month } = monthResult.rows[0];
+                    const highestKVA = result.rows[0]?.highest_kva || 0;
 
-                    const last24HoursSumQuery = `
-                    SELECT
-                        SUM(kw) AS total_kw_24_hours,
-                        SUM(kvar) AS total_kvar_24_hours
-                    FROM ems.ems_actual_data
-                    WHERE timestamp >= $1 AND deviceid = $2;`;
+                    const latestKVAQuery = `
+                        SELECT
+                            kva
+                        FROM ems.ems_live
+                        WHERE device_uid = $1
+                        ORDER BY date_time DESC
+                        LIMIT 1;`;
 
-                    db.query(last24HoursSumQuery, [last24Hours, deviceID], (last24HoursError, last24HoursResult) => {
-                        if (last24HoursError) {
-                            console.error(`Error fetching data for the last 24 hours for device ${deviceID}:`, last24HoursError);
+                    db.query(latestKVAQuery, [deviceID], (latestKVAError, latestKVAResult) => {
+                        if (latestKVAError) {
+                            console.error(`Error fetching latest KVA for device ${deviceID}:`, latestKVAError);
                             return;
                         }
 
-                        const { total_kw_24_hours, total_kvar_24_hours } = last24HoursResult.rows[0];
+                        const latestKVA = latestKVAResult.rows[0]?.kva || 0;
 
-                        const insertQuery = `
-                            INSERT INTO ems.sum_kw (deviceid, total_kw_month, total_kvar_month, total_kw_day, total_kvar_day, calculation_date)
-                            VALUES ($1, $2, $3, $4, $5, $6);`;
+                        const upsertQuery = `
+                            INSERT INTO ems.maxdemand (deviceid, highest_kva, live_kva, calculation_date)
+                            VALUES ($1, $2, $3, $4)
+                            ON CONFLICT (deviceid, calculation_date)
+                            DO UPDATE SET
+                                highest_kva = GREATEST(EXCLUDED.highest_kva, $2),
+                                live_kva = $3;`;
 
-                        const currentDate = new Date();
-
-                        db.query(insertQuery, [deviceID, total_kw_month, total_kvar_month, total_kw_24_hours, total_kvar_24_hours, currentDate], (insertError) => {
-                            if (insertError) {
-                                console.error(`Error inserting data for device ${deviceID}:`, insertError);
+                        db.query(upsertQuery, [deviceID, highestKVA, latestKVA, currentDate], (upsertError) => {
+                            if (upsertError) {
+                                console.error(`Error inserting or updating KVA values for device ${deviceID}:`, upsertError);
+                            } else {
+                                console.log(`KVA values for device ${deviceID} inserted or updated successfully.`);
                             }
                         });
                     });
@@ -66,9 +70,10 @@ function kw_sum() {
             });
         });
     } catch (error) {
-        console.error('Error fetching and storing data:', error);
+        console.error('Error inserting or updating device KVA values:', error);
     }
 }
 
-kw_sum();
-setInterval(kw_sum, 24 * 60 * 60 * 1000);
+setInterval(maxdemand, 60 * 1000);
+
+maxdemand();

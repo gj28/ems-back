@@ -6,20 +6,11 @@ const fs = require('fs');
 const bodyParser = require('body-parser');
 const audit_logs = require('./graph/graphlogs');
 const SA = require('./superadmin/SA');
-const graph1=require('./graph/graph_sms');
-const graph2=require('./graph/graph');
-const sum=require('./graph/sum');
 const kwsum=require('./graph/kw_sum');
-//const dwsum=require('./mdsum');
 
 //const { checkState } = require('./SMS/smsController');
 // const mqtt_sub = require('./sub');
 // const mqtt_pub = require('./pub');
-// const MinuteData = require('./dash/interval_min');
-// const hourData = require('./dash/interval_hour');
-// const weekData = require('./dash/interval_week');
-// const dayData = require('./dash/interval_day');
-// const MonthData = require('./dash/interval_month');
 const app = express();
 const port = 3000;
 
