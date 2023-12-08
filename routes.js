@@ -31,6 +31,8 @@ router.put('/companyDetails/:UserId', dashboard.companyDetails);
 router.put('/personalDetails/:UserId', dashboard.personalDetails);
 router.put('/updatePassword/:UserId', dashboard.updatePassword);
 
+
+router.get('/feederinterval/:deviceId/:interval', dashboard.Intervalfeeder);
 router.get('/feeder/:CompanyName', dashboard.feeder);
 router.get('/getdata/:meters', dashboard.getdata);
 router.get('/parametersFilter/:deviceid/:parameter/:interval', dashboard.parametersFilter);
