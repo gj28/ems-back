@@ -351,12 +351,12 @@ function getDataByCustomDate(req, res) {
 
 function getDeviceDetails(req, res) {
   try {
-    const deviceId = req.params.deviceId;
+    const Company = req.params.company;
 
     // Validate the deviceId parameter if necessary
 
-    const deviceDetailsQuery = 'SELECT * FROM ems.ems_devices WHERE deviceid = $1';
-    db.query(deviceDetailsQuery, [deviceId], (error, deviceDetail) => {
+    const deviceDetailsQuery = 'SELECT * FROM ems.ems_devices WHERE company = $1';
+    db.query(deviceDetailsQuery, [Company], (error, deviceDetail) => {
       if (error) {
         console.error('Error fetching data:', error);
         return res.status(500).json({ message: 'Internal server error' });
@@ -593,10 +593,10 @@ function feeder(req, res) {
     let query;
 
     if (Userid) {
-      query = 'SELECT * FROM ems.ems_energy_usage WHERE group_name = $1 and virtual_group = $2';
+      query = 'SELECT * FROM ems.ems_devices WHERE company = $1 and virtualgroup = $2';
       db.query(query, [CompanyName, Userid], handleResponse(res));
     } else {
-      query = 'SELECT * FROM ems.ems_energy_usage where group_name = $1';
+      query = 'SELECT * FROM ems.ems_devices where company = $1';
       db.query(query, [CompanyName], handleResponse(res));
     }
   } catch (error) {
@@ -777,7 +777,7 @@ function getUserDetails(req, res) {
         return res.status(404).json({ message: 'user details not found' });
       }
 
-      res.status(200).json(userDetail);
+      res.status(200).json(userDetail.rows);
     });
   } catch (error) {
     console.error('An error occurred:', error);
