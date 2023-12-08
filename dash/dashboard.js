@@ -785,6 +785,59 @@ function getUserDetails(req, res) {
 
 
 
+
+function edituser(req, res) {
+  const userId = req.params.userId;
+  const { name, designation, mobile, plants, privileges } = req.body;
+
+  const edituserQuery = `UPDATE ems.ems_user_profile SET name = $1, designation = $2, mobile =$3 , plants = $4, privileges = $5 WHERE userid = $6`;
+
+  db.query(edituserQuery,[name, designation, mobile, plants, privileges, userId],
+    (updateError, updateResult) => {
+      if (updateError) {
+        console.error(updateError);                
+        return res.status(401).json({ message: 'Error Updating user' });
+      }
+      return res.status(200).json({ message: 'User Updated Successfully' });
+    });
+}
+
+function deleteuser(req, res) {
+  
+  const userId = req.params.userId;
+  const checkuserId =`SELECT * FROM ems.ems_user_profile WHERE userid =?`;
+  const deleteQuery = 'DELETE FROM ems.ems_user_profile WHERE userid = ?';
+  try {
+    db.query(checkuserId, [userId], (checkError, checkResult)=>{
+      if(checkError) {
+        console.log(checkError);
+        return res.status(401).json({message: 'error during checking user id'})
+      }
+      if(checkResult.length === 0 ){
+        return res.status(404).json({ message: 'no user found'})
+      }
+      db.query(deleteQuery, [userId] ,(error, result) => {
+        if (error) {
+          return res.status(401).json({ message: 'error during deleting' });
+        }
+
+        if (result.affectedRows === 0) {
+          return res.status(404).json({ message: 'user not found' });
+        }
+
+        res.status(200).json({ message: 'user deleted' });
+      });
+    });
+  } catch (error) {
+    console.error('An error occurred:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+  
+}
+
+
+
+
 //feeder configuration
 function getFeederDetails(req, res) {
   try {
@@ -810,17 +863,79 @@ function getFeederDetails(req, res) {
 
 
 
+function editfeeder(req, res) {
+  const deviceId = req.params.deviceId;
+  const { name, location, thresholdvalue , feeder_id, group_name} = req.body;
+
+  const editdeviceQuery = `UPDATE ems.ems_feeder SET name = $1, location = $2, thresholdvalue =$3 , feeder_id = $4, group_name = $5 WHERE deviceuid = $6`;
+
+  db.query(editdeviceQuery,[name, location, thresholdvalue, feeder_id, group_name, deviceId],
+    (updateError, updateResult) => {
+      if (updateError) {
+        console.error(updateError);                
+        return res.status(401).json({ message: 'Error Updating user' });
+      }
+      return res.status(200).json({ message: 'User Updated Successfully' });
+    });
+}
+
+
+
+//alertevent
+function alerteventDetails(req, res) {
+  try {
+    const alertId = req.params.alertId;
+    const alerteventsQuery = 'SELECT * FROM ems.ems_alerts WHERE feedername = $1';
+    db.query(alerteventsQuery, [alertId], (error, alerteventsDetail) => {
+      if (error) {
+        console.error('Error fetching data:', error);
+        return res.status(500).json({ message: 'Internal server error' });
+      }
+
+      if (alerteventsDetail.length === 0) {
+        return res.status(404).json({ message: 'alerts details not found' });
+      }
+      res.status(200).json(alerteventsDetail.rows);
+    });
+  } catch (error) {
+    console.error('An error occurred:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}
 
 
 
 
+function editalert(req, res) {
+  const alertId = req.params.alertId;
+  const { alertname, name, threshold, repeat, start_time, end_time } = req.body;
 
+  // Validate timestamp values
+  if (!isValidTimestamp(start_time) || !isValidTimestamp(end_time)) {
+    return res.status(400).json({ message: 'Invalid timestamp format' });
+  }
 
+  const editalertQuery = `UPDATE ems.ems_alerts SET name = $1, alertname = $2, threshold = $3, repeat = $4,  start_time = $5, end_time = $6 WHERE feedername = $7`;
 
+  db.query(
+    editalertQuery,
+    [alertname, name, threshold, repeat, start_time, end_time, alertId],
+    (updateError, updateResult) => {
+      if (updateError) {
+        console.error(updateError);
+        return res.status(401).json({ message: 'Error Updating user' });
+      }
+      return res.status(200).json({ message: 'User Updated Successfully' });
+    }
+  );
+}
 
-
-
-
+// Function to validate timestamp format
+function isValidTimestamp(timestamp) {
+  // Implement your timestamp validation logic here
+  // Example: return true if the timestamp is in a valid format, otherwise false
+  return timestamp && !isNaN(Date.parse(timestamp));
+}
 
 
 
@@ -850,5 +965,10 @@ module.exports = {
   parametersFilter,
   addDeviceTrigger,
   getUserDetails,
+  edituser,
+  deleteuser,
   getFeederDetails,
+  editfeeder,
+  alerteventDetails,
+  editalert,
 };

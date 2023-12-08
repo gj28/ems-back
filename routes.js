@@ -53,11 +53,18 @@ router.get('/messages/:receiver', dashboard.getUserMessages);
 router.get('/Company-users/:CompanyEmail', dashboard.fetchCompanyUser);
 router.get('/logs', logs.fetchLogs);
 router.get('/temp', dashboard.temp);
+//userdetailspage
 router.get('/userdetails/:userId', dashboard.getUserDetails);
-router.get('/feederdetails/:deviceId', dashboard.getFeederDetails);
-router.get('/alerteventsDetail/:alertId', dashboard.alerteventDetails);
-// router.put('/UpdateuserDetail/:userid' , dashboard.UpdateuserDetails);
 router.put('/edituser/:userId', dashboard.edituser);
+router.delete('/deleteuser/:userId', dashboard.deleteuser);
+//feederconfiguration
+router.get('/feederdetails/:deviceId', dashboard.getFeederDetails);
+router.put('/editfeeder/:deviceId', dashboard.editfeeder);
+//alertseventsdetail
+router.get('/alerteventsDetail/:alertId', dashboard.alerteventDetails);
+router.put('/editalert/:alertId', dashboard.editalert);
+
+
 
 
 // router.put('/personalDetails/:UserId', authentication.personalDetails);
