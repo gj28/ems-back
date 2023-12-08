@@ -34,6 +34,7 @@ router.put('/updatePassword/:UserId', dashboard.updatePassword);
 router.get('/feeder/:CompanyName', dashboard.feeder);
 router.get('/getdata/:meters', dashboard.getdata);
 router.get('/parametersFilter/:deviceid/:parameter/:interval', dashboard.parametersFilter);
+router.post('/addDeviceTrigger', dashboard.addDeviceTrigger);
 
 // router.put('/setUserOnline/:UserId', authentication.setUserOnline);
 // router.put('/setUserOffline/:UserId', authentication.setUserOffline);
@@ -46,7 +47,7 @@ router.get('/user', authentication.getUserDetails);
 router.get('/userdevices/:companyEmail', dashboard.userDevices);
 router.get('/data/:deviceid/:parameter', dashboard.getDataByCustomDate);
 router.get('/parametersFilter/:CompanyName/:interval', dashboard.filter);
-router.get('/live-device-detail/:deviceId', dashboard.getDeviceDetails);
+router.get('/live-device-detail/:company', dashboard.getDeviceDetails);
 router.get('/user-data/:userId', dashboard.getUserData);
 router.get('/messages/:receiver', dashboard.getUserMessages);
 router.get('/Company-users/:CompanyEmail', dashboard.fetchCompanyUser);
@@ -67,7 +68,7 @@ router.put('/edituser/:userid', dashboard.edituser);
 //SA get route
 router.get('/fetchAllDevices', SA.fetchAllDevices);
 router.get('/fetchAllUsers', SA.fetchAllUsers);
-router.get('/Company/:CompanyEmail', SA.dev);
+//router.get('/Company/:CompanyEmail', SA.dev);
 router.get('/logs/:interval', SA.fetchLogs);
 router.get('/apilogs/:interval', SA.apilogs);
 router.get('/getDeviceByUID/:deviceUID', SA.getDeviceByUID);

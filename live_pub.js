@@ -32,7 +32,7 @@ function fetchDataAndPublish(deviceId) {
     .then((result) => {
       const data = result.rows[0];
       if (data) {
-        const topic = `ems/${deviceId}`;
+        const topic = `ems_live/${deviceId}`;
         const message = JSON.stringify(data);
 
         if (data.id !== lastPublishedTableIDs[deviceId]) {

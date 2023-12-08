@@ -8,11 +8,11 @@ const broker = 'mqtt://broker.emqx.io';
 
 // PostgreSQL configuration
 const pgConfig = {
-  host: process.env.pub_host,
-  user: process.env.pub_user,
-  password: process.env.pub_password,
-  database: process.env.pub_database,
-  port: process.env.pub_port,
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  port: process.env.DB_Port,
 };
 
 // Create a PostgreSQL client
@@ -35,7 +35,7 @@ mqttClient.on('connect', () => {
   const deviceIds = ['SL02202327', 'SL02202333', 'SL02202343', 'SL02202329'];
 
   deviceIds.forEach((deviceId) => {
-    const topic = `ems/${deviceId}`;
+    const topic = `ems_live/${deviceId}`;
     mqttClient.subscribe(topic, (error) => {
       if (error) {
         console.error(`Error subscribing to ${topic}:`, error);

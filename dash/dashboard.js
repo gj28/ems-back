@@ -351,12 +351,12 @@ function getDataByCustomDate(req, res) {
 
 function getDeviceDetails(req, res) {
   try {
-    const deviceId = req.params.deviceId;
+    const Company = req.params.company;
 
     // Validate the deviceId parameter if necessary
 
-    const deviceDetailsQuery = 'SELECT * FROM ems.ems_devices WHERE DeviceUID = $1';
-    db.query(deviceDetailsQuery, [deviceId], (error, deviceDetail) => {
+    const deviceDetailsQuery = 'SELECT * FROM ems.ems_devices WHERE company = $1';
+    db.query(deviceDetailsQuery, [Company], (error, deviceDetail) => {
       if (error) {
         console.error('Error fetching data:', error);
         return res.status(500).json({ message: 'Internal server error' });
@@ -367,7 +367,7 @@ function getDeviceDetails(req, res) {
         return res.status(404).json({ message: 'Device details not found' });
       }
 
-      res.status(200).json(deviceDetail);
+      res.status(200).json(deviceDetail.rows);
     });
   } catch (error) {
     console.error('An error occurred:', error);
@@ -436,12 +436,12 @@ function fetchCompanyUser(req, res) {
 }
 
 function addDevice(req, res) {
-  const { DeviceUID, DeviceLocation, DeviceName, CompanyEmail, CompanyName } = req.body;
+  const { entryid, deviceid, devicelocation, metername, shift, company, virtualgroup } = req.body;
   try {
-    const checkDeviceQuery = 'SELECT * FROM ems.ems_devices WHERE DeviceUID = $1';
-    const insertDeviceQuery = 'INSERT INTO ems.ems_devices (DeviceUID, DeviceLocation, DeviceName, CompanyEmail, CompanyName) VALUES ($1,$2,$3,$4,$5)';
+    const checkDeviceQuery = 'SELECT * FROM ems.ems_devices WHERE entryid = $1';
+    const insertDeviceQuery = 'INSERT INTO ems.ems_devices (entryid, timestamp, deviceid, devicelocation, metername, shift, company, virtualgroup) VALUES ($1, NOW(), $2, $3, $4, $5, $6, $7)';
 
-    db.query(checkDeviceQuery, [DeviceUID], (error, checkResult) => {
+    db.query(checkDeviceQuery, [entryid], (error, checkResult) => {
       if (error) {
         console.error('Error while checking device:', error);
         return res.status(500).json({ message: 'Internal server error' });
@@ -451,7 +451,7 @@ function addDevice(req, res) {
         return res.status(400).json({ message: 'Device already added' });
       }
 
-      db.query(insertDeviceQuery, [DeviceUID, DeviceLocation, DeviceName, CompanyEmail, CompanyName], (insertError, insertResult) => {
+      db.query(insertDeviceQuery, [entryid, deviceid, devicelocation, metername, shift, company, virtualgroup], (insertError, insertResult) => {
         if (insertError) {
           console.error('Error while inserting device:', insertError);
           return res.status(500).json({ message: 'Internal server error' });
@@ -465,6 +465,9 @@ function addDevice(req, res) {
     res.status(500).json({ message: 'Internal server error' });
   }
 }
+
+
+
 
 function temp(req, res) {
   const userId = req.params.userId;
@@ -590,10 +593,10 @@ function feeder(req, res) {
     let query;
 
     if (Userid) {
-      query = 'SELECT * FROM ems.ems_energy_usage WHERE group_name = $1 and virtual_group = $2';
+      query = 'SELECT * FROM ems.ems_devices WHERE company = $1 and virtualgroup = $2';
       db.query(query, [CompanyName, Userid], handleResponse(res));
     } else {
-      query = 'SELECT * FROM ems.ems_energy_usage where group_name = $1';
+      query = 'SELECT * FROM ems.ems_devices where company = $1';
       db.query(query, [CompanyName], handleResponse(res));
     }
   } catch (error) {
@@ -737,6 +740,26 @@ function parametersFilter(req, res) {
   }
 }
 
+function addDeviceTrigger(req, res) {
+  const { DeviceUID, TriggerValue, CompanyEmail } = req.body;
+    try {
+        const insertTriggerQuery = 'INSERT INTO ems.ems_trigger (deviceid, triggervalue, companyemail) VALUES ($1,$2,$3)';
+
+        db.query(insertTriggerQuery, [DeviceUID, TriggerValue, CompanyEmail], (error, insertResult) => {
+          if (error) {
+            console.error('Error while inserting device:', error);
+            return res.status(500).json({ message: 'Internal server error' });
+          }
+
+          return res.json({ message: 'Device Trigger added successfully!' });
+        });
+
+    } catch (error) {
+      console.error('Error in device check:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+}
+
 
 //userdetails
 
@@ -752,7 +775,7 @@ function getUserDetails(req, res) {
       if (userDetail.length === 0) {
         return res.status(404).json({ message: 'user details not found' });
       }
-      res.status(200).json(userDetail.rows);
+      res.status(200).json(userDetail.rows.rows);
      });
   } catch (error) {
     console.error('An error occurred:', error);
@@ -785,93 +808,20 @@ function getFeederDetails(req, res) {
   }
 }
 
-function alerteventDetails(req, res) {
-  try {
-    const alertId = req.params.alertId;
-    const alerteventsQuery = 'SELECT * FROM ems.ems_alerts WHERE feedername = $1';
-    db.query(alerteventsQuery, [alertId], (error, alerteventsDetail) => {
-      if (error) {
-        console.error('Error fetching data:', error);
-        return res.status(500).json({ message: 'Internal server error' });
-      }
-
-      if (alerteventsDetail.length === 0) {
-        return res.status(404).json({ message: 'alerts details not found' });
-      }
-
-      res.status(200).json(alerteventsDetail.rows);
-    });
-  } catch (error) {
-    console.error('An error occurred:', error);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-}
 
 
-// function UpdateuserDetails(req, res) {
-//   const UserId = req.params.UserId;
-//   const { name, userid, designation, mobile, plants, privileges } = req.body;
 
-//   const tenantId = uuidv4();
 
-//   logExecution('userDetails', tenantId, 'INFO', `Updating user details for user ${UserId}`);
 
-//   const userCheckQuery = 'SELECT * FROM ems.ems_user_profile WHERE userid = $1';
 
-//   db.query(userCheckQuery, [UserId], (error, useridCheckResult) => {
-//     if (error) {
-//       console.error('Error during UserId check:', error);
-//       logExecution('userDetails', tenantId, 'ERROR', 'Error during UserId check');
-//       return res.status(500).json({ message: 'Internal server error' });
-//     }
 
-//     try {
-//       if (useridCheckResult.length === 0) {
-//         console.log('User not found!');
-//         logExecution('userDetails', tenantId, 'ERROR', 'User not found');
-//         return res.status(400).json({ message: 'User not found!' });
-//       }
 
-//       const userdetailQuery = 'UPDATE ems.ems_user_profile SET name = $1, userid = $2 , designation = $3, mobile = $4, plants = $5, privileges = $6 WHERE userid = $7';
 
-//       db.query(userdetailQuery, [name, userid, designation, mobile, plants, privileges, userId], (error, details) => {
-//         if (error) {
-//           console.error('Error updating user details:', error);
 
-//           logExecution('userDetails', tenantId, 'ERROR', 'Error updating user details');
-//           return res.status(500).json({ message: 'Internal server error' });
-//         }
 
-//         logExecution('userDetails', tenantId, 'INFO', `Personal details updated successfully for user ${UserId}`);
 
-//         res.json({ message: 'user Details Updated Successfully' });
-//         console.log(details);
-//       });
-//     } catch (error) {
-//       console.error('Error updating user details:', error);
-//       logExecution('userDetails', tenantId, 'ERROR', 'Error updating user details');
-//       res.status(500).json({ message: 'Internal server error' });
-//     }
-//   });
-// }
-function edituser(req, res) {
-  const userId = req.params.userId;
-  const { name, designation, mobile, plants, privileges } = req.body;
 
-  const edituserQuery = `UPDATE ems_user_profile SET name = ?, designation = ?, mobile = ?, plants = ?, privileges = ? WHERE userid = ?`;
 
-  db.query(
-    edituserQuery,
-    [name, designation, mobile, plants, privileges, userId],
-    (updateError, updateResult) => {
-      if (updateError) {
-        console.log(updateError);
-        return res.status(401).json({ message: 'Error Updating user' });
-      }
-      return res.status(200).json({ message: 'User Updated Successfully' });
-    }
-  );
-}
 
 
 
@@ -898,9 +848,7 @@ module.exports = {
   feeder,
   getdata,
   parametersFilter,
+  addDeviceTrigger,
   getUserDetails,
   getFeederDetails,
-  alerteventDetails,
-  //UpdateuserDetails,
-  edituser,
 };
