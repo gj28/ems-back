@@ -589,25 +589,137 @@ function handleQueryResponse(callback) {
 
 //feeder
 
+// function feeder(req, res) {
+//   const CompanyName = req.params.CompanyName;
+//   const Userid = req.query.Userid;
+//   const DeviceId = req.query.DeviceId;
+
+//   try {
+//     let query;
+
+//     if (Userid && DeviceId) {
+//       query = 'SELECT * FROM ems.ems_devices WHERE company = $1 and virtualgroup = $2 and deviceid = $3';
+//       db.query(query, [CompanyName, Userid, DeviceId], handleResponse(res));
+//     } else if (Userid) {
+//       query = 'SELECT * FROM ems.ems_devices WHERE company = $1 and virtualgroup = $2';
+//       db.query(query, [CompanyName, Userid], handleResponse(res));
+//     } else if (DeviceId) {
+//       query = 'SELECT * FROM ems.ems_devices WHERE company = $1 and deviceid = $2';
+//       db.query(query, [CompanyName, DeviceId], handleResponse(res));
+//     } else {
+//       query = 'SELECT * FROM ems.ems_devices WHERE company = $1';
+//       db.query(query, [CompanyName], handleResponse(res));
+//     }
+//   } catch (error) {
+//     console.error('Error fetching data:', error);
+//     res.status(500).json({ message: 'Internal server error' });
+//   }
+// }
+
 function feeder(req, res) {
-  const CompanyName = req.params.CompanyName;
-  const Userid = req.query.Userid;
-
   try {
-    let query;
+    const CompanyName = req.params.CompanyName;
+    const Userid = req.query.Userid;
+    const DeviceId = req.query.DeviceId;
+    const TimeInterval = req.query.TimeInterval;
 
-    if (Userid) {
-      query = 'SELECT * FROM ems.ems_devices WHERE company = $1 and virtualgroup = $2';
-      db.query(query, [CompanyName, Userid], handleResponse(res));
-    } else {
-      query = 'SELECT * FROM ems.ems_devices where company = $1';
-      db.query(query, [CompanyName], handleResponse(res));
+    if (!CompanyName) {
+      return res.status(400).json({ message: 'Company name is required' });
     }
+
+    let query;
+    let parameters;
+
+    if (Userid && DeviceId) {
+      query = 'SELECT * FROM ems.ems_devices WHERE company = $1 and virtualgroup = $2 and deviceid = $3';
+      parameters = [CompanyName, Userid, DeviceId];
+    } else if (Userid) {
+      query = 'SELECT * FROM ems.ems_devices WHERE company = $1 and virtualgroup = $2';
+      parameters = [CompanyName, Userid];
+    } else if (DeviceId) {
+      query = 'SELECT * FROM ems.ems_devices WHERE company = $1 and deviceid = $2';
+      parameters = [CompanyName, DeviceId];
+    } else {
+      query = 'SELECT * FROM ems.ems_devices WHERE company = $1';
+      parameters = [CompanyName];
+    }
+
+    db.query(query, parameters, (error, devicesResult) => {
+      if (error) {
+        console.error('Error fetching devices:', error);
+        return res.status(500).json({ message: 'Internal server error' });
+      }
+
+      const devices = devicesResult.rows;
+
+      if (devices.length === 0) {
+        return res.status(404).json({ message: 'No devices found for the given company name' });
+      }
+
+      // Use the retrieved devices to build the device ID array
+      const deviceIds = devices.map(device => device.deviceid);
+
+      // Fetch data based on the specified time interval
+      let duration;
+      switch (TimeInterval) {
+        case '15min':
+          duration = '15 minutes';
+          break;
+        case '30min':
+          duration = '30 minutes';
+          break;
+        case '1hour':
+          duration = '1 hour';
+          break;
+        case '12hour':
+          duration = '12 hours';
+          break;
+        case '1day':
+          duration = '1 day';
+          break;
+        case '7day':
+          duration = '7 days';
+          break;
+        case '30day':
+          duration = '30 days';
+          break;
+        case '1year':
+          duration = '1 year';
+          break;
+        default:
+          return res.status(400).json({ message: 'Invalid time interval' });
+      }
+
+      const dataQuery = `
+        SELECT device_uid, "date_time", "kvah"
+        FROM ems.ems_live
+        WHERE date_time >= NOW() - INTERVAL '${duration}'
+        AND device_uid = ANY($1::varchar[])
+      `;
+
+      const dataQueryParameters = [deviceIds];
+
+      db.query(dataQuery, dataQueryParameters, (dataError, dataResults) => {
+        if (dataError) {
+          console.error('Error fetching data:', dataError);
+          return res.status(500).json({ message: 'Internal server error' });
+        }
+
+        const data = dataResults.rows.map(row => ({
+          company: CompanyName,
+          device: row.device_uid,
+          data: { kvah: row.kvah, date_time: row.date_time }
+        }));
+
+        res.json(data);
+      });
+    });
   } catch (error) {
-    console.error('Error fetching data:', error);
+    console.error('An error occurred:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 }
+
 
 
 function handleResponse(res) {
