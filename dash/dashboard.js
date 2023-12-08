@@ -749,24 +749,20 @@ function getUserDetails(req, res) {
         console.error('Error fetching data:', error);
         return res.status(500).json({ message: 'Internal server error' });
       }
-
       if (userDetail.length === 0) {
         return res.status(404).json({ message: 'user details not found' });
       }
-
-      res.status(200).json(userDetail);
-    });
+      res.status(200).json(userDetail.rows);
+     });
   } catch (error) {
     console.error('An error occurred:', error);
-    res.status(500).jsonno({ message: 'Internal server error' });
+    res.status(500).json({ message: 'Internal server error' });
   }
 }
 
 
 
 //feeder configuration
-
-
 function getFeederDetails(req, res) {
   try {
     const deviceId = req.params.deviceId;
@@ -781,7 +777,7 @@ function getFeederDetails(req, res) {
         return res.status(404).json({ message: 'Feeder details not found' });
       }
 
-      res.status(200).json(feederDetail);
+      res.status(200).json(feederDetail.rows);
     });
   } catch (error) {
     console.error('An error occurred:', error);
@@ -803,7 +799,7 @@ function alerteventDetails(req, res) {
         return res.status(404).json({ message: 'alerts details not found' });
       }
 
-      res.status(200).json(alerteventsDetail);
+      res.status(200).json(alerteventsDetail.rows);
     });
   } catch (error) {
     console.error('An error occurred:', error);
@@ -812,60 +808,70 @@ function alerteventDetails(req, res) {
 }
 
 
+// function UpdateuserDetails(req, res) {
+//   const UserId = req.params.UserId;
+//   const { name, userid, designation, mobile, plants, privileges } = req.body;
 
+//   const tenantId = uuidv4();
 
+//   logExecution('userDetails', tenantId, 'INFO', `Updating user details for user ${UserId}`);
 
+//   const userCheckQuery = 'SELECT * FROM ems.ems_user_profile WHERE userid = $1';
 
+//   db.query(userCheckQuery, [UserId], (error, useridCheckResult) => {
+//     if (error) {
+//       console.error('Error during UserId check:', error);
+//       logExecution('userDetails', tenantId, 'ERROR', 'Error during UserId check');
+//       return res.status(500).json({ message: 'Internal server error' });
+//     }
 
-function edituserDetails(req, res) {
-  const UserId = req.params.UserId;
-  const { name, userid, designation, mobile, plants, privileges } = req.body;
+//     try {
+//       if (useridCheckResult.length === 0) {
+//         console.log('User not found!');
+//         logExecution('userDetails', tenantId, 'ERROR', 'User not found');
+//         return res.status(400).json({ message: 'User not found!' });
+//       }
 
-  const tenantId = uuidv4();
+//       const userdetailQuery = 'UPDATE ems.ems_user_profile SET name = $1, userid = $2 , designation = $3, mobile = $4, plants = $5, privileges = $6 WHERE userid = $7';
 
-  logExecution('userDetails', tenantId, 'INFO', `Updating user details for user ${UserId}`);
+//       db.query(userdetailQuery, [name, userid, designation, mobile, plants, privileges, userId], (error, details) => {
+//         if (error) {
+//           console.error('Error updating user details:', error);
 
-  const userCheckQuery = 'SELECT * FROM ems.ems_user_profile WHERE userid = $1';
+//           logExecution('userDetails', tenantId, 'ERROR', 'Error updating user details');
+//           return res.status(500).json({ message: 'Internal server error' });
+//         }
 
-  db.query(userCheckQuery, [UserId], (error, useridCheckResult) => {
-    if (error) {
-      console.error('Error during UserId check:', error);
-      logExecution('userrDetails', tenantId, 'ERROR', 'Error during UserId check');
-      return res.status(500).json({ message: 'Internal server error' });
-    }
+//         logExecution('userDetails', tenantId, 'INFO', `Personal details updated successfully for user ${UserId}`);
 
-    try {
-      if (useridCheckResult.length === 0) {
-        console.log('User not found!');
-        logExecution('userDetails', tenantId, 'ERROR', 'User not found');
-        return res.status(400).json({ message: 'User not found!' });
+//         res.json({ message: 'user Details Updated Successfully' });
+//         console.log(details);
+//       });
+//     } catch (error) {
+//       console.error('Error updating user details:', error);
+//       logExecution('userDetails', tenantId, 'ERROR', 'Error updating user details');
+//       res.status(500).json({ message: 'Internal server error' });
+//     }
+//   });
+// }
+function edituser(req, res) {
+  const userId = req.params.userId;
+  const { name, designation, mobile, plants, privileges } = req.body;
+
+  const edituserQuery = `UPDATE ems_user_profile SET name = ?, designation = ?, mobile = ?, plants = ?, privileges = ? WHERE userid = ?`;
+
+  db.query(
+    edituserQuery,
+    [name, designation, mobile, plants, privileges, userId],
+    (updateError, updateResult) => {
+      if (updateError) {
+        console.log(updateError);
+        return res.status(401).json({ message: 'Error Updating user' });
       }
-
-      const userdetailQuery = 'UPDATE ems.ems_edit_user_profile SET name = $1, userid = $2 , designation = $3, mobile = $4, plants = $5, privileges = $6 WHERE userid = $7';
-
-      db.query(userdetailQuery, [name, userid, designation, mobile, plants, privileges, userId], (error, details) => {
-        if (error) {
-          console.error('Error updating user details:', error);
-
-          logExecution('userDetails', tenantId, 'ERROR', 'Error updating user details');
-          return res.status(500).json({ message: 'Internal server error' });
-        }
-
-        logExecution('userDetails', tenantId, 'INFO', `Personal details updated successfully for user ${UserId}`);
-
-        res.json({ message: 'user Details Updated Successfully' });
-        console.log(details);
-      });
-    } catch (error) {
-      console.error('Error updating user details:', error);
-      logExecution('userDetails', tenantId, 'ERROR', 'Error updating user details');
-      res.status(500).json({ message: 'Internal server error' });
+      return res.status(200).json({ message: 'User Updated Successfully' });
     }
-  });
+  );
 }
-
-
-
 
 
 
@@ -895,5 +901,6 @@ module.exports = {
   getUserDetails,
   getFeederDetails,
   alerteventDetails,
-  edituserDetails,
+  //UpdateuserDetails,
+  edituser,
 };

@@ -52,10 +52,11 @@ router.get('/messages/:receiver', dashboard.getUserMessages);
 router.get('/Company-users/:CompanyEmail', dashboard.fetchCompanyUser);
 router.get('/logs', logs.fetchLogs);
 router.get('/temp', dashboard.temp);
-router.get('/userdetails/:userid', dashboard.getUserDetails);
-router.get('/feederdetails/:deviceid', dashboard.getFeederDetails);
-router.get('/alerteventsDetail/:feedername', dashboard.alerteventDetails);
-router.put('/edituserDetails/:userid', dashboard.edituserDetails);
+router.get('/userdetails/:userId', dashboard.getUserDetails);
+router.get('/feederdetails/:deviceId', dashboard.getFeederDetails);
+router.get('/alerteventsDetail/:alertId', dashboard.alerteventDetails);
+// router.put('/UpdateuserDetail/:userid' , dashboard.UpdateuserDetails);
+router.put('/edituser/:userid', dashboard.edituser);
 
 
 // router.put('/personalDetails/:UserId', authentication.personalDetails);
