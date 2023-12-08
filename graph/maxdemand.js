@@ -62,7 +62,7 @@ function maxdemand() {
                             if (upsertError) {
                                 console.error(`Error inserting or updating KVA values for device ${deviceID}:`, upsertError);
                             } else {
-                                console.log(`KVA values for device ${deviceID} inserted or updated successfully.`);
+                                //console.log(`KVA values for device ${deviceID} inserted or updated successfully.`);
                             }
                         });
                     });

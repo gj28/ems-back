@@ -6,7 +6,7 @@ const fs = require('fs');
 const bodyParser = require('body-parser');
 const audit_logs = require('./graph/graphlogs');
 const SA = require('./superadmin/SA');
-const kwsum=require('./graph/kw_sum');
+const kwsum=require('./graph/maxdemand');
 
 //const { checkState } = require('./SMS/smsController');
 // const mqtt_sub = require('./sub');
