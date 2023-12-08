@@ -763,6 +763,8 @@ function getdata(req, res) {
   });
 }
 
+
+
 function parametersFilter(req, res) {
   try {
     const deviceid = req.params.deviceid;
@@ -1332,6 +1334,28 @@ function isValidTimestamp(timestamp) {
 
 
 
+function fetchmaxdemand(req, res) {
+  try {
+    const currentDate = new Date().toISOString().split('T')[0];
+
+    const query = `SELECT * FROM ems.maxdemand WHERE DATE(calculation_date) = '${currentDate}'`;
+
+    db.query(query, (error, result) => {
+      if (error) {
+        console.error('Error fetching devices:', error);
+        res.status(500).json({ message: 'Error fetching devices', error: error.message });
+        return;
+      }
+
+      const devices = result.rows;
+
+      res.json({ devices });
+    });
+  } catch (error) {
+    console.error('Error fetching devices:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}
 
 
 
@@ -1363,5 +1387,6 @@ module.exports = {
   editfeeder,
   alerteventDetails,
   editalert,
-  piechart
+  piechart,
+  fetchmaxdemand
 };
