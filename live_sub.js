@@ -4,7 +4,12 @@ require('dotenv').config();
 const os = require('os');
 
 // MQTT broker URL
-const broker = 'mqtt://broker.emqx.io';
+const broker = 'ws://dashboard.senselive.in:9001';
+
+const options = {
+  username: 'Sense2023', // Replace with your MQTT broker username
+  password: 'sense123', // Replace with your MQTT broker password
+};
 
 // PostgreSQL configuration
 const pgConfig = {
@@ -26,7 +31,7 @@ pgClient.connect().then(() => {
 });
 
 // Connect to the MQTT broker
-const mqttClient = mqtt.connect(broker);
+const mqttClient = mqtt.connect(broker,options);
 
 // Handle MQTT connection event
 mqttClient.on('connect', () => {
@@ -49,6 +54,7 @@ mqttClient.on('connect', () => {
 mqttClient.on('message', (topic, message) => {
   try {
     const data = JSON.parse(message);
+
 
     // Insert data into PostgreSQL database
     const insertQuery = `INSERT INTO ems.ems_live (
