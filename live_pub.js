@@ -2,8 +2,12 @@ const mqtt = require('mqtt');
 require('dotenv').config();
 const { Client } = require('pg');
 
-const broker = 'mqtt://broker.emqx.io';
+const broker = 'ws://dashboard.senselive.in:9001';
 
+const options = {
+  username: 'Sense2023', // Replace with your MQTT broker username
+  password: 'sense123', // Replace with your MQTT broker password
+};
 const dbConfig = {
   host: process.env.pub_host,
   user: process.env.pub_user,
@@ -16,7 +20,7 @@ const pgClient = new Client(dbConfig);
 
 pgClient.connect();
 
-const mqttClient = mqtt.connect(broker);
+const mqttClient = mqtt.connect(broker,options);
 
 const deviceIds = ['SL02202327', 'SL02202333', 'SL02202343', 'SL02202329'];
 
