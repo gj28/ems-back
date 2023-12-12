@@ -1,4 +1,3 @@
-
 const bcrypt = require('bcrypt');
 const db = require('../db');
 const jwtUtils = require('../token/jwtUtils');
@@ -620,10 +619,9 @@ function feeder(req, res) {
   try {
     const CompanyName = req.params.CompanyName;
     const Userid = req.query.Userid;
-    const DeviceId = req.query.DeviceId;
+    const DeviceIds = req.query.DeviceId; // Use DeviceIds to receive an array of DeviceId values
     const Shift = req.query.Shift;
     const TimeInterval = req.query.TimeInterval;
-
 
     if (!CompanyName) {
       return res.status(400).json({ message: 'Company name is required' });
@@ -632,15 +630,15 @@ function feeder(req, res) {
     let query;
     let parameters;
 
-    if (Userid && DeviceId) {
-      query = 'SELECT * FROM ems.ems_devices WHERE company = $1 and virtualgroup = $2 and deviceid = $3';
-      parameters = [CompanyName, Userid, DeviceId];
+    if (Userid && DeviceIds) {
+      query = 'SELECT * FROM ems.ems_devices WHERE company = $1 and virtualgroup = $2 and deviceid = ANY($3::varchar[])';
+      parameters = [CompanyName, Userid, DeviceIds];
     } else if (Userid) {
       query = 'SELECT * FROM ems.ems_devices WHERE company = $1 and virtualgroup = $2';
       parameters = [CompanyName, Userid];
-    } else if (DeviceId) {
-      query = 'SELECT * FROM ems.ems_devices WHERE company = $1 and deviceid = $2';
-      parameters = [CompanyName, DeviceId];
+    } else if (DeviceIds) {
+      query = 'SELECT * FROM ems.ems_devices WHERE company = $1 and deviceid = ANY($2::varchar[])';
+      parameters = [CompanyName, DeviceIds];
     } else if (Shift) {  
       query = 'SELECT * FROM ems.ems_devices WHERE company = $1 and shift = $2';
       parameters = [CompanyName, Shift];
