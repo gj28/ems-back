@@ -835,6 +835,119 @@ function feederParametrised(req, res) {
 }
 
 
+// function feederHarmonic(req, res) {
+//   try {
+//     const CompanyName = req.params.CompanyName;
+//     const Userid = req.query.Userid;
+//     const DeviceIds = req.query.DeviceId;
+//     const Shift = req.query.Shift;
+//     const TimeInterval = req.query.TimeInterval;
+
+//     if (!CompanyName) {
+//       return res.status(400).json({ message: 'Company name is required' });
+//     }
+
+//     let query;
+//     let parameters;
+
+//     if (Userid && DeviceIds) {
+//       query = 'SELECT * FROM ems.ems_devices WHERE company = $1 and virtualgroup = $2 and deviceid = ANY($3::varchar[])';
+//       parameters = [CompanyName, Userid, DeviceIds];
+//     } else if (Userid) {
+//       query = 'SELECT * FROM ems.ems_devices WHERE company = $1 and virtualgroup = $2';
+//       parameters = [CompanyName, Userid];
+//     } else if (DeviceIds) {
+//       query = 'SELECT * FROM ems.ems_devices WHERE company = $1 and deviceid = ANY($2::varchar[])';
+//       parameters = [CompanyName, DeviceIds];
+//     } else if (Shift) {  
+//       query = 'SELECT * FROM ems.ems_devices WHERE company = $1 and shift = $2';
+//       parameters = [CompanyName, Shift];
+//     } else {
+//       query = 'SELECT * FROM ems.ems_devices WHERE company = $1';
+//       parameters = [CompanyName];
+//     }
+//     db.query(query, parameters, (error, devicesResult) => {
+//       if (error) {
+//         console.error('Error fetching devices:', error);
+//         return res.status(500).json({ message: 'Internal server error' });
+//       }
+
+//       const devices = devicesResult.rows;
+
+//       if (devices.length === 0) {
+//         return res.status(404).json({ message: 'No devices found for the given company name' });
+//       }
+
+//       const deviceIds = devices.map(device => device.deviceid);
+
+//       let duration;
+//       switch (TimeInterval) {
+//         case '15min':
+//           duration = '15 minutes';
+//           break;
+//         case '30min':
+//           duration = '30 minutes';
+//           break;
+//         case '1hour':
+//           duration = '1 hour';
+//           break;
+//         case '12hour':
+//           duration = '12 hours';
+//           break;
+//         case '1day':
+//           duration = '1 day';
+//           break;
+//         case '7day':
+//           duration = '7 days';
+//           break;
+//         case '30day':
+//           duration = '30 days';
+//           break;
+//         case '1year':
+//           duration = '1 year';
+//           break;
+//         default:
+//           return res.status(400).json({ message: 'Invalid time interval' });
+//       }
+
+//       const dataQuery = `
+//         SELECT device_uid, "date_time", "thd_v1n","thd_v2n","thd_v3n","thd_v12","thd_v23","thd_v31","thd_i1","thd_i2","thd_i3"
+//         FROM ems.ems_live
+//         WHERE date_time >= NOW() - INTERVAL '${duration}'
+//         AND device_uid = ANY($1::varchar[])
+//       `;
+
+//       const dataQueryParameters = [deviceIds];
+
+//       db.query(dataQuery, dataQueryParameters, (dataError, dataResults) => {
+//         if (dataError) {
+//           console.error('Error fetching data:', dataError);
+//           return res.status(500).json({ message: 'Internal server error' });
+//         }
+
+//         const data = dataResults.rows.map(row => ({
+//           company: CompanyName,
+//           device: row.device_uid,
+//           data1: { thd_v1n: row.thd_v1n, date_time: row.date_time },
+//           data2: { thd_v2n: row.thd_v2n, date_time: row.date_time },
+//           data3: { thd_v3n: row.thd_v3n, date_time: row.date_time },
+//           data4: { thd_v12: row.thd_v12, date_time: row.date_time },
+//           data5: { thd_v23: row.thd_v23, date_time: row.date_time },
+//           data6: { thd_v31: row.thd_v31, date_time: row.date_time },
+//           data6: { thd_i1: row.thd_i1, date_time: row.date_time },
+//           data6: { thd_i2: row.thd_i2, date_time: row.date_time },
+//           data6: { thd_i3: row.thd_i3, date_time: row.date_time }
+//         }));
+
+//         res.json(data);
+//       });
+//     });
+//   } catch (error) {
+//     console.error('An error occurred:', error);
+//     res.status(500).json({ message: 'Internal server error' });
+//   }
+// }
+
 function feederHarmonic(req, res) {
   try {
     const CompanyName = req.params.CompanyName;
@@ -925,21 +1038,34 @@ function feederHarmonic(req, res) {
           return res.status(500).json({ message: 'Internal server error' });
         }
 
-        const data = dataResults.rows.map(row => ({
-          company: CompanyName,
-          device: row.device_uid,
-          data1: { thd_v1n: row.thd_v1n, date_time: row.date_time },
-          data2: { thd_v2n: row.thd_v2n, date_time: row.date_time },
-          data3: { thd_v3n: row.thd_v3n, date_time: row.date_time },
-          data4: { thd_v12: row.thd_v12, date_time: row.date_time },
-          data5: { thd_v23: row.thd_v23, date_time: row.date_time },
-          data6: { thd_v31: row.thd_v31, date_time: row.date_time },
-          data6: { thd_i1: row.thd_i1, date_time: row.date_time },
-          data6: { thd_i2: row.thd_i2, date_time: row.date_time },
-          data6: { thd_i3: row.thd_i3, date_time: row.date_time }
-        }));
+        const data = {};
 
-        res.json(data);
+        dataResults.rows.forEach(row => {
+          const deviceUid = row.device_uid;
+
+          if (!data[deviceUid]) {
+            data[deviceUid] = {
+              company: CompanyName,
+              device: deviceUid,
+              data: []
+            };
+          }
+
+          data[deviceUid].data.push({
+            thd_v1n: row.thd_v1n,
+            thd_v2n: row.thd_v2n,
+            thd_v3n: row.thd_v3n,
+            thd_v12: row.thd_v12,
+            thd_v23: row.thd_v23,
+            thd_v31: row.thd_v31,
+            thd_i1: row.thd_i1,
+            thd_i2: row.thd_i2,
+            thd_i3: row.thd_i3,
+            date_time: row.date_time
+          });
+        });
+
+        res.json(Object.values(data));
       });
     });
   } catch (error) {
@@ -947,6 +1073,8 @@ function feederHarmonic(req, res) {
     res.status(500).json({ message: 'Internal server error' });
   }
 }
+
+
 function getdata(req, res) {
   const meters = req.params.meters;
 
@@ -1418,36 +1546,36 @@ function getFeederDetails(req, res) {
 //       WHERE device_uid = $1 AND date_time <= NOW() 
 //       ORDER BY date_time DESC LIMIT 1`;
       
-//       let newintervalQuery;
+//     //   let newintervalQuery;
 
-//     switch (interval) {
-//       case '5 MINUTE':
-//         newintervalQuery = '10 MINUTE';
-//         break;
-//       case '1 HOUR':
-//         newintervalQuery = '2 HOUR';
-//         break;
-//       case '1 DAY':
-//         newintervalQuery = '2 DAY';
-//         break;
-//       case '1 WEEK':
-//         newintervalQuery = '2 WEEK';
-//         break;
-//       case '1 MONTH':
-//         newintervalQuery = '2 MONTH';
-//         break;
-//       case '1 YEAR':
-//         newintervalQuery = '2 YEAR';
-//         break;
-//       default:
-//         return res.status(400).json({ message: 'Invalid interval specified' });
-//     }
-//       const differenceValue = `
-//       SELECT ${selectClause} FROM ems.ems_live 
-//       WHERE device_uid = $1 AND date_time >= NOW() - INTERVAL '${newintervalQuery}' 
-//       ORDER BY date_time ASC LIMIT 1`;
+//     // switch (interval) {
+//     //   case '5 MINUTE':
+//     //     newintervalQuery = '10 MINUTE';
+//     //     break;
+//     //   case '1 HOUR':
+//     //     newintervalQuery = '2 HOUR';
+//     //     break;
+//     //   case '1 DAY':
+//     //     newintervalQuery = '2 DAY';
+//     //     break;
+//     //   case '1 WEEK':
+//     //     newintervalQuery = '2 WEEK';
+//     //     break;
+//     //   case '1 MONTH':
+//     //     newintervalQuery = '2 MONTH';
+//     //     break;
+//     //   case '1 YEAR':
+//     //     newintervalQuery = '2 YEAR';
+//     //     break;
+//     //   default:
+//     //     return res.status(400).json({ message: 'Invalid interval specified' });
+//     // }
+//     //   const differenceValue = `
+//     //   SELECT ${selectClause} FROM ems.ems_live 
+//     //   WHERE device_uid = $1 AND date_time >= NOW() - INTERVAL '${newintervalQuery}' 
+//     //   ORDER BY date_time ASC LIMIT 1`;
 
-//     console.log('Fetch First Values Query:', differenceValue);
+//     //console.log('Fetch First Values Query:', differenceValue);
 //     //console.log('Fetch Last Values Query:', fetchLastValuesQuery);
 
 //     db.query(fetchFirstValuesQuery, [deviceId], (fetchFirstError, fetchFirstResult) => {
@@ -1468,7 +1596,7 @@ function getFeederDetails(req, res) {
 //           return res.status(500).json({ message: 'Internal server error' });
 //         }
 
-//         //console.log('Fetch Last Result:', fetchLastResult);
+//        // console.log('Fetch Last Result:', fetchLastResult);
 
 //         if (!fetchLastResult || fetchLastResult.rows.length === 0) {
 //           return res.status(404).json({ message: 'No data found for the specified interval' });
@@ -1491,6 +1619,114 @@ function getFeederDetails(req, res) {
 //     res.status(500).json({ message: 'Internal server error' });
 //   }
 // }
+function Intervalfeeder(req, res) {
+  const { deviceId, interval } = req.params;
+
+  try {
+    let intervalQuery;
+
+    switch (interval) {
+      case 'min':
+        intervalQuery = '5 MINUTE';
+        break;
+      case 'hour':
+        intervalQuery = '1 HOUR';
+        break;
+      case 'day':
+        intervalQuery = '1 DAY';
+        break;
+      case 'week':
+        intervalQuery = '1 WEEK';
+        break;
+      case 'month':
+        intervalQuery = '1 MONTH';
+        break;
+      case 'year':
+        intervalQuery = '1 YEAR';
+        break;
+      default:
+        return res.status(400).json({ message: 'Invalid interval specified' });
+    }
+
+    const parameters = ['kvah', 'kwh', 'kvar', 'kvarh'];
+
+    const selectClause = parameters.map(param => `${param} AS ${param}`).join(', ');
+
+    // Fetch the first values for the specified interval
+    const fetchFirstValuesQuery = `
+      SELECT ${selectClause} FROM ems.ems_live 
+      WHERE device_uid = $1 AND date_time >= NOW() - INTERVAL '${intervalQuery}' 
+      ORDER BY date_time ASC LIMIT 1`;
+
+    // Fetch the second values for the specified interval
+    const fetchSecondValuesQuery = `
+      SELECT ${selectClause} FROM ems.ems_live 
+      WHERE device_uid = $1 AND date_time >= NOW() - INTERVAL '${intervalQuery}' * 2
+      ORDER BY date_time ASC LIMIT 1`;
+
+    // Fetch the third values for the specified interval
+    const fetchThirdValuesQuery = `
+      SELECT ${selectClause} FROM ems.ems_live 
+      WHERE device_uid = $1 AND date_time >= NOW() - INTERVAL '${intervalQuery}' * 2
+      ORDER BY date_time ASC LIMIT 1 OFFSET 1`;
+
+    db.query(fetchFirstValuesQuery, [deviceId], (fetchFirstError, fetchFirstResult) => {
+      if (fetchFirstError) {
+        console.error('Error while fetching the first values:', fetchFirstError);
+        return res.status(500).json({ message: 'Internal server error' });
+      }
+
+      if (!fetchFirstResult || fetchFirstResult.rows.length === 0) {
+        return res.status(404).json({ message: 'No data found for the specified interval' });
+      }
+
+      db.query(fetchSecondValuesQuery, [deviceId], (fetchSecondError, fetchSecondResult) => {
+        if (fetchSecondError) {
+          console.error('Error while fetching the second values:', fetchSecondError);
+          return res.status(500).json({ message: 'Internal server error' });
+        }
+
+        if (!fetchSecondResult || fetchSecondResult.rows.length === 0) {
+          return res.status(404).json({ message: 'No data found for the specified interval' });
+        }
+
+        db.query(fetchThirdValuesQuery, [deviceId], (fetchThirdError, fetchThirdResult) => {
+          if (fetchThirdError) {
+            console.error('Error while fetching the third values:', fetchThirdError);
+            return res.status(500).json({ message: 'Internal server error' });
+          }
+
+          if (!fetchThirdResult || fetchThirdResult.rows.length === 0) {
+            return res.status(404).json({ message: 'No data found for the specified interval' });
+          }
+
+          // Calculate the differences for each parameter
+          const firstSecondDifferences = {};
+          const secondThirdDifferences = {};
+
+          parameters.forEach(param => {
+            const firstValue = fetchFirstResult.rows[0][param];
+            const secondValue = fetchSecondResult.rows[0][param];
+            const thirdValue = fetchThirdResult.rows[0][param];
+
+            const firstSecondDifference = secondValue - firstValue;
+            const secondThirdDifference = thirdValue - secondValue;
+
+            firstSecondDifferences[param] = firstSecondDifference;
+            secondThirdDifferences[param] = secondThirdDifference;
+          });
+
+          return res.json({ firstSecondDifferences, secondThirdDifferences });
+        });
+      });
+    });
+  } catch (error) {
+    console.error('Error in device retrieval:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}
+
+
 
 
 function editfeeder(req, res) {
@@ -1622,10 +1858,11 @@ module.exports = {
   edituser,
   deleteuser,
   getFeederDetails,
-  //Intervalfeeder,
+  Intervalfeeder,
   editfeeder,
   alerteventDetails,
   editalert,
   piechart,
   fetchmaxdemand
+  
 };
