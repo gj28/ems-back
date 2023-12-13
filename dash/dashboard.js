@@ -834,6 +834,119 @@ function feederParametrised(req, res) {
   }
 }
 
+
+function feederHarmonic(req, res) {
+  try {
+    const CompanyName = req.params.CompanyName;
+    const Userid = req.query.Userid;
+    const DeviceIds = req.query.DeviceId;
+    const Shift = req.query.Shift;
+    const TimeInterval = req.query.TimeInterval;
+
+    if (!CompanyName) {
+      return res.status(400).json({ message: 'Company name is required' });
+    }
+
+    let query;
+    let parameters;
+
+    if (Userid && DeviceIds) {
+      query = 'SELECT * FROM ems.ems_devices WHERE company = $1 and virtualgroup = $2 and deviceid = ANY($3::varchar[])';
+      parameters = [CompanyName, Userid, DeviceIds];
+    } else if (Userid) {
+      query = 'SELECT * FROM ems.ems_devices WHERE company = $1 and virtualgroup = $2';
+      parameters = [CompanyName, Userid];
+    } else if (DeviceIds) {
+      query = 'SELECT * FROM ems.ems_devices WHERE company = $1 and deviceid = ANY($2::varchar[])';
+      parameters = [CompanyName, DeviceIds];
+    } else if (Shift) {  
+      query = 'SELECT * FROM ems.ems_devices WHERE company = $1 and shift = $2';
+      parameters = [CompanyName, Shift];
+    } else {
+      query = 'SELECT * FROM ems.ems_devices WHERE company = $1';
+      parameters = [CompanyName];
+    }
+    db.query(query, parameters, (error, devicesResult) => {
+      if (error) {
+        console.error('Error fetching devices:', error);
+        return res.status(500).json({ message: 'Internal server error' });
+      }
+
+      const devices = devicesResult.rows;
+
+      if (devices.length === 0) {
+        return res.status(404).json({ message: 'No devices found for the given company name' });
+      }
+
+      const deviceIds = devices.map(device => device.deviceid);
+
+      let duration;
+      switch (TimeInterval) {
+        case '15min':
+          duration = '15 minutes';
+          break;
+        case '30min':
+          duration = '30 minutes';
+          break;
+        case '1hour':
+          duration = '1 hour';
+          break;
+        case '12hour':
+          duration = '12 hours';
+          break;
+        case '1day':
+          duration = '1 day';
+          break;
+        case '7day':
+          duration = '7 days';
+          break;
+        case '30day':
+          duration = '30 days';
+          break;
+        case '1year':
+          duration = '1 year';
+          break;
+        default:
+          return res.status(400).json({ message: 'Invalid time interval' });
+      }
+
+      const dataQuery = `
+        SELECT device_uid, "date_time", "thd_v1n","thd_v2n","thd_v3n","thd_v12","thd_v23","thd_v31","thd_i1","thd_i2","thd_i3"
+        FROM ems.ems_live
+        WHERE date_time >= NOW() - INTERVAL '${duration}'
+        AND device_uid = ANY($1::varchar[])
+      `;
+
+      const dataQueryParameters = [deviceIds];
+
+      db.query(dataQuery, dataQueryParameters, (dataError, dataResults) => {
+        if (dataError) {
+          console.error('Error fetching data:', dataError);
+          return res.status(500).json({ message: 'Internal server error' });
+        }
+
+        const data = dataResults.rows.map(row => ({
+          company: CompanyName,
+          device: row.device_uid,
+          data1: { thd_v1n: row.thd_v1n, date_time: row.date_time },
+          data2: { thd_v2n: row.thd_v2n, date_time: row.date_time },
+          data3: { thd_v3n: row.thd_v3n, date_time: row.date_time },
+          data4: { thd_v12: row.thd_v12, date_time: row.date_time },
+          data5: { thd_v23: row.thd_v23, date_time: row.date_time },
+          data6: { thd_v31: row.thd_v31, date_time: row.date_time },
+          data6: { thd_i1: row.thd_i1, date_time: row.date_time },
+          data6: { thd_i2: row.thd_i2, date_time: row.date_time },
+          data6: { thd_i3: row.thd_i3, date_time: row.date_time }
+        }));
+
+        res.json(data);
+      });
+    });
+  } catch (error) {
+    console.error('An error occurred:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}
 function getdata(req, res) {
   const meters = req.params.meters;
 
@@ -1501,6 +1614,7 @@ module.exports = {
   temp,
   feeder,
   feederParametrised,
+  feederHarmonic,
   getdata,
   parametersFilter,
   addDeviceTrigger,
