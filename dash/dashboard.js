@@ -646,6 +646,7 @@ function feeder(req, res) {
       query = 'SELECT * FROM ems.ems_devices WHERE company = $1';
       parameters = [CompanyName];
     }
+
     db.query(query, parameters, (error, devicesResult) => {
       if (error) {
         console.error('Error fetching devices:', error);
@@ -705,17 +706,30 @@ function feeder(req, res) {
           return res.status(500).json({ message: 'Internal server error' });
         }
 
-        const data = dataResults.rows.map(row => ({
-          company: CompanyName,
-          device: row.device_uid,
-          data1: { kvah: row.kvah, date_time: row.date_time },
-          data2: { kwh: row.kwh, date_time: row.date_time },
-          data3: { imp_kvarh: row.imp_kvarh, date_time: row.date_time },
-          data4: { exp_kvarh: row.exp_kvarh, date_time: row.date_time },
-          data5: { kvarh: row.kvarh, date_time: row.date_time }
-        }));
+        const data = {};
 
-        res.json(data);
+        dataResults.rows.forEach(row => {
+          const deviceUid = row.device_uid;
+
+          if (!data[deviceUid]) {
+            data[deviceUid] = {
+              company: CompanyName,
+              device: deviceUid,
+              data: []
+            };
+          }
+
+          data[deviceUid].data.push({
+            kvah: row.kvah,
+            kwh: row.kwh,
+            imp_kvarh: row.imp_kvarh,
+            exp_kvarh: row.exp_kvarh,
+            kvarh: row.kvarh,
+            date_time: row.date_time
+          });
+        });
+
+        res.json(Object.values(data));
       });
     });
   } catch (error) {
@@ -723,6 +737,7 @@ function feeder(req, res) {
     res.status(500).json({ message: 'Internal server error' });
   }
 }
+
 
 function feederParametrised(req, res) {
   try {
