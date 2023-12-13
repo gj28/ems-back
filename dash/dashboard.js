@@ -724,6 +724,115 @@ function feeder(req, res) {
   }
 }
 
+function feederParametrised(req, res) {
+  try {
+    const CompanyName = req.params.CompanyName;
+    const Userid = req.query.Userid;
+    const DeviceIds = req.query.DeviceId;
+    const Shift = req.query.Shift;
+    const TimeInterval = req.query.TimeInterval;
+
+    if (!CompanyName) {
+      return res.status(400).json({ message: 'Company name is required' });
+    }
+
+    let query;
+    let parameters;
+
+    if (Userid && DeviceIds) {
+      query = 'SELECT * FROM ems.ems_devices WHERE company = $1 and virtualgroup = $2 and deviceid = ANY($3::varchar[])';
+      parameters = [CompanyName, Userid, DeviceIds];
+    } else if (Userid) {
+      query = 'SELECT * FROM ems.ems_devices WHERE company = $1 and virtualgroup = $2';
+      parameters = [CompanyName, Userid];
+    } else if (DeviceIds) {
+      query = 'SELECT * FROM ems.ems_devices WHERE company = $1 and deviceid = ANY($2::varchar[])';
+      parameters = [CompanyName, DeviceIds];
+    } else if (Shift) {  
+      query = 'SELECT * FROM ems.ems_devices WHERE company = $1 and shift = $2';
+      parameters = [CompanyName, Shift];
+    } else {
+      query = 'SELECT * FROM ems.ems_devices WHERE company = $1';
+      parameters = [CompanyName];
+    }
+    db.query(query, parameters, (error, devicesResult) => {
+      if (error) {
+        console.error('Error fetching devices:', error);
+        return res.status(500).json({ message: 'Internal server error' });
+      }
+
+      const devices = devicesResult.rows;
+
+      if (devices.length === 0) {
+        return res.status(404).json({ message: 'No devices found for the given company name' });
+      }
+
+      const deviceIds = devices.map(device => device.deviceid);
+
+      let duration;
+      switch (TimeInterval) {
+        case '15min':
+          duration = '15 minutes';
+          break;
+        case '30min':
+          duration = '30 minutes';
+          break;
+        case '1hour':
+          duration = '1 hour';
+          break;
+        case '12hour':
+          duration = '12 hours';
+          break;
+        case '1day':
+          duration = '1 day';
+          break;
+        case '7day':
+          duration = '7 days';
+          break;
+        case '30day':
+          duration = '30 days';
+          break;
+        case '1year':
+          duration = '1 year';
+          break;
+        default:
+          return res.status(400).json({ message: 'Invalid time interval' });
+      }
+
+      const dataQuery = `
+        SELECT device_uid, "date_time", "kva","kw","kvar","voltage_l","voltage_n","current"
+        FROM ems.ems_live
+        WHERE date_time >= NOW() - INTERVAL '${duration}'
+        AND device_uid = ANY($1::varchar[])
+      `;
+
+      const dataQueryParameters = [deviceIds];
+
+      db.query(dataQuery, dataQueryParameters, (dataError, dataResults) => {
+        if (dataError) {
+          console.error('Error fetching data:', dataError);
+          return res.status(500).json({ message: 'Internal server error' });
+        }
+
+        const data = dataResults.rows.map(row => ({
+          company: CompanyName,
+          device: row.device_uid,
+          data1: { kva: row.kva, date_time: row.date_time },
+          data2: { kw: row.kw, date_time: row.date_time },
+          data3: { kvar: row.kvar, date_time: row.date_time },
+          data4: { voltage_l: row.voltage_l, date_time: row.date_time },
+          data5: { voltage_n: row.voltage_n, date_time: row.date_time },
+          data6: { current: row.current, date_time: row.date_time }
+        }));
+
+        res.json(data);
+      });
+    });
+  } catch (error) {
+    console.error('An error occurred:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}
 
 function getdata(req, res) {
   const meters = req.params.meters;
@@ -1391,6 +1500,7 @@ module.exports = {
   addDevice,
   temp,
   feeder,
+  feederParametrised,
   getdata,
   parametersFilter,
   addDeviceTrigger,
