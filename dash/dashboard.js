@@ -1726,8 +1726,9 @@ function isValidTimestamp(timestamp) {
 function fetchmaxdemand(req, res) {
   try {
     const currentDate = new Date().toISOString().split('T')[0];
+    const companyName = req.params.companyName; // Assuming the company name is passed as a parameter
 
-    const query = `SELECT * FROM ems.maxdemand WHERE DATE(calculation_date) = '${currentDate}'`;
+    const query = `SELECT * FROM ems.maxdemand WHERE DATE(calculation_date) = '${currentDate}' AND company_name = '${companyName}'`;
 
     db.query(query, (error, result) => {
       if (error) {
@@ -1745,6 +1746,7 @@ function fetchmaxdemand(req, res) {
     res.status(500).json({ message: 'Internal server error' });
   }
 }
+
 
 
 

@@ -40,7 +40,7 @@ router.get('/getdata/:meters', dashboard.getdata);
 router.get('/parametersFilter/:deviceid/:parameter/:interval', dashboard.parametersFilter);
 router.post('/addDeviceTrigger', dashboard.addDeviceTrigger);
 router.get('/piechart/:companyName/:interval', dashboard.piechart);
-router.get('/fetchmaxdemand', dashboard.fetchmaxdemand);
+router.get('/fetchmaxdemand/:companyName', dashboard.fetchmaxdemand);
 // router.put('/setUserOnline/:UserId', authentication.setUserOnline);
 // router.put('/setUserOffline/:UserId', authentication.setUserOffline);
 
