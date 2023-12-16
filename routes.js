@@ -33,6 +33,7 @@ router.put('/updatePassword/:UserId', dashboard.updatePassword);
 
 
 router.get('/feederinterval/:deviceId/:interval', dashboard.Intervalfeeder);  
+router.get('/feederBargraph/:companyName/:interval', dashboard.feederBargraph);
 router.get('/feeder/:CompanyName', dashboard.feeder);
 router.get('/feederParametrised/:CompanyName', dashboard.feederParametrised);
 router.get('/feederHarmonic/:CompanyName', dashboard.feederHarmonic);

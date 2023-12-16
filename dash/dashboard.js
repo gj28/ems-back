@@ -1636,6 +1636,222 @@ function Intervalfeeder(req, res) {
 
 
 
+// function feederBargraph(req, res) {
+//   const { companyName, interval } = req.params;
+
+//   try {
+//     let intervalQuery;
+
+//     switch (interval) {
+//       case 'min':
+//         intervalQuery = '5 MINUTE';
+//         break;
+//       case 'hour':
+//         intervalQuery = '1 HOUR';
+//         break;
+//       case 'day':
+//         intervalQuery = '1 DAY';
+//         break;
+//       case 'week':
+//         intervalQuery = '1 WEEK';
+//         break;
+//       case 'month':
+//         intervalQuery = '1 MONTH';
+//         break;
+//       case 'year':
+//         intervalQuery = '1 YEAR';
+//         break;
+//         default:
+//       return res.status(400).json({ message: 'Invalid interval specified' });
+//     }
+
+  
+//     // Step 1: Retrieve device IDs for the specified company name
+//     const fetchDeviceIdsQuery = `
+//       SELECT deviceid FROM ems.ems_devices 
+//       WHERE company = $1`;
+
+//     db.query(fetchDeviceIdsQuery, [companyName], (fetchDeviceIdsError, fetchDeviceIdsResult) => {
+//       if (fetchDeviceIdsError) {
+//         console.error('Error while fetching device IDs:', fetchDeviceIdsError);
+//         return res.status(500).json({ message: 'Internal server error' });
+//       }
+
+//       if (!fetchDeviceIdsResult || fetchDeviceIdsResult.rows.length === 0) {
+//         return res.status(404).json({ message: 'No devices found for the specified company name' });
+//       }
+
+//       // Extract device IDs from the result
+//       const deviceIds = fetchDeviceIdsResult.rows.map(row => row.deviceid);
+
+//       const parameters = ['kvah', 'kwh', 'kvar', 'kvarh'];
+//       const selectClause = parameters.map(param => `${param} AS ${param}`).join(', ');
+
+//       // Step 2: Fetch the first values for the specified interval and device IDs
+//       const fetchFirstValuesQuery = `
+//       SELECT ${selectClause} FROM ems.ems_live 
+//       WHERE device_uid IN (${deviceIds.map((id, index) => `$${index + 1}`).join(', ')}) 
+//       AND date_time >= NOW() - INTERVAL '${intervalQuery}' 
+//       ORDER BY date_time ASC LIMIT 1`;
+    
+//     console.log(fetchFirstValuesQuery);
+
+    
+
+//       // Step 3: Fetch the last values for the specified interval and device IDs
+//       const fetchLastValuesQuery = `
+//         SELECT ${selectClause} FROM ems.ems_live 
+//         WHERE device_uid IN (${deviceIds.map((id, index) => `$${index + 2}`).join(', ')}) 
+//         AND date_time <= NOW() 
+//         ORDER BY date_time DESC LIMIT 1`;
+
+//       // Step 4: Execute the queries
+//       const queryParameters = [companyName, ...deviceIds];
+//       db.query(fetchFirstValuesQuery, queryParameters, (fetchFirstError, fetchFirstResult) => {
+//         if (fetchFirstError) {
+//           console.error('Error while fetching the first values:', fetchFirstError);
+//           return res.status(500).json({ message: 'Internal server error' });
+//         }
+
+//         if (!fetchFirstResult || fetchFirstResult.rows.length === 0) {
+//           return res.status(404).json({ message: 'No data found for the specified interval and devices' });
+//         }
+
+//         db.query(fetchLastValuesQuery, queryParameters, (fetchLastError, fetchLastResult) => {
+//           if (fetchLastError) {
+//             console.error('Error while fetching the last values:', fetchLastError);
+//             return res.status(500).json({ message: 'Internal server error' });
+//           }
+
+//           if (!fetchLastResult || fetchLastResult.rows.length === 0) {
+//             return res.status(404).json({ message: 'No data found for the specified interval and devices' });
+//           }
+
+//           // Calculate the differences for each parameter
+//           const parameterDifferences = {};
+//           parameters.forEach(param => {
+//             const firstValue = fetchFirstResult.rows[0][param];
+//             const lastValue = fetchLastResult.rows[0][param];
+//             const difference = lastValue - firstValue;
+//             parameterDifferences[param] = difference;
+//           });
+
+//           return res.json(parameterDifferences);
+//         });
+//       });
+//     });
+//   } catch (error) {
+//     console.error('Error in device retrieval:', error);
+//     res.status(500).json({ message: 'Internal server error' });
+//   }
+// }
+
+
+function feederBargraph(req, res) {
+  const { companyName, interval } = req.params;
+
+  try {
+    let intervalQuery;
+
+    switch (interval) {
+      case 'min':
+        intervalQuery = '5 MINUTE';
+        break;
+      case 'hour':
+        intervalQuery = '1 HOUR';
+        break;
+      case 'day':
+        intervalQuery = '1 DAY';
+        break;
+      case 'week':
+        intervalQuery = '1 WEEK';
+        break;
+      case 'month':
+        intervalQuery = '1 MONTH';
+        break;
+      case 'year':
+        intervalQuery = '1 YEAR';
+        break;
+      default:
+        return res.status(400).json({ message: 'Invalid interval specified' });
+    }
+
+    // Step 1: Retrieve device IDs for the specified company name
+    const fetchDeviceIdsQuery = `
+      SELECT deviceid FROM ems.ems_devices 
+      WHERE company = $1`;
+
+    db.query(fetchDeviceIdsQuery, [companyName], (fetchDeviceIdsError, fetchDeviceIdsResult) => {
+      if (fetchDeviceIdsError) {
+        console.error('Error while fetching device IDs:', fetchDeviceIdsError);
+        return res.status(500).json({ message: 'Internal server error' });
+      }
+
+      if (!fetchDeviceIdsResult || fetchDeviceIdsResult.rows.length === 0) {
+        return res.status(404).json({ message: 'No devices found for the specified company name' });
+      }
+
+      // Extract device IDs from the result
+      const deviceIds = fetchDeviceIdsResult.rows.map(row => row.deviceid);
+
+      const parameters = ['kvah', 'kwh', 'kvar', 'kvarh'];
+      const selectClause = parameters.map(param => `${param} AS ${param}`).join(', ');
+
+      // Step 2: Fetch the first values for the specified interval and device IDs
+      const fetchFirstValuesQuery = `
+        SELECT ${selectClause} FROM ems.ems_live 
+        WHERE device_uid IN (${deviceIds.map((id, index) => `$${index + 1}`).join(', ')}) 
+        AND date_time >= NOW() - INTERVAL '${intervalQuery}' 
+        ORDER BY date_time ASC LIMIT 1`;
+
+      // Step 3: Fetch the last values for the specified interval and device IDs
+      const fetchLastValuesQuery = `
+        SELECT ${selectClause} FROM ems.ems_live 
+        WHERE device_uid IN (${deviceIds.map((id, index) => `$${index + 1}`).join(', ')}) 
+        AND date_time <= NOW() 
+        ORDER BY date_time DESC LIMIT 1`;
+      // Step 4: Execute the queries
+      const queryParameters = [...deviceIds];
+      db.query(fetchFirstValuesQuery, queryParameters, (fetchFirstError, fetchFirstResult) => {
+        if (fetchFirstError) {
+          console.error('Error while fetching the first values:', fetchFirstError);
+          return res.status(500).json({ message: 'Internal server error' });
+        }
+
+        if (!fetchFirstResult || fetchFirstResult.rows.length === 0) {
+          return res.status(404).json({ message: 'No data found for the specified interval and devices' });
+        }
+
+        db.query(fetchLastValuesQuery, queryParameters, (fetchLastError, fetchLastResult) => {
+          if (fetchLastError) {
+            console.error('Error while fetching the last values:', fetchLastError);
+            return res.status(500).json({ message: 'Internal server error' });
+          }
+
+          if (!fetchLastResult || fetchLastResult.rows.length === 0) {
+            return res.status(404).json({ message: 'No data found for the specified interval and devices' });
+          }
+
+          // Calculate the differences for each parameter
+          const parameterDifferences = {};
+          parameters.forEach(param => {
+            const firstValue = fetchFirstResult.rows[0][param];
+            const lastValue = fetchLastResult.rows[0][param];
+            const difference = lastValue - firstValue;
+            parameterDifferences[param] = difference;
+          });
+
+          return res.json(parameterDifferences);
+        });
+      });
+    });
+  } catch (error) {
+    console.error('Error in device retrieval:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}
+
+
 function editfeeder(req, res) {
   const deviceId = req.params.deviceId;
   const { name, location, thresholdvalue , feeder_id, group_name} = req.body;
@@ -1861,6 +2077,6 @@ module.exports = {
   alerteventDetails,
   editalert,
   piechart,
-  fetchmaxdemand
-  
+  fetchmaxdemand,
+  feederBargraph
 };
