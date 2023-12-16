@@ -1127,29 +1127,20 @@ function piechart(req, res) {
 
     let duration;
     switch (timeInterval) {
-      case '15min':
-        duration = '15 minutes';
-        break;
-      case '30min':
-        duration = '30 minutes';
-        break;
       case '1hour':
         duration = '1 hours';
         break;
       case '12hour':
         duration = '12 hours';
         break;
-      case '1day':
+      case 'day':
         duration = '1 day';
         break;
-      case '7day':
+      case 'week':
         duration = '7 days';
         break;
-      case '30day':
+      case 'month':
         duration = '30 days';
-        break;
-      case '1year':
-        duration = '1 year';
         break;
       default:
         return res.status(400).json({ message: 'Invalid time interval' });
@@ -1748,9 +1739,98 @@ function fetchmaxdemand(req, res) {
 }
 
 
+function maxdemand() {
+  try {
+      const currentDate = new Date();
+      currentDate.setHours(0, 0, 0, 0);
+
+      const deviceIdsQuery = `
+          SELECT DISTINCT device_uid
+          FROM ems.ems_live;`;
+
+      db.query(deviceIdsQuery, (deviceIdsError, deviceIdsResult) => {
+          if (deviceIdsError) {
+              console.error('Error fetching unique device IDs:', deviceIdsError);
+              return;
+          }
+
+          const uniqueDeviceIds = deviceIdsResult.rows;
+
+          uniqueDeviceIds.forEach((device) => {
+              const deviceID = device.device_uid;
+
+              const deviceCompanyQuery = `
+                  SELECT company
+                  FROM ems.ems_devices
+                  WHERE deviceid = $1;`;
+
+              db.query(deviceCompanyQuery, [deviceID], (companyError, companyResult) => {
+                  if (companyError) {
+                      console.error(`Error fetching company for device ${deviceID}:`, companyError);
+                      return;
+                  }
+
+                  const company = companyResult.rows[0]?.company || 'Unknown'; // Default to 'Unknown' if company is not found
+
+                  const deviceHighestKVAQuery = `
+                      SELECT
+                          MAX(kva) AS highest_kva
+                      FROM ems.ems_live
+                      WHERE date_time >= $1 AND device_uid = $2;`;
+
+                  db.query(deviceHighestKVAQuery, [currentDate, deviceID], (error, result) => {
+                      if (error) {
+                          console.error(`Error fetching highest KVA for device ${deviceID}:`, error);
+                          return;
+                      }
+
+                      const highestKVA = result.rows[0]?.highest_kva || 0;
+
+                      const latestKVAQuery = `
+                          SELECT
+                              kva
+                          FROM ems.ems_live
+                          WHERE device_uid = $1
+                          ORDER BY date_time DESC
+                          LIMIT 1;`;
+
+                      db.query(latestKVAQuery, [deviceID], (latestKVAError, latestKVAResult) => {
+                          if (latestKVAError) {
+                              console.error(`Error fetching latest KVA for device ${deviceID}:`, latestKVAError);
+                              return;
+                          }
+
+                          const latestKVA = latestKVAResult.rows[0]?.kva || 0;
+
+                          const upsertQuery = `
+                              INSERT INTO ems.maxdemand (deviceid, company_name, highest_kva, live_kva, calculation_date)
+                              VALUES ($1, $2, $3, $4, $5)
+                              ON CONFLICT (deviceid, calculation_date)
+                              DO UPDATE SET
+                                  highest_kva = GREATEST(EXCLUDED.highest_kva, $3),
+                                  live_kva = $4;`;
+
+                          db.query(upsertQuery, [deviceID, company, highestKVA, latestKVA, currentDate], (upsertError) => {
+                              if (upsertError) {
+                                  console.error(`Error inserting or updating KVA values for device ${deviceID}:`, upsertError);
+                              } else {
+                                  //console.log(`KVA values for device ${deviceID} inserted or updated successfully.`);
+                              }
+                          });
+                      });
+                  });
+              });
+          });
+      });
+  } catch (error) {
+      console.error('Error inserting or updating device KVA values:', error);
+  }
+}
 
 
+setInterval(maxdemand, 60 * 1000);
 
+maxdemand();
 
 module.exports = {
 	userDevices,
