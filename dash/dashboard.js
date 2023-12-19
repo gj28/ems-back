@@ -2000,7 +2000,7 @@ function feederBargraph(req, res) {
       }
 
       // Continue fetching device values
-      const parameters = ['kvah', 'kwh'];
+      const parameters = ['kvah', 'kwh', 'kva']; // Include 'kva' in the parameters
       const selectClause = parameters.map(param => `${param} AS ${param}`).join(', ');
 
       const fetchValuesQuery = `
@@ -2064,7 +2064,7 @@ function feederBargraph(req, res) {
             }
           } else if (interval === 'day') {
             // 24 datapoints of 1 hour each
-            for (let i = 0; i < values.length; i += Math.floor(values.length / 24)) {
+            for (let i = 0; I < values.length; i += Math.floor(values.length / 24)) {
               const startIdx = i;
               const endIdx = Math.min(i + Math.floor(values.length / 24) - 1, values.length - 1);
               const startValue = values[startIdx];
@@ -2111,13 +2111,17 @@ function calculateAggregatedValue(startValue, endValue) {
   const endKvah = endValue.kvah || 0;
   const startKwh = startValue.kwh || 0;
   const endKwh = endValue.kwh || 0;
+  const startKva = startValue.kva || 0;
+  const endKva = endValue.kva || 0;
 
   return {
     kvah: Math.abs(startKvah - endKvah), // Use Math.abs to consider -ve values as +ve
     kwh: Math.abs(startKwh - endKwh), // Use Math.abs to consider -ve values as +ve
+    kva: Math.abs(startKva - endKva), // Use Math.abs to consider -ve values as +ve
     date_time: endValue.date_time, // You might want to use the end time as the timestamp
   };
 }
+
 
 
 
