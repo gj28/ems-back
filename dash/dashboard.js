@@ -1791,8 +1791,175 @@ function Intervalfeeder(req, res) {
 //   }
 // }
 
+// function feederBargraph(req, res) {
+//   const { companyName, interval } = req.params;
+
+//   try {
+//     let duration;
+
+//     switch (interval) {
+//       case '1hour':
+//         duration = '1 hours';
+//         break;
+//       case '12hour':
+//         duration = '12 hours';
+//         break;
+//       case 'day':
+//         duration = '1 day';
+//         break;
+//       case 'week':
+//         duration = '7 days';
+//         break;
+//       case 'month':
+//         duration = '30 days';
+//         break;
+//       default:
+//         return res.status(400).json({ message: 'Invalid interval specified' });
+//     }
+
+//     // Fetch device IDs for the specified company name
+//     const fetchDeviceIdsQuery = `
+//       SELECT deviceid FROM ems.ems_devices 
+//       WHERE company = $1`;
+
+//     db.query(fetchDeviceIdsQuery, [companyName], (fetchIdsError, fetchIdsResult) => {
+//       if (fetchIdsError) {
+//         console.error('Error while fetching device IDs:', fetchIdsError);
+//         return res.status(500).json({ message: 'Internal server error' });
+//       }
+
+//       const deviceIds = fetchIdsResult.rows.map(row => row.deviceid);
+
+//       if (deviceIds.length === 0) {
+//         return res.status(404).json({ message: 'No devices found for the specified company' });
+//       }
+
+//       const parameters = ['kvah', 'kwh'];
+//       const selectClause = parameters.map(param => `${param} AS ${param}`).join(', ');
+
+//       const fetchValuesQuery = `
+//         SELECT device_uid, ${selectClause}, date_time FROM ems.ems_live 
+//         WHERE device_uid IN (${deviceIds.map((id, index) => `$${index + 1}`).join(', ')})
+//         AND date_time >= NOW() - INTERVAL '${duration}' 
+//         ORDER BY device_uid, date_time ASC`;
+
+//       db.query(fetchValuesQuery, deviceIds, (fetchValuesError, fetchValuesResult) => {
+//         if (fetchValuesError) {
+//           console.error('Error while fetching values:', fetchValuesError);
+//           return res.status(500).json({ message: 'Internal server error' });
+//         }
+
+//         if (!fetchValuesResult || fetchValuesResult.rows.length === 0) {
+//           return res.status(404).json({ message: 'No data found for the specified interval and company' });
+//         }
+
+//         // Process the fetched values as needed
+//         const deviceData = {};
+
+//         fetchValuesResult.rows.forEach(row => {
+//           const deviceId = row.device_uid;
+
+//           if (!deviceData[deviceId]) {
+//             deviceData[deviceId] = {
+//               values: [],
+//             };
+//           }
+
+//           parameters.forEach(param => {
+//             deviceData[deviceId].values.push({
+//               [param]: row[param],
+//               date_time: row.date_time,
+//             });
+//           });
+//         });
+
+
+// // Adjust the structure to set firstValue and lastValue for each device
+// Object.keys(deviceData).forEach(deviceId => {
+//   const values = deviceData[deviceId].values;
+
+//   if (values.length > 0) {
+//     let aggregatedValues = [];
+
+//     if (interval === '1hour') {
+//       // 10 datapoints of 10 minutes each
+//       for (let i = 0; i < values.length; i += 10) {
+//         const startIdx = i;
+//         const endIdx = Math.min(i + 9, values.length - 1);
+//         const startValue = values[startIdx];
+//         const endValue = values[endIdx];
+//         aggregatedValues.push(calculateAggregatedValue(startValue, endValue));
+//       }
+//     } else if (interval === '12hour') {
+//       // 12 datapoints of 1 hour each
+//       for (let i = 0; i < values.length; i += Math.floor(values.length / 12)) {
+//         const startIdx = i;
+//         const endIdx = Math.min(i + Math.floor(values.length / 12) - 1, values.length - 1);
+//         const startValue = values[startIdx];
+//         const endValue = values[endIdx];
+//         aggregatedValues.push(calculateAggregatedValue(startValue, endValue));
+//       }
+//     } else if (interval === 'day') {
+//       // 24 datapoints of 1 hour each
+//       for (let i = 0; i < values.length; i += Math.floor(values.length / 24)) {
+//         const startIdx = i;
+//         const endIdx = Math.min(i + Math.floor(values.length / 24) - 1, values.length - 1);
+//         const startValue = values[startIdx];
+//         const endValue = values[endIdx];
+//         aggregatedValues.push(calculateAggregatedValue(startValue, endValue));
+//       }
+//     } else if (interval === 'week') {
+//       // 7 datapoints of 1 day each
+//       for (let i = 0; i < values.length; i += Math.ceil(values.length / 7)) {
+//         const startIdx = i;
+//         const endIdx = Math.min(i + Math.ceil(values.length / 7) - 1, values.length - 1);
+//         const startValue = values[startIdx];
+//         const endValue = values[endIdx];
+//         aggregatedValues.push(calculateAggregatedValue(startValue, endValue));
+//       }
+//     } else if (interval === 'month') {
+//       // 6 datapoints of 5 days each
+//       for (let i = 0; i < values.length; i += Math.ceil(values.length / 6)) {
+//         const startIdx = i;
+//         const endIdx = Math.min(i + Math.ceil(values.length / 6) - 1, values.length - 1);
+//         const startValue = values[startIdx];
+//         const endValue = values[endIdx];
+//         aggregatedValues.push(calculateAggregatedValue(startValue, endValue));
+//       }
+//     }
+
+//     deviceData[deviceId].aggregatedValues = aggregatedValues;
+//   }
+
+//   delete deviceData[deviceId].values;
+// });
+
+//         return res.json(deviceData);
+//       });
+//     });
+//   } catch (error) {
+//     console.error('Error in device retrieval:', error);
+//     res.status(500).json({ message: 'Internal server error' });
+//   }
+// }
+
+// function calculateAggregatedValue(startValue, endValue) {
+//   // Handle null values by replacing them with 0
+//   const startKvah = startValue.kvah || 0;
+//   const endKvah = endValue.kvah || 0;
+//   const startKwh = startValue.kwh || 0;
+//   const endKwh = endValue.kwh || 0;
+
+//   return {
+//     kvah: Math.abs( startKvah - endKvah), // Use Math.abs to consider -ve values as +ve
+//     kwh: Math.abs( startKwh - endKwh), // Use Math.abs to consider -ve values as +ve
+//     date_time: endValue.date_time, // You might want to use the end time as the timestamp
+//   };
+// }
+
+
 function feederBargraph(req, res) {
-  const { companyName, interval } = req.params;
+  const { deviceId, interval } = req.params;
 
   try {
     let duration;
@@ -1817,48 +1984,45 @@ function feederBargraph(req, res) {
         return res.status(400).json({ message: 'Invalid interval specified' });
     }
 
-    // Fetch device IDs for the specified company name
-    const fetchDeviceIdsQuery = `
+    // Check if the device ID is available in ems_devices
+    const checkDeviceQuery = `
       SELECT deviceid FROM ems.ems_devices 
-      WHERE company = $1`;
+      WHERE deviceid = $1`;
 
-    db.query(fetchDeviceIdsQuery, [companyName], (fetchIdsError, fetchIdsResult) => {
-      if (fetchIdsError) {
-        console.error('Error while fetching device IDs:', fetchIdsError);
+    db.query(checkDeviceQuery, [deviceId], (checkDeviceError, checkDeviceResult) => {
+      if (checkDeviceError) {
+        console.error('Error while checking device ID:', checkDeviceError);
         return res.status(500).json({ message: 'Internal server error' });
       }
 
-      const deviceIds = fetchIdsResult.rows.map(row => row.deviceid);
-
-      if (deviceIds.length === 0) {
-        return res.status(404).json({ message: 'No devices found for the specified company' });
+      if (checkDeviceResult.rows.length === 0) {
+        return res.status(404).json({ message: 'Device not found' });
       }
 
+      // Continue fetching device values
       const parameters = ['kvah', 'kwh'];
       const selectClause = parameters.map(param => `${param} AS ${param}`).join(', ');
 
       const fetchValuesQuery = `
         SELECT device_uid, ${selectClause}, date_time FROM ems.ems_live 
-        WHERE device_uid IN (${deviceIds.map((id, index) => `$${index + 1}`).join(', ')})
+        WHERE device_uid = $1
         AND date_time >= NOW() - INTERVAL '${duration}' 
         ORDER BY device_uid, date_time ASC`;
 
-      db.query(fetchValuesQuery, deviceIds, (fetchValuesError, fetchValuesResult) => {
+      db.query(fetchValuesQuery, [deviceId], (fetchValuesError, fetchValuesResult) => {
         if (fetchValuesError) {
           console.error('Error while fetching values:', fetchValuesError);
           return res.status(500).json({ message: 'Internal server error' });
         }
 
         if (!fetchValuesResult || fetchValuesResult.rows.length === 0) {
-          return res.status(404).json({ message: 'No data found for the specified interval and company' });
+          return res.status(404).json({ message: 'No data found for the specified interval and device' });
         }
 
         // Process the fetched values as needed
         const deviceData = {};
 
         fetchValuesResult.rows.forEach(row => {
-          const deviceId = row.device_uid;
-
           if (!deviceData[deviceId]) {
             deviceData[deviceId] = {
               values: [],
@@ -1873,66 +2037,64 @@ function feederBargraph(req, res) {
           });
         });
 
+        // Adjust the structure to set firstValue and lastValue for the device
+        const values = deviceData[deviceId].values;
 
-// Adjust the structure to set firstValue and lastValue for each device
-Object.keys(deviceData).forEach(deviceId => {
-  const values = deviceData[deviceId].values;
+        if (values.length > 0) {
+          let aggregatedValues = [];
 
-  if (values.length > 0) {
-    let aggregatedValues = [];
+          // Adjust aggregation logic based on the interval
+          if (interval === '1hour') {
+            // 10 datapoints of 10 minutes each
+            for (let i = 0; i < values.length; i += 10) {
+              const startIdx = i;
+              const endIdx = Math.min(i + 9, values.length - 1);
+              const startValue = values[startIdx];
+              const endValue = values[endIdx];
+              aggregatedValues.push(calculateAggregatedValue(startValue, endValue));
+            }
+          } else if (interval === '12hour') {
+            // 12 datapoints of 1 hour each
+            for (let i = 0; i < values.length; i += Math.floor(values.length / 12)) {
+              const startIdx = i;
+              const endIdx = Math.min(i + Math.floor(values.length / 12) - 1, values.length - 1);
+              const startValue = values[startIdx];
+              const endValue = values[endIdx];
+              aggregatedValues.push(calculateAggregatedValue(startValue, endValue));
+            }
+          } else if (interval === 'day') {
+            // 24 datapoints of 1 hour each
+            for (let i = 0; i < values.length; i += Math.floor(values.length / 24)) {
+              const startIdx = i;
+              const endIdx = Math.min(i + Math.floor(values.length / 24) - 1, values.length - 1);
+              const startValue = values[startIdx];
+              const endValue = values[endIdx];
+              aggregatedValues.push(calculateAggregatedValue(startValue, endValue));
+            }
+          } else if (interval === 'week') {
+            // 7 datapoints of 1 day each
+            for (let i = 0; i < values.length; i += Math.ceil(values.length / 7)) {
+              const startIdx = i;
+              const endIdx = Math.min(i + Math.ceil(values.length / 7) - 1, values.length - 1);
+              const startValue = values[startIdx];
+              const endValue = values[endIdx];
+              aggregatedValues.push(calculateAggregatedValue(startValue, endValue));
+            }
+          } else if (interval === 'month') {
+            // 6 datapoints of 5 days each
+            for (let i = 0; i < values.length; i += Math.ceil(values.length / 6)) {
+              const startIdx = i;
+              const endIdx = Math.min(i + Math.ceil(values.length / 6) - 1, values.length - 1);
+              const startValue = values[startIdx];
+              const endValue = values[endIdx];
+              aggregatedValues.push(calculateAggregatedValue(startValue, endValue));
+            }
+          }
 
-    if (interval === '1hour') {
-      // 10 datapoints of 10 minutes each
-      for (let i = 0; i < values.length; i += 10) {
-        const startIdx = i;
-        const endIdx = Math.min(i + 9, values.length - 1);
-        const startValue = values[startIdx];
-        const endValue = values[endIdx];
-        aggregatedValues.push(calculateAggregatedValue(startValue, endValue));
-      }
-    } else if (interval === '12hour') {
-      // 12 datapoints of 1 hour each
-      for (let i = 0; i < values.length; i += Math.floor(values.length / 12)) {
-        const startIdx = i;
-        const endIdx = Math.min(i + Math.floor(values.length / 12) - 1, values.length - 1);
-        const startValue = values[startIdx];
-        const endValue = values[endIdx];
-        aggregatedValues.push(calculateAggregatedValue(startValue, endValue));
-      }
-    } else if (interval === 'day') {
-      // 24 datapoints of 1 hour each
-      for (let i = 0; i < values.length; i += Math.floor(values.length / 24)) {
-        const startIdx = i;
-        const endIdx = Math.min(i + Math.floor(values.length / 24) - 1, values.length - 1);
-        const startValue = values[startIdx];
-        const endValue = values[endIdx];
-        aggregatedValues.push(calculateAggregatedValue(startValue, endValue));
-      }
-    } else if (interval === 'week') {
-      // 7 datapoints of 1 day each
-      for (let i = 0; i < values.length; i += Math.ceil(values.length / 7)) {
-        const startIdx = i;
-        const endIdx = Math.min(i + Math.ceil(values.length / 7) - 1, values.length - 1);
-        const startValue = values[startIdx];
-        const endValue = values[endIdx];
-        aggregatedValues.push(calculateAggregatedValue(startValue, endValue));
-      }
-    } else if (interval === 'month') {
-      // 6 datapoints of 5 days each
-      for (let i = 0; i < values.length; i += Math.ceil(values.length / 6)) {
-        const startIdx = i;
-        const endIdx = Math.min(i + Math.ceil(values.length / 6) - 1, values.length - 1);
-        const startValue = values[startIdx];
-        const endValue = values[endIdx];
-        aggregatedValues.push(calculateAggregatedValue(startValue, endValue));
-      }
-    }
+          deviceData[deviceId].aggregatedValues = aggregatedValues;
+        }
 
-    deviceData[deviceId].aggregatedValues = aggregatedValues;
-  }
-
-  delete deviceData[deviceId].values;
-});
+        delete deviceData[deviceId].values;
 
         return res.json(deviceData);
       });
@@ -1951,13 +2113,11 @@ function calculateAggregatedValue(startValue, endValue) {
   const endKwh = endValue.kwh || 0;
 
   return {
-    kvah: endKvah - startKvah,
-    kwh:  endKwh - startKwh,
+    kvah: Math.abs(startKvah - endKvah), // Use Math.abs to consider -ve values as +ve
+    kwh: Math.abs(startKwh - endKwh), // Use Math.abs to consider -ve values as +ve
     date_time: endValue.date_time, // You might want to use the end time as the timestamp
   };
 }
-
-
 
 
 
