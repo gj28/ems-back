@@ -1415,23 +1415,20 @@ function Intervalfeeder(req, res) {
     let intervalQuery;
 
     switch (interval) {
-      case 'min':
-        intervalQuery = '5 MINUTE';
+      case '1hour':
+        duration = '1 hours';
         break;
-      case 'hour':
-        intervalQuery = '1 HOUR';
+      case '12hour':
+        duration = '12 hours';
         break;
       case 'day':
-        intervalQuery = '1 DAY';
+        duration = '1 day';
         break;
       case 'week':
-        intervalQuery = '1 WEEK';
+        duration = '7 days';
         break;
       case 'month':
-        intervalQuery = '1 MONTH';
-        break;
-      case 'year':
-        intervalQuery = '1 YEAR';
+        duration = '30 days';
         break;
       default:
         return res.status(400).json({ message: 'Invalid interval specified' });
