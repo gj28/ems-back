@@ -1795,26 +1795,23 @@ function feederBargraph(req, res) {
   const { companyName, interval } = req.params;
 
   try {
-    let intervalQuery;
+    let duration;
 
     switch (interval) {
-      case 'min':
-        intervalQuery = '5 MINUTE';
+      case '1hour':
+        duration = '1 hours';
         break;
-      case 'hour':
-        intervalQuery = '1 HOUR';
+      case '12hour':
+        duration = '12 hours';
         break;
       case 'day':
-        intervalQuery = '1 DAY';
+        duration = '1 day';
         break;
       case 'week':
-        intervalQuery = '1 WEEK';
+        duration = '7 days';
         break;
       case 'month':
-        intervalQuery = '1 MONTH';
-        break;
-      case 'year':
-        intervalQuery = '1 YEAR';
+        duration = '30 days';
         break;
       default:
         return res.status(400).json({ message: 'Invalid interval specified' });
@@ -1843,7 +1840,7 @@ function feederBargraph(req, res) {
       const fetchValuesQuery = `
         SELECT device_uid, ${selectClause}, date_time FROM ems.ems_live 
         WHERE device_uid IN (${deviceIds.map((id, index) => `$${index + 1}`).join(', ')})
-        AND date_time >= NOW() - INTERVAL '${intervalQuery}' 
+        AND date_time >= NOW() - INTERVAL '${duration}' 
         ORDER BY device_uid, date_time ASC`;
 
       db.query(fetchValuesQuery, deviceIds, (fetchValuesError, fetchValuesResult) => {
@@ -1876,15 +1873,66 @@ function feederBargraph(req, res) {
           });
         });
 
-        // Adjust the structure to set firstValue and lastValue for each device
-        Object.keys(deviceData).forEach(deviceId => {
-          const values = deviceData[deviceId].values;
-          if (values.length > 0) {
-            deviceData[deviceId].firstValue = values[0];
-            deviceData[deviceId].lastValue = values[values.length - 1];
-          }
-          delete deviceData[deviceId].values;
-        });
+
+// Adjust the structure to set firstValue and lastValue for each device
+Object.keys(deviceData).forEach(deviceId => {
+  const values = deviceData[deviceId].values;
+
+  if (values.length > 0) {
+    let aggregatedValues = [];
+
+    if (interval === '1hour') {
+      // 10 datapoints of 10 minutes each
+      for (let i = 0; i < values.length; i += 10) {
+        const startIdx = i;
+        const endIdx = Math.min(i + 9, values.length - 1);
+        const startValue = values[startIdx];
+        const endValue = values[endIdx];
+        aggregatedValues.push(calculateAggregatedValue(startValue, endValue));
+      }
+    } else if (interval === '12hour') {
+      // 12 datapoints of 1 hour each
+      for (let i = 0; i < values.length; i += Math.floor(values.length / 12)) {
+        const startIdx = i;
+        const endIdx = Math.min(i + Math.floor(values.length / 12) - 1, values.length - 1);
+        const startValue = values[startIdx];
+        const endValue = values[endIdx];
+        aggregatedValues.push(calculateAggregatedValue(startValue, endValue));
+      }
+    } else if (interval === 'day') {
+      // 24 datapoints of 1 hour each
+      for (let i = 0; i < values.length; i += Math.floor(values.length / 24)) {
+        const startIdx = i;
+        const endIdx = Math.min(i + Math.floor(values.length / 24) - 1, values.length - 1);
+        const startValue = values[startIdx];
+        const endValue = values[endIdx];
+        aggregatedValues.push(calculateAggregatedValue(startValue, endValue));
+      }
+    } else if (interval === 'week') {
+      // 7 datapoints of 1 day each
+      for (let i = 0; i < values.length; i += Math.ceil(values.length / 7)) {
+        const startIdx = i;
+        const endIdx = Math.min(i + Math.ceil(values.length / 7) - 1, values.length - 1);
+        const startValue = values[startIdx];
+        const endValue = values[endIdx];
+        aggregatedValues.push(calculateAggregatedValue(startValue, endValue));
+      }
+    } else if (interval === 'month') {
+      // 6 datapoints of 5 days each
+      for (let i = 0; i < values.length; i += Math.ceil(values.length / 6)) {
+        const startIdx = i;
+        const endIdx = Math.min(i + Math.ceil(values.length / 6) - 1, values.length - 1);
+        const startValue = values[startIdx];
+        const endValue = values[endIdx];
+        aggregatedValues.push(calculateAggregatedValue(startValue, endValue));
+      }
+    }
+
+    deviceData[deviceId].aggregatedValues = aggregatedValues;
+  }
+
+  delete deviceData[deviceId].values;
+});
 
         return res.json(deviceData);
       });
@@ -1894,6 +1942,23 @@ function feederBargraph(req, res) {
     res.status(500).json({ message: 'Internal server error' });
   }
 }
+
+function calculateAggregatedValue(startValue, endValue) {
+  // Handle null values by replacing them with 0
+  const startKvah = startValue.kvah || 0;
+  const endKvah = endValue.kvah || 0;
+  const startKwh = startValue.kwh || 0;
+  const endKwh = endValue.kwh || 0;
+
+  return {
+    kvah: endKvah - startKvah,
+    kwh:  endKwh - startKwh,
+    date_time: endValue.date_time, // You might want to use the end time as the timestamp
+  };
+}
+
+
+
 
 
 function editfeeder(req, res) {
@@ -2091,6 +2156,10 @@ function maxdemand() {
 setInterval(maxdemand, 60 * 1000);
 
 maxdemand();
+
+
+
+
 
 module.exports = {
 	userDevices,
