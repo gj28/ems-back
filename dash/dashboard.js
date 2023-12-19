@@ -1506,6 +1506,101 @@ function fetchHighestKva(req, res) {
 }
 
 
+function fetchLowestPF(req, res) {
+  const { companyName, interval } = req.params;
+
+  try {
+    let intervalQuery;
+
+    switch (interval) {
+      case '1hour':
+        intervalQuery = '1 hour';
+        break;
+      case '12hour':
+        intervalQuery = '12 hours';
+        break;
+      case 'day':
+        intervalQuery = '1 day';
+        break;
+      case 'week':
+        intervalQuery = '7 days';
+        break;
+      case 'month':
+        intervalQuery = '30 days';
+        break;
+      default:
+        return res.status(400).json({ message: 'Invalid interval specified' });
+    }
+
+    // Fetch all devices for the specified company
+    const fetchDevicesQuery = `
+      SELECT deviceid FROM ems.ems_devices 
+      WHERE company = $1`;
+
+    db.query(fetchDevicesQuery, [companyName], (fetchDevicesError, fetchDevicesResult) => {
+      if (fetchDevicesError) {
+        console.error('Error while fetching devices:', fetchDevicesError);
+        return res.status(500).json({ message: 'Internal server error' });
+      }
+
+      if (!fetchDevicesResult || fetchDevicesResult.rows.length === 0) {
+        return res.status(404).json({ message: 'No devices found for the specified company' });
+      }
+
+      // Use map to extract deviceid values
+      const deviceIds = fetchDevicesResult.rows.map(row => row.deviceid);
+
+      console.log('Device IDs:', deviceIds);
+
+      // Fetch the lowest 4 PF values for each device within the specified interval
+      const fetchLowestPFQuery = `
+        SELECT device_uid, array_agg(pf) AS pf_values
+        FROM (
+          SELECT device_uid, pf,
+                 ROW_NUMBER() OVER (PARTITION BY device_uid ORDER BY pf ASC) AS rank
+          FROM ems.ems_live
+          WHERE device_uid = ANY ($1)
+            AND date_time >= NOW() - INTERVAL '${intervalQuery}'
+        ) AS subquery
+        WHERE rank <= 4
+        GROUP BY device_uid
+        ORDER BY device_uid;
+      `;
+
+      const queryParams = [deviceIds];
+
+      console.log('Query:', fetchLowestPFQuery);
+      console.log('Params:', queryParams);
+
+      db.query(fetchLowestPFQuery, queryParams, (fetchError, fetchResult) => {
+        if (fetchError) {
+          console.error('Error while fetching lowest PF:', fetchError);
+          return res.status(500).json({ message: 'Internal server error' });
+        }
+
+        if (!fetchResult || fetchResult.rows.length === 0) {
+          return res.status(404).json({ message: 'No data found for the specified interval or devices' });
+        }
+
+        const lowestPFByDevice = {};
+        fetchResult.rows.forEach(row => {
+          const deviceId = row.device_uid;
+          const pfValues = row.pf_values;
+
+          // Convert the pf values to an array of floats
+          const pfArray = pfValues.map(value => parseFloat(value));
+
+          lowestPFByDevice[deviceId] = pfArray;
+        });
+
+        return res.json(lowestPFByDevice);
+      });
+    });
+  } catch (error) {
+    console.error('Error in fetching lowest PF by company:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}
 
 
 
@@ -2455,5 +2550,6 @@ module.exports = {
   piechart,
   fetchmaxdemand,
   feederBargraph,
-  fetchHighestKva
+  fetchHighestKva,
+  fetchLowestPF
 };

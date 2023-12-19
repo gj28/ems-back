@@ -32,6 +32,8 @@ router.put('/personalDetails/:UserId', dashboard.personalDetails);
 router.put('/updatePassword/:UserId', dashboard.updatePassword);
 
 
+
+router.get('/fetchLowestPF/:companyName/:interval', dashboard.fetchLowestPF);
 router.get('/fetchHighestKva/:companyName/:interval', dashboard.fetchHighestKva); 
 router.get('/feederinterval/:deviceId/:interval', dashboard.Intervalfeeder);  
 router.get('/Bargraph/:deviceId/:interval', dashboard.feederBargraph);
