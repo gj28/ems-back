@@ -1416,24 +1416,23 @@ function Intervalfeeder(req, res) {
 
     switch (interval) {
       case '1hour':
-        duration = '1 hours';
+        intervalQuery = '1 hours';
         break;
       case '12hour':
-        duration = '12 hours';
+        intervalQuery = '12 hours';
         break;
       case 'day':
-        duration = '1 day';
+        intervalQuery = '1 day';
         break;
       case 'week':
-        duration = '7 days';
+        intervalQuery = '7 days';
         break;
       case 'month':
-        duration = '30 days';
+        intervalQuery = '30 days';
         break;
       default:
         return res.status(400).json({ message: 'Invalid interval specified' });
     }
-
     const parameters = ['kvah', 'kwh', 'kvar', 'kvarh'];
 
     const selectClause = parameters.map(param => `${param} AS ${param}`).join(', ');
@@ -1479,7 +1478,7 @@ function Intervalfeeder(req, res) {
         parameters.forEach(param => {
           const firstValue = fetchFirstResult.rows[0][param];
           const lastValue = fetchLastResult.rows[0][param];
-          const difference = lastValue - firstValue;
+          const difference = firstValue - lastValue;
           parameterDifferences[param] = difference;
         });
 
