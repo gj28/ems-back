@@ -44,7 +44,7 @@ function fetchDataAndPublish(deviceId) {
             if (err) {
               console.error('MQTT publish error:', err);
             } else {
-              //console.log(`Published data to topic: ${topic}`);
+              console.log(`Published data to topic: ${topic}`);
               lastPublishedTableIDs[deviceId] = data.id;
             }
           });
