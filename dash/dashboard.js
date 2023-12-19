@@ -1408,6 +1408,109 @@ function getFeederDetails(req, res) {
 }
 
 
+
+function fetchHighestKva(req, res) {
+  const { companyName, interval } = req.params;
+
+  try {
+    let intervalQuery;
+
+    switch (interval) {
+      case '1hour':
+        intervalQuery = '1 hour';
+        break;
+      case '12hour':
+        intervalQuery = '12 hours';
+        break;
+      case 'day':
+        intervalQuery = '1 day';
+        break;
+      case 'week':
+        intervalQuery = '7 days';
+        break;
+      case 'month':
+        intervalQuery = '30 days';
+        break;
+      default:
+        return res.status(400).json({ message: 'Invalid interval specified' });
+    }
+
+    // Fetch all devices for the specified company
+    const fetchDevicesQuery = `
+      SELECT deviceid FROM ems.ems_devices 
+      WHERE company = $1`;
+
+    db.query(fetchDevicesQuery, [companyName], (fetchDevicesError, fetchDevicesResult) => {
+      if (fetchDevicesError) {
+        console.error('Error while fetching devices:', fetchDevicesError);
+        return res.status(500).json({ message: 'Internal server error' });
+      }
+
+      if (!fetchDevicesResult || fetchDevicesResult.rows.length === 0) {
+        return res.status(404).json({ message: 'No devices found for the specified company' });
+      }
+
+      // Use map to extract deviceid values
+      const deviceIds = fetchDevicesResult.rows.map(row => row.deviceid);
+
+      console.log('Device IDs:', deviceIds);
+
+      // Fetch the top 4 highest kva values for each device within the specified interval
+      const fetchHighestKvaQuery = `
+        SELECT device_uid, array_agg(kva) AS kva_values
+        FROM (
+          SELECT device_uid, kva,
+                 ROW_NUMBER() OVER (PARTITION BY device_uid ORDER BY kva DESC) AS rank
+          FROM ems.ems_live
+          WHERE device_uid = ANY ($1)
+            AND date_time >= NOW() - INTERVAL '${intervalQuery}'
+        ) AS subquery
+        WHERE rank <= 4
+        GROUP BY device_uid
+        ORDER BY device_uid;
+      `;
+
+      const queryParams = [deviceIds];
+
+      console.log('Query:', fetchHighestKvaQuery);
+      console.log('Params:', queryParams);
+
+      db.query(fetchHighestKvaQuery, queryParams, (fetchError, fetchResult) => {
+        if (fetchError) {
+          console.error('Error while fetching highest kva:', fetchError);
+          return res.status(500).json({ message: 'Internal server error' });
+        }
+
+        if (!fetchResult || fetchResult.rows.length === 0) {
+          return res.status(404).json({ message: 'No data found for the specified interval or devices' });
+        }
+
+        const highestKvaByDevice = {};
+        fetchResult.rows.forEach(row => {
+          const deviceId = row.device_uid;
+          const kvaValues = row.kva_values;
+
+          // Convert the kva values to an array of integers
+          const kvaArray = kvaValues.map(value => parseInt(value, 10));
+
+          highestKvaByDevice[deviceId] = kvaArray;
+        });
+
+        return res.json(highestKvaByDevice);
+      });
+    });
+  } catch (error) {
+    console.error('Error in fetching highest kva by company:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}
+
+
+
+
+
+
+
 function Intervalfeeder(req, res) {
   const { deviceId, interval } = req.params;
 
@@ -2351,5 +2454,6 @@ module.exports = {
   editalert,
   piechart,
   fetchmaxdemand,
-  feederBargraph
+  feederBargraph,
+  fetchHighestKva
 };
