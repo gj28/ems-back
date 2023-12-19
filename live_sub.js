@@ -137,7 +137,7 @@ mqttClient.on('message', (topic, message) => {
 
     pgClient.query(insertQuery, insertValues)
       .then(() => {
-        //console.log('Data inserted into PostgreSQL');
+        console.log('Data inserted into PostgreSQL');
       })
       .catch((error) => {
         console.error('Error inserting data into PostgreSQL:', error);
