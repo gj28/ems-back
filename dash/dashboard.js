@@ -696,14 +696,17 @@ function feeder(req, res) {
 
 
       const dataQuery = `
-        SELECT device_uid, "date_time", "kvah","kvarh","kwh","imp_kvarh","exp_kvarh"
-        FROM ems.ems_live
-        WHERE date_time >= NOW() - INTERVAL '${duration}'
-        AND device_uid = ANY($1::varchar[])
-      `;
-
+      SELECT device_uid, "date_time", "kvah", "kvarh", "kwh", "imp_kvarh", "exp_kvarh"
+      FROM ems.ems_live
+      WHERE date_time >= NOW() - INTERVAL '${duration}'
+      AND date_time <= NOW()
+      AND device_uid = ANY($1::varchar[])
+    `;
+    
+      
+      
       const dataQueryParameters = [deviceIds];
-
+      
       db.query(dataQuery, dataQueryParameters, (dataError, dataResults) => {
         if (dataError) {
           console.error('Error fetching data:', dataError);
@@ -731,7 +734,14 @@ function feeder(req, res) {
             kvarh: row.kvarh,
             date_time: row.date_time
           });
-          console.log('Processed data:', data);
+          //console.log('Processed data:', data);
+          console.log('Processed data:', {
+            company: CompanyName,
+            device: deviceUid,
+            dataLength: data[deviceUid].data.length,
+            // Add more relevant information as needed
+          });
+          
         });
 
         res.json(Object.values(data));
