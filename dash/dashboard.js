@@ -691,6 +691,10 @@ function feeder(req, res) {
           return res.status(400).json({ message: 'Invalid time interval' });
       }
 
+      console.log('deviceIds:', deviceIds);
+      console.log('duration:', duration);
+
+
       const dataQuery = `
         SELECT device_uid, "date_time", "kvah","kvarh","kwh","imp_kvarh","exp_kvarh"
         FROM ems.ems_live
@@ -707,7 +711,7 @@ function feeder(req, res) {
         }
 
         const data = {};
-
+        console.log('Data results:', dataResults.rows);
         dataResults.rows.forEach(row => {
           const deviceUid = row.device_uid;
 
@@ -727,6 +731,7 @@ function feeder(req, res) {
             kvarh: row.kvarh,
             date_time: row.date_time
           });
+          console.log('Processed data:', data);
         });
 
         res.json(Object.values(data));
@@ -1408,7 +1413,6 @@ function getFeederDetails(req, res) {
 }
 
 
-
 function fetchHighestKva(req, res) {
   const { companyName, interval } = req.params;
 
@@ -1457,9 +1461,9 @@ function fetchHighestKva(req, res) {
 
       // Fetch the top 4 highest kva values for each device within the specified interval
       const fetchHighestKvaQuery = `
-        SELECT device_uid, array_agg(kva) AS kva_values
+        SELECT device_uid, array_agg(kva) AS kva_values, array_agg(date_time) AS timestamp_values
         FROM (
-          SELECT device_uid, kva,
+          SELECT device_uid, kva, date_time,
                  ROW_NUMBER() OVER (PARTITION BY device_uid ORDER BY kva DESC) AS rank
           FROM ems.ems_live
           WHERE device_uid = ANY ($1)
@@ -1489,11 +1493,12 @@ function fetchHighestKva(req, res) {
         fetchResult.rows.forEach(row => {
           const deviceId = row.device_uid;
           const kvaValues = row.kva_values;
+          const timestampValues = row.timestamp_values;
 
           // Convert the kva values to an array of integers
           const kvaArray = kvaValues.map(value => parseInt(value, 10));
 
-          highestKvaByDevice[deviceId] = kvaArray;
+          highestKvaByDevice[deviceId] = { kva: kvaArray, timestamp: timestampValues };
         });
 
         return res.json(highestKvaByDevice);
@@ -1504,6 +1509,7 @@ function fetchHighestKva(req, res) {
     res.status(500).json({ message: 'Internal server error' });
   }
 }
+
 
 
 function fetchLowestPF(req, res) {
@@ -1554,13 +1560,14 @@ function fetchLowestPF(req, res) {
 
       // Fetch the lowest 4 PF values for each device within the specified interval
       const fetchLowestPFQuery = `
-        SELECT device_uid, array_agg(pf) AS pf_values
+        SELECT device_uid, array_agg(pf) AS pf_values, array_agg(date_time) AS timestamp_values
         FROM (
-          SELECT device_uid, pf,
+          SELECT device_uid, pf, date_time,
                  ROW_NUMBER() OVER (PARTITION BY device_uid ORDER BY pf ASC) AS rank
           FROM ems.ems_live
           WHERE device_uid = ANY ($1)
             AND date_time >= NOW() - INTERVAL '${intervalQuery}'
+            AND pf > 0 
         ) AS subquery
         WHERE rank <= 4
         GROUP BY device_uid
@@ -1586,11 +1593,12 @@ function fetchLowestPF(req, res) {
         fetchResult.rows.forEach(row => {
           const deviceId = row.device_uid;
           const pfValues = row.pf_values;
+          const timestampValues = row.timestamp_values;
 
           // Convert the pf values to an array of floats
           const pfArray = pfValues.map(value => parseFloat(value));
 
-          lowestPFByDevice[deviceId] = pfArray;
+          lowestPFByDevice[deviceId] = { pf: pfArray, timestamp: timestampValues };
         });
 
         return res.json(lowestPFByDevice);
@@ -1601,8 +1609,6 @@ function fetchLowestPF(req, res) {
     res.status(500).json({ message: 'Internal server error' });
   }
 }
-
-
 
 
 
