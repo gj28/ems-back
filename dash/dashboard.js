@@ -834,8 +834,10 @@ function feederParametrised(req, res) {
         SELECT device_uid, "date_time", "kva","kw","kvar","voltage_l","voltage_n","current"
         FROM ems.ems_live
         WHERE date_time >= NOW() - INTERVAL '${duration}'
+        AND date_time <= NOW()
         AND device_uid = ANY($1::varchar[])
       `;
+      
 
       const dataQueryParameters = [deviceIds];
 
@@ -958,6 +960,7 @@ function feederHarmonic(req, res) {
         SELECT device_uid, "date_time", "thd_v1n","thd_v2n","thd_v3n","thd_v12","thd_v23","thd_v31","thd_i1","thd_i2","thd_i3"
         FROM ems.ems_live
         WHERE date_time >= NOW() - INTERVAL '${duration}'
+        AND date_time <= NOW()
         AND device_uid = ANY($1::varchar[])
       `;
 
@@ -2168,6 +2171,170 @@ function Intervalfeeder(req, res) {
 // }
 
 
+// function feederBargraph(req, res) {
+//   const { deviceId, interval } = req.params;
+
+//   try {
+//     let duration;
+
+//     switch (interval) {
+//       case '1hour':
+//         duration = '1 hours';
+//         break;
+//       case '12hour':
+//         duration = '12 hours';
+//         break;
+//       case 'day':
+//         duration = '1 day';
+//         break;
+//       case 'week':
+//         duration = '7 days';
+//         break;
+//       case 'month':
+//         duration = '30 days';
+//         break;
+//       default:
+//         return res.status(400).json({ message: 'Invalid interval specified' });
+//     }
+
+//     // Check if the device ID is available in ems_devices
+//     const checkDeviceQuery = `
+//       SELECT deviceid FROM ems.ems_devices 
+//       WHERE deviceid = $1`;
+
+//     db.query(checkDeviceQuery, [deviceId], (checkDeviceError, checkDeviceResult) => {
+//       if (checkDeviceError) {
+//         console.error('Error while checking device ID:', checkDeviceError);
+//         return res.status(500).json({ message: 'Internal server error' });
+//       }
+
+//       if (checkDeviceResult.rows.length === 0) {
+//         return res.status(404).json({ message: 'Device not found' });
+//       }
+
+//       // Continue fetching device values
+//       const parameters = ['kvah', 'kwh', 'kva']; // Include 'kva' in the parameters
+//       const selectClause = parameters.map(param => `${param} AS ${param}`).join(', ');
+
+//       const fetchValuesQuery = `
+//         SELECT device_uid, ${selectClause}, date_time FROM ems.ems_live 
+//         WHERE device_uid = $1
+//         AND date_time >= NOW() - INTERVAL '${duration}' 
+//         ORDER BY device_uid, date_time ASC`;
+
+//       db.query(fetchValuesQuery, [deviceId], (fetchValuesError, fetchValuesResult) => {
+//         if (fetchValuesError) {
+//           console.error('Error while fetching values:', fetchValuesError);
+//           return res.status(500).json({ message: 'Internal server error' });
+//         }
+
+//         if (!fetchValuesResult || fetchValuesResult.rows.length === 0) {
+//           return res.status(404).json({ message: 'No data found for the specified interval and device' });
+//         }
+
+//         // Process the fetched values as needed
+//         const deviceData = {};
+
+//         fetchValuesResult.rows.forEach(row => {
+//           if (!deviceData[deviceId]) {
+//             deviceData[deviceId] = {
+//               values: [],
+//             };
+//           }
+
+//           parameters.forEach(param => {
+//             deviceData[deviceId].values.push({
+//               [param]: row[param],
+//               date_time: row.date_time,
+//             });
+//           });
+//         });
+
+//         // Adjust the structure to set firstValue and lastValue for the device
+//         const values = deviceData[deviceId].values;
+
+//         if (values.length > 0) {
+//           let aggregatedValues = [];
+
+//           // Adjust aggregation logic based on the interval
+//           if (interval === '1hour') {
+//             // 10 datapoints of 10 minutes each
+//             for (let i = 0; i < values.length; i += 10) {
+//               const startIdx = i;
+//               const endIdx = Math.min(i + 9, values.length - 1);
+//               const startValue = values[startIdx];
+//               const endValue = values[endIdx];
+//               aggregatedValues.push(calculateAggregatedValue(startValue, endValue));
+//             }
+//           } else if (interval === '12hour') {
+//             // 12 datapoints of 1 hour each
+//             for (let i = 0; i < values.length; i += Math.floor(values.length / 12)) {
+//               const startIdx = i;
+//               const endIdx = Math.min(i + Math.floor(values.length / 12) - 1, values.length - 1);
+//               const startValue = values[startIdx];
+//               const endValue = values[endIdx];
+//               aggregatedValues.push(calculateAggregatedValue(startValue, endValue));
+//             }
+//           } else if (interval === 'day') {
+//             // 24 datapoints of 1 hour each
+//             for (let i = 0; I < values.length; i += Math.floor(values.length / 24)) {
+//               const startIdx = i;
+//               const endIdx = Math.min(i + Math.floor(values.length / 24) - 1, values.length - 1);
+//               const startValue = values[startIdx];
+//               const endValue = values[endIdx];
+//               aggregatedValues.push(calculateAggregatedValue(startValue, endValue));
+//             }
+//           } else if (interval === 'week') {
+//             // 7 datapoints of 1 day each
+//             for (let i = 0; i < values.length; i += Math.ceil(values.length / 7)) {
+//               const startIdx = i;
+//               const endIdx = Math.min(i + Math.ceil(values.length / 7) - 1, values.length - 1);
+//               const startValue = values[startIdx];
+//               const endValue = values[endIdx];
+//               aggregatedValues.push(calculateAggregatedValue(startValue, endValue));
+//             }
+//           } else if (interval === 'month') {
+//             // 6 datapoints of 5 days each
+//             for (let i = 0; i < values.length; i += Math.ceil(values.length / 6)) {
+//               const startIdx = i;
+//               const endIdx = Math.min(i + Math.ceil(values.length / 6) - 1, values.length - 1);
+//               const startValue = values[startIdx];
+//               const endValue = values[endIdx];
+//               aggregatedValues.push(calculateAggregatedValue(startValue, endValue));
+//             }
+//           }
+
+//           deviceData[deviceId].aggregatedValues = aggregatedValues;
+//         }
+
+//         delete deviceData[deviceId].values;
+
+//         return res.json(deviceData);
+//       });
+//     });
+//   } catch (error) {
+//     console.error('Error in device retrieval:', error);
+//     res.status(500).json({ message: 'Internal server error' });
+//   }
+// }
+
+// function calculateAggregatedValue(startValue, endValue) {
+//   // Handle null values by replacing them with 0
+//   const startKvah = startValue.kvah || 0;
+//   const endKvah = endValue.kvah || 0;
+//   const startKwh = startValue.kwh || 0;
+//   const endKwh = endValue.kwh || 0;
+//   const startKva = startValue.kva || 0;
+//   const endKva = endValue.kva || 0;
+
+//   return {
+//     kvah: Math.abs(startKvah - endKvah), // Use Math.abs to consider -ve values as +ve
+//     kwh: Math.abs(startKwh - endKwh), // Use Math.abs to consider -ve values as +ve
+//     kva: Math.abs(startKva - endKva), // Use Math.abs to consider -ve values as +ve
+//     date_time: endValue.date_time, // You might want to use the end time as the timestamp
+//   };
+// }
+
 function feederBargraph(req, res) {
   const { deviceId, interval } = req.params;
 
@@ -2255,49 +2422,49 @@ function feederBargraph(req, res) {
 
           // Adjust aggregation logic based on the interval
           if (interval === '1hour') {
-            // 10 datapoints of 10 minutes each
-            for (let i = 0; i < values.length; i += 10) {
+            // 6 datapoints of 10 minutes each
+            for (let i = 0; i < values.length; i += 6) {
               const startIdx = i;
-              const endIdx = Math.min(i + 9, values.length - 1);
+              const endIdx = Math.min(i + 5, values.length - 1);
               const startValue = values[startIdx];
               const endValue = values[endIdx];
-              aggregatedValues.push(calculateAggregatedValue(startValue, endValue));
+              aggregatedValues.push(calculateDifferenceValue(startValue, endValue));
             }
           } else if (interval === '12hour') {
             // 12 datapoints of 1 hour each
-            for (let i = 0; i < values.length; i += Math.floor(values.length / 12)) {
+            for (let i = 0; i < values.length; i += 12) {
               const startIdx = i;
-              const endIdx = Math.min(i + Math.floor(values.length / 12) - 1, values.length - 1);
+              const endIdx = Math.min(i + 11, values.length - 1);
               const startValue = values[startIdx];
               const endValue = values[endIdx];
-              aggregatedValues.push(calculateAggregatedValue(startValue, endValue));
+              aggregatedValues.push(calculateDifferenceValue(startValue, endValue));
             }
           } else if (interval === 'day') {
             // 24 datapoints of 1 hour each
-            for (let i = 0; I < values.length; i += Math.floor(values.length / 24)) {
+            for (let i = 0; i < values.length; i += 24) {
               const startIdx = i;
-              const endIdx = Math.min(i + Math.floor(values.length / 24) - 1, values.length - 1);
+              const endIdx = Math.min(i + 23, values.length - 1);
               const startValue = values[startIdx];
               const endValue = values[endIdx];
-              aggregatedValues.push(calculateAggregatedValue(startValue, endValue));
+              aggregatedValues.push(calculateDifferenceValue(startValue, endValue));
             }
           } else if (interval === 'week') {
             // 7 datapoints of 1 day each
-            for (let i = 0; i < values.length; i += Math.ceil(values.length / 7)) {
+            for (let i = 0; i < values.length; i += 7) {
               const startIdx = i;
-              const endIdx = Math.min(i + Math.ceil(values.length / 7) - 1, values.length - 1);
+              const endIdx = Math.min(i + 6, values.length - 1);
               const startValue = values[startIdx];
               const endValue = values[endIdx];
-              aggregatedValues.push(calculateAggregatedValue(startValue, endValue));
+              aggregatedValues.push(calculateDifferenceValue(startValue, endValue));
             }
           } else if (interval === 'month') {
-            // 6 datapoints of 5 days each
-            for (let i = 0; i < values.length; i += Math.ceil(values.length / 6)) {
+            // 30 datapoints of 1 day each
+            for (let i = 0; i < values.length; i += 30) {
               const startIdx = i;
-              const endIdx = Math.min(i + Math.ceil(values.length / 6) - 1, values.length - 1);
+              const endIdx = Math.min(i + 29, values.length - 1);
               const startValue = values[startIdx];
               const endValue = values[endIdx];
-              aggregatedValues.push(calculateAggregatedValue(startValue, endValue));
+              aggregatedValues.push(calculateDifferenceValue(startValue, endValue));
             }
           }
 
@@ -2315,21 +2482,17 @@ function feederBargraph(req, res) {
   }
 }
 
-function calculateAggregatedValue(startValue, endValue) {
-  // Handle null values by replacing them with 0
-  const startKvah = startValue.kvah || 0;
-  const endKvah = endValue.kvah || 0;
-  const startKwh = startValue.kwh || 0;
-  const endKwh = endValue.kwh || 0;
-  const startKva = startValue.kva || 0;
-  const endKva = endValue.kva || 0;
+function calculateDifferenceValue(startValue, endValue) {
+  // Assuming startValue and endValue are objects with the same properties
+  const result = {};
 
-  return {
-    kvah: Math.abs(startKvah - endKvah), // Use Math.abs to consider -ve values as +ve
-    kwh: Math.abs(startKwh - endKwh), // Use Math.abs to consider -ve values as +ve
-    kva: Math.abs(startKva - endKva), // Use Math.abs to consider -ve values as +ve
-    date_time: endValue.date_time, // You might want to use the end time as the timestamp
-  };
+  for (const param in startValue) {
+    if (startValue.hasOwnProperty(param)) {
+      result[param] = endValue[param] - startValue[param];
+    }
+  }
+
+  return result;
 }
 
 
