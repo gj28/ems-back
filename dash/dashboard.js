@@ -2171,7 +2171,7 @@ function Intervalfeeder(req, res) {
 // }
 
 
-function feederC(req, res) {
+function feederBargraph(req, res) {
   const { deviceId, interval } = req.params;
 
   try {
