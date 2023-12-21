@@ -30,6 +30,11 @@ router.put('/editDevice/:deviceId', dashboard.editDevice);
 router.put('/companyDetails/:UserId', dashboard.companyDetails);
 router.put('/personalDetails/:UserId', dashboard.personalDetails);
 router.put('/updatePassword/:UserId', dashboard.updatePassword);
+// router.put('/edit_user/:userid' , dashboard.edit_user);
+router.post('/addShift' , dashboard.addShift);
+// router.post('/addUserData' , dashboard.addUserData);
+router.put('/edit_feeder' , dashboard.edit_feeder);
+router.put('/editfeeders/:feeder_id', dashboard.editfeeders);
 
 
 
@@ -47,7 +52,8 @@ router.get('/piechart/:companyName/:interval', dashboard.piechart);
 router.get('/fetchmaxdemand/:companyName', dashboard.fetchmaxdemand);
 // router.put('/setUserOnline/:UserId', authentication.setUserOnline);
 // router.put('/setUserOffline/:UserId', authentication.setUserOffline);
-
+router.get('/getUser_Data/:companyEmail',dashboard.getUser_Data);
+router.get('/getFeederData/:feeder_id' , dashboard.getFeederData);
 
 // Authentication get route
 router.get('/user', authentication.getUserDetails);
@@ -72,8 +78,8 @@ router.put('/editfeeder/:deviceId', dashboard.editfeeder);
 //alertseventsdetail
 router.get('/alerteventsDetail/:alertId', dashboard.alerteventDetails);
 router.put('/editalert/:alertId', dashboard.editalert);
-
-
+router.get('/getDay_Shift/:shift_code' , dashboard.getDay_Shift);
+router.get('/getAlerts/:name' , dashboard.getAlerts);
 
 
 // router.put('/personalDetails/:UserId', authentication.personalDetails);
@@ -111,6 +117,10 @@ router.put('/blockuser/:userid/', SA.Block);
 router.delete('/deleteDevice/:deviceUID', SA.deleteDevice);
 router.post('/recoverUser/:userid', SA.recoverUser);
 router.delete('/deleteUser/:userid', SA.deleteUser);
+router.delete('/delete_user/:userid' , dashboard.delete_user);
+router.delete('/delete_feeder/:feeder_id' , dashboard.delete_feeder);
+router.delete('/delete_alerts/:name' , dashboard.delete_alerts);
+router.delete('/delete_shift/:shift_code' , dashboard.delete_shift);
 
 
 //SA graph route
