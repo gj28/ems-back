@@ -1044,6 +1044,10 @@ function unreadnotification(req, res) {
     }
     
 
+
+
+    
+
 module.exports = {
   fetchAllUsers,
   fetchAllDevices,

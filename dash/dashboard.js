@@ -1,4 +1,5 @@
 const bcrypt = require('bcrypt');
+// const bcrypt = require('bcrypt');
 const db = require('../db');
 const jwtUtils = require('../token/jwtUtils');
 const CircularJSON = require('circular-json');
@@ -2831,6 +2832,340 @@ maxdemand();
 
 
 
+// Maithili //
+
+function getUser_Data(req, res) {
+  const companyEmail = req.params.companyEmail;
+  const getUserDetailsQuery = `SELECT username , firstname , lastname , companyid , companyemail , contactno , designation , verified ,  block  FROM ems.ems_users WHERE companyemail = $1`;
+  
+  db.query(getUserDetailsQuery, [companyEmail], (getUserDetailsError, getUserDetailsResult) => {
+    if (getUserDetailsError) {
+      
+      return res.status(401).json({ message: 'Error while Fetching Data', error: getUserDetailsError });
+    }
+
+    if (getUserDetailsResult.rows.length === 0) {
+      return res.status(404).json({ message: 'No data Found' });
+    }
+
+    res.json({ getUser_Data: getUserDetailsResult.rows });
+  });
+}
+
+
+function delete_user(req, res) {
+  const userid = req.params.userid;
+
+  const checkUserQuery = `SELECT * FROM ems.ems_users WHERE Userid = $1`;
+  db.query(checkUserQuery, [userid], (checkError, checkResult) => {
+    if (checkError) {
+       res.status(500).json({ message: 'Error while checking user', error: checkError });
+    }
+
+    if (checkResult.rows.length === 0) {
+       res.status(404).json({ message: 'User Not Found' });
+    }
+
+    const deleteUserQuery = `DELETE FROM ems.ems_users WHERE Userid = $1`;
+    db.query(deleteUserQuery, [userid], (deleteError, deleteResult) => {
+      if (deleteError) {
+         res.status(500).json({ message: 'Error while deleting user', error: deleteError });
+      }
+
+      if (deleteResult.rowCount === 0) {
+         res.status(404).json({ message: 'User Not Found' });
+      }
+
+       res.status(200).json({ message: 'User Deleted Successfully' });
+    });
+  });
+}
+
+
+// function edit_user(req, res) {
+//   const userid = req.params.userid;
+//   const {
+//     userName,
+//     firstName,
+//     lastName,
+//     companyId,
+//     companyEmail,
+//     contactno,
+//     personalEmail,
+//     password,
+//     designation
+//   } = req.body;
+
+//   const editUserQuery = `
+//     UPDATE ems.ems_users
+//     SET username = $1, firstname = $2, lastname = $3, companyid = $4, companyemail = $5, contactno = $6, personalemail = $7, password = $8, designation = $9
+//     WHERE userid = $10`;
+
+//     bcrypt.hash(password , 10 , (hashError , hashPassword) => {
+//       if (hashError){
+//           res.status(401).json({message: 'Error while hashing passward',hashError});
+//       }
+//   db.query(
+//     editUserQuery,
+//     [
+//       userName,
+//       firstName,
+//       lastName,
+//       companyId,
+//       companyEmail,
+//       contactno,
+//       personalEmail,
+//       hashPassword,
+//       designation,
+//        userid
+//     ],
+//     (error, result) => {
+//       if (error) {
+//         console.error('Error updating user:', error);
+//         return res.status(500).json({ message: 'Internal server error' });
+//       }
+
+//       if (result.rowCount === 0) {
+//         return res.status(404).json({ message: 'User not found' });
+//       }
+
+//       res.json({ message: 'User updated successfully' });
+//     })
+//   })
+// };
+
+
+function getFeederData(req, res) {
+  const feeder_id = req.params.feeder_id; 
+  const getFeederQuery = `SELECT * FROM ems.ems_feeder WHERE feeder_id = $1`;
+  
+  db.query(getFeederQuery, [feeder_id], (getFeederError, getFeederResult) => {
+    if (getFeederError) {
+      return res.status(500).json({ message: 'Error while fetching data', error: getFeederError });
+    }
+
+    if (getFeederResult.rows.length === 0) {
+      return res.status(404).json({ message: 'No data found' });
+    }
+
+    res.json({ getFeederData: getFeederResult.rows });
+  });
+}
+
+
+function delete_feeder(req, res) {
+  const feeder_id = req.params.feeder_id;
+
+  const checkFeederQuery = `SELECT * FROM ems.ems_feeder WHERE feeder_id = $1`;
+  db.query(checkFeederQuery, [feeder_id], (checkError, checkResult) => {
+    if (checkError) {
+       res.status(500).json({ message: 'Error while checking feederr', error: checkError });
+    }
+
+    if (checkResult.rows.length === 0) {
+       res.status(404).json({ message: 'Feeder Not Found' });
+    }
+    
+    const deleteFeederQuery = `DELETE FROM ems.ems_feeder WHERE feeder_id = $1`;
+    db.query(deleteFeederQuery, [feeder_id], (deleteError, deleteResult) => {
+      if (deleteError) {
+         res.status(500).json({ message: 'Error while deleting feeder', error: deleteError });
+      }
+
+      if (deleteResult.rowCount === 0) {
+         res.status(404).json({ message: 'feeder Not Found' });
+      }
+
+       res.status(200).json({ message: 'Feeder Deleted Successfully' });
+    });
+  });
+}
+
+
+
+function getAlerts(req, res) {
+  const name = req.params.name;
+  const getAlertsQuery = `SELECT * FROM ems.ems_alerts WHERE name = $1`;
+  
+  db.query(getAlertsQuery, [name], (getError, getResult) => {
+    if (getError) {
+      
+      return res.status(401).json({ message: 'Error while Fetching Data', error: getError });
+    }
+
+    if (getResult.rows.length === 0) {
+      return res.status(404).json({ message: 'No data Found' });
+    }
+
+    res.json({ getAlerts : getResult.rows });
+  });
+}
+
+
+function delete_alerts(req, res) {
+  const name = req.params.name;
+
+  const checkAlertQuery = `SELECT * FROM ems.ems_alerts WHERE name = $1`;
+  db.query(checkAlertQuery, [name], (checkError, checkResult) => {
+    if (checkError) {
+       res.status(500).json({ message: 'Error while checking Alerts', error: checkError });
+    }
+
+    if (checkResult.rows.length === 0) {
+       res.status(404).json({ message: 'Alert Not Found' });
+    }
+    
+    const deleteAlertQuery = `DELETE FROM ems.ems_alerts WHERE name = $1`;
+    db.query(deleteAlertQuery, [name], (deleteError, deleteResult) => {
+      if (deleteError) {
+         res.status(500).json({ message: 'Error while deleting Alert', error: deleteError });
+      }
+
+      if (deleteResult.rowCount === 0) {
+         res.status(404).json({ message: 'Alert Not Found' ,deleteError});
+      }
+
+       res.status(200).json({ message: 'Alert Deleted Successfully' });
+    });
+  });
+}
+
+
+function addShift(req,res){
+  //const shiftCode = req.params.shiftCode;
+  const { shiftCode ,shiftName, startTime, endTime, graceTime } = req.body;
+  const insertShiftQuery  = `INSERT INTO ems.ems_day_shift (shift_code, shift_name, start_time, end_time, grace_time_min) VALUES($1,$2,$3,$4,$5)`;
+
+  db.query(insertShiftQuery , [shiftCode, shiftName, startTime, endTime, graceTime] , (insertError , insertResult) =>{
+    if(insertError){
+      console.log(insertError);
+      return res.status(402).json({message:'Error while inserting data',insertError});
+    }
+    res.status(200).json({message:' shift added successfully', insertResult});
+  });
+}
+
+function getDay_Shift(req, res) {
+  const shift_code = req.params.shift_code;
+  const getDayShiftQuery = `SELECT * FROM ems.ems_day_shift WHERE shift_code = $1`;
+  
+  db.query(getDayShiftQuery, [shift_code], (getError, getResult) => {
+    if (getError) {
+      
+      return res.status(401).json({ message: 'Error while Fetching Data', error: getError });
+    }
+
+    if (getResult.rows.length === 0) {
+      return res.status(404).json({ message: 'No data Found' });
+    }
+
+    res.json({ getDay_Shift : getResult.rows });
+  });
+}
+
+
+function delete_shift(req, res) {
+  const shift_code = req.params.shift_code;
+
+  const checkShiftQuery = `SELECT * FROM ems.ems_day_shift WHERE shift_code = $1`;
+  db.query(checkShiftQuery, [shift_code], (checkError, checkResult) => {
+    if (checkError) {
+       res.status(500).json({ message: 'Error while checking shifts', error: checkError });
+    }
+
+    if (checkResult.rows.length === 0) {
+       res.status(404).json({ message: 'Shift Not Found' });
+    }
+    
+    const deleteShiftQuery = `DELETE FROM ems.ems_day_shift WHERE shift_code = $1`;
+    db.query(deleteShiftQuery, [shift_code], (deleteError, deleteResult) => {
+      if (deleteError) {
+         res.status(500).json({ message: 'Error while deleting shift', error: deleteError });
+      }
+
+      if (deleteResult.rowCount === 0) {
+         res.status(404).json({ message: 'shift Not Found' ,deleteError});
+      }
+
+       res.status(200).json({ message: 'Shift Deleted Successfully' });
+    });
+  });
+}
+
+
+// function addUserData(req,res){
+//   //const shiftCode = req.params.shiftCode;
+//   const checkUserNameQuery = `SELECT * FROM ems.ems_users WHERE  username = $1`;
+//   const { username , firstname , lastname , companyid , companyemail , contactno , usertype , personalemail , password , designation  } = req.body;
+
+//   const insertUserQuery  = `INSERT INTO ems.ems_users ( username , firstname , lastname , companyid , companyemail , contactno , userType , personalemail , password , designation ) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`;
+
+//   db.query(checkUserNameQuery, [username] , (checkUserNameError, checkUserNameResult) => {
+//     if ( checkUserNameError ){
+//         return res.status(401).json({message: 'Eroor while checking username',checkUserNameError}); 
+//     }
+//     if ( checkUserNameResult.length != 0 ){
+//        return  res.status(402).json({message : 'User already Exists'});
+//     }
+//   })
+
+//   bcrypt.hash(password , 10 , (hashError , hashPassword) =>{
+//     if (hashError){
+//        return res.status(401).json({message: 'Error while hashing passward',hashError});
+//     }
+
+//   db.query(insertUserQuery , [username , firstname , lastname , companyid , companyemail , contactno , usertype , personalemail , hashPassword , designation] , (insertError , insertResult) =>{
+//     if(insertError){
+//       console.log(insertError);
+//       return res.status(402).json({message:'Error while inserting data',insertError});
+//     }
+//     res.status(200).json({message:' user added successfully', insertResult});
+//   });
+//   });
+// }
+
+function editfeeders(req, res) {
+  const feederid = req.params.feeder_id;
+  const { name , location , deviceuid , device , group_id , virtual_group_id , group_name , virtual_group_name } = req.body;
+
+  const deviceCheckQuery = 'SELECT * FROM ems.ems_feeder WHERE deviceuid = $1';
+
+  db.query(deviceCheckQuery, [feederid], (error, deviceCheckResult) => {
+    if (error) {
+      console.error('Error during device check:', error);
+      // Log the er
+      return res.status(500).json({ message: 'Internal server error' });
+    }
+
+    try {
+      if (deviceCheckResult.length === 0) {
+        console.log('Device not found!');
+        // Log the end of the function execution with an error message
+        return res.status(400).json({ message: 'Device not found!' });
+      }
+
+      const devicesQuery = 'UPDATE ems.ems_feeder SET   name = $1 , location = $2 , deviceuid = $3 , device = $4 , group_id = $5  , virtual_group_id = $6 ,group_name = $7 , virtual_group_name = $8  WHERE  feeder_id = $9';
+
+      db.query(devicesQuery, [name , location , deviceuid , device , group_id , virtual_group_id , group_name , virtual_group_name , feederid], (error, devices) => {
+        if (error) {
+          console.error('Error updating device:', error);
+          // Log the error
+          logExecution('editDevice', tenantId, 'ERROR', 'Error updating device');
+          return res.status(500).json({ message: 'Internal server error' });
+        }
+
+        res.json({ message: 'Device Updated Successfully' });
+        console.log(devices);
+      });
+    } catch (error) {
+      console.error('Error updating device:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+}
+
+
+
 
 
 module.exports = {
@@ -2865,5 +3200,17 @@ module.exports = {
   fetchmaxdemand,
   feederBargraph,
   fetchHighestKva,
-  fetchLowestPF
+  fetchLowestPF,
+  // addUserData,
+  getUser_Data,
+  delete_user,
+  // edit_user,
+  getFeederData,
+  delete_feeder,
+  delete_alerts,
+  getDay_Shift,
+  getAlerts,
+  addShift,
+  delete_shift,
+  editfeeders,
 };
