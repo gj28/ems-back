@@ -3052,5 +3052,3 @@ module.exports = {
   delete_shift,
   editfeeders,
 };
-
-// `SELECT  name = $1 , location = $2 , deviceuid = $3 , device = $4 , group_id = $5 , virtual_group_id = $6 , group_name = $7 , virtual_group_name = $8 FROM ems.ems_users WHERE freeder_id = $9 ;`

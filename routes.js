@@ -33,7 +33,7 @@ router.put('/updatePassword/:UserId', dashboard.updatePassword);
 // router.put('/edit_user/:userid' , dashboard.edit_user);
 router.post('/addShift' , dashboard.addShift);
 // router.post('/addUserData' , dashboard.addUserData);
-router.put('/edit_feeder' , dashboard.edit_feeder);
+router.put('/edit_feeder' , dashboard.editfeeders);
 router.put('/editfeeders/:feeder_id', dashboard.editfeeders);
 
 
