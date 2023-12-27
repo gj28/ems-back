@@ -2582,8 +2582,8 @@ function feederBargraph(req, res) {
             dataPoints = 7;
             break;
           case 'month':
-            intervalSize = Math.ceil(values.length / 6);
-            dataPoints = 6;
+            intervalSize = Math.ceil(values.length / 30);
+            dataPoints = 30;
             break;
           default:
             return res.status(400).json({ message: 'Invalid interval specified' });
