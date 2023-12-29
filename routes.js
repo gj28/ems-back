@@ -129,4 +129,5 @@ router.get('/graph2/', SA.graph2);
 router.get('/graph3/', SA.graph3);
 router.get('/graph4/', SA.graph4);
 
+router.get('/getArray' , dashboard.getArray);
 module.exports = router;

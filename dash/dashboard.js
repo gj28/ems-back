@@ -3159,6 +3159,28 @@ function editfeeders(req, res) {
 
 
 
+function getArray(req, res) {
+  const ArrayQuery = `
+    SELECT column_name
+    FROM information_schema.columns 
+    WHERE table_name = 'ems_actual_data'
+    AND ordinal_position > 4`;
+
+  db.query(ArrayQuery, (getError, getResult) => {
+    if (getError) {
+      return res.status(401).json({ message: 'Error while Fetching Data', error: getError });
+    }
+
+    if (getResult.rows.length === 0) {
+      return res.status(404).json({ message: 'No data Found' });
+    }
+
+    // Extract values and store in an array
+    const dataArray = getResult.rows.map(row => row.column_name);
+    
+    res.json(dataArray);
+  });
+}
 
 
 module.exports = {
@@ -3206,4 +3228,6 @@ module.exports = {
   addShift,
   delete_shift,
   editfeeders,
+  getArray,
+
 };
