@@ -620,7 +620,7 @@ function feeder(req, res) {
   try {
     const CompanyName = req.params.CompanyName;
     const Userid = req.query.Userid;
-    const DeviceIds = req.query.DeviceId;
+    const DeviceIds = req.query.DeviceIds;
     const Shift = req.query.Shift;
     const TimeInterval = req.query.TimeInterval;
 
@@ -633,13 +633,13 @@ function feeder(req, res) {
 
     if (Userid && DeviceIds) {
       query = 'SELECT * FROM ems.ems_devices WHERE company = $1 and virtualgroup = $2 and deviceid = ANY($3::varchar[])';
-      parameters = [CompanyName, Userid, DeviceIds];
+      parameters = [CompanyName, Userid, DeviceIds.split(',')]; 
     } else if (Userid) {
       query = 'SELECT * FROM ems.ems_devices WHERE company = $1 and virtualgroup = $2';
       parameters = [CompanyName, Userid];
     } else if (DeviceIds) {
       query = 'SELECT * FROM ems.ems_devices WHERE company = $1 and deviceid = ANY($2::varchar[])';
-      parameters = [CompanyName, DeviceIds];
+      parameters = [CompanyName, DeviceIds.split(',')]; 
     } else if (Shift) {  
       query = 'SELECT * FROM ems.ems_devices WHERE company = $1 and shift = $2';
       parameters = [CompanyName, Shift];
@@ -692,22 +692,16 @@ function feeder(req, res) {
           return res.status(400).json({ message: 'Invalid time interval' });
       }
 
-      console.log('deviceIds:', deviceIds);
-      console.log('duration:', duration);
-
-
       const dataQuery = `
-      SELECT device_uid, "date_time", "kvah", "kvarh", "kwh", "imp_kvarh", "exp_kvarh"
-      FROM ems.ems_live
-      WHERE date_time >= NOW() - INTERVAL '${duration}'
-      AND date_time <= NOW()
-      AND device_uid = ANY($1::varchar[])
-    `;
-    
-      
-      
+        SELECT device_uid, "date_time", "kvah", "kvarh", "kwh", "imp_kvarh", "exp_kvarh"
+        FROM ems.ems_live
+        WHERE date_time >= NOW() - INTERVAL '${duration}'
+        AND date_time <= NOW()
+        AND device_uid = ANY($1::varchar[])
+      `;
+
       const dataQueryParameters = [deviceIds];
-      
+
       db.query(dataQuery, dataQueryParameters, (dataError, dataResults) => {
         if (dataError) {
           console.error('Error fetching data:', dataError);
@@ -735,14 +729,12 @@ function feeder(req, res) {
             kvarh: row.kvarh,
             date_time: row.date_time
           });
-          //console.log('Processed data:', data);
+
           console.log('Processed data:', {
             company: CompanyName,
             device: deviceUid,
             dataLength: data[deviceUid].data.length,
-            // Add more relevant information as needed
           });
-          
         });
 
         res.json(Object.values(data));
@@ -753,6 +745,7 @@ function feeder(req, res) {
     res.status(500).json({ message: 'Internal server error' });
   }
 }
+
 
 
 function feederParametrised(req, res) {
