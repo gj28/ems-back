@@ -130,4 +130,8 @@ router.get('/graph3/', SA.graph3);
 router.get('/graph4/', SA.graph4);
 
 router.get('/getArray' , dashboard.getArray);
+//router.get('/getActualData/:deviceid' , dashboard.getActualData);
+router.get('/getActualData' , dashboard.getActualData);
+
+
 module.exports = router;

@@ -3183,6 +3183,50 @@ function getArray(req, res) {
 }
 
 
+// function getActualData(req, res) {
+//   const deviceid = req.params.deviceid;
+//   const getActualDataQuery = `SELECT * FROM ems.ems_actual_data WHERE deviceid = $1`;
+  
+//   db.query(getActualDataQuery, [deviceid], (getError, getResult) => {
+//     if (getError) {
+      
+//       return res.status(401).json({ message: 'Error while Fetching Data', error: getError });
+//     }
+
+//     if (getResult.rows.length === 0) {
+//       return res.status(404).json({ message: 'No data Found' });
+//     }
+
+//     res.json({ getActualData : getResult.rows });
+//   });
+// }
+
+function getActualData(req, res) {
+  const { deviceid, start_time, end_time } = req.body;
+  try {
+    const fetchQuery = `SELECT * FROM ems.ems_actual_data WHERE deviceid = $1 AND timestamp >= $2 AND timestamp <= $3  ORDER BY timestamp DESC`;
+
+    db.query(fetchQuery, [deviceid, start_time, end_time], (fetchError, fetchResult) => {
+      if (fetchError) {
+        console.error('Error while fetching devices:', fetchError);
+        return res.status(500).json({ message: 'Internal server error' .error });
+      }
+
+      return res.json({ data: fetchResult });
+    });
+} catch (error) {
+  console.error('Error in device retrieval:', error);
+  res.status(500).json({ message: 'Internal server error' , error });
+}
+}
+
+
+  
+
+
+
+
+
 module.exports = {
 	userDevices,
   editDevice,
@@ -3229,5 +3273,6 @@ module.exports = {
   delete_shift,
   editfeeders,
   getArray,
+  getActualData,
 
 };
