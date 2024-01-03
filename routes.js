@@ -47,7 +47,7 @@ router.get('/feederParametrised/:CompanyName', dashboard.feederParametrised);
 router.get('/feederHarmonic/:CompanyName', dashboard.feederHarmonic);
 router.get('/getdata/:meters', dashboard.getdata);
 router.get('/parametersFilter/:deviceid/:parameter/:interval', dashboard.parametersFilter);
-router.post('/addDeviceTrigger', dashboard.addDeviceTrigger);
+//router.post('/addDeviceTrigger', dashboard.addDeviceTrigger);
 router.get('/piechart/:companyName/:interval', dashboard.piechart);
 router.get('/fetchmaxdemand/:companyName', dashboard.fetchmaxdemand);
 // router.put('/setUserOnline/:UserId', authentication.setUserOnline);

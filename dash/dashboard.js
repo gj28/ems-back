@@ -1424,29 +1424,25 @@ function piechart(req, res) {
 }
 
 
+// function addDeviceTrigger(req, res) {
+//   const { DeviceUID, TriggerValue, CompanyEmail } = req.body;
+//     try {
+//         const insertTriggerQuery = 'INSERT INTO ems.ems_trigger (deviceid, triggervalue, companyemail) VALUES ($1,$2,$3)';
 
+//         db.query(insertTriggerQuery, [DeviceUID, TriggerValue, CompanyEmail], (error, insertResult) => {
+//           if (error) {
+//             console.error('Error while inserting device:', error);
+//             return res.status(500).json({ message: 'Internal server error' });
+//           }
 
+//           return res.json({ message: 'Device Trigger added successfully!' });
+//         });
 
-
-function addDeviceTrigger(req, res) {
-  const { DeviceUID, TriggerValue, CompanyEmail } = req.body;
-    try {
-        const insertTriggerQuery = 'INSERT INTO ems.ems_trigger (deviceid, triggervalue, companyemail) VALUES ($1,$2,$3)';
-
-        db.query(insertTriggerQuery, [DeviceUID, TriggerValue, CompanyEmail], (error, insertResult) => {
-          if (error) {
-            console.error('Error while inserting device:', error);
-            return res.status(500).json({ message: 'Internal server error' });
-          }
-
-          return res.json({ message: 'Device Trigger added successfully!' });
-        });
-
-    } catch (error) {
-      console.error('Error in device check:', error);
-      res.status(500).json({ message: 'Internal server error' });
-    }
-}
+//     } catch (error) {
+//       console.error('Error in device check:', error);
+//       res.status(500).json({ message: 'Internal server error' });
+//     }
+// }
 
 
 //userdetails
@@ -3201,29 +3197,31 @@ function getArray(req, res) {
 //   });
 // }
 
-function getActualData(req, res) {
-  const { deviceid, start_time, end_time } = req.body;
-  try {
-    const fetchQuery = `SELECT * FROM ems.ems_actual_data WHERE deviceid = $1 AND timestamp >= $2 AND timestamp <= $3  ORDER BY timestamp DESC`;
 
-    db.query(fetchQuery, [deviceid, start_time, end_time], (fetchError, fetchResult) => {
+
+
+function getActualData(req, res) {
+  const { column_name ,deviceid, start_time, end_time } = req.body;
+  try {
+    const fetchQuery =` SELECT ${column_name}
+      FROM ems.ems_actual_data 
+      WHERE deviceid = $1 
+      AND timestamp >= $2 
+      AND timestamp <= $3 
+      ORDER BY timestamp DESC`;
+
+    db.query(fetchQuery, [ deviceid, start_time, end_time], (fetchError, fetchResult) => {
       if (fetchError) {
         console.error('Error while fetching devices:', fetchError);
         return res.status(500).json({ message: 'Internal server error' .error });
       }
-
       return res.json({ data: fetchResult });
     });
 } catch (error) {
   console.error('Error in device retrieval:', error);
-  res.status(500).json({ message: 'Internal server error' , error });
+  return res.status(500).json({ message: 'Internal server error' , error });
 }
 }
-
-
-  
-
-
 
 
 
@@ -3246,7 +3244,7 @@ module.exports = {
   feederHarmonic,
   getdata,
   parametersFilter,
-  addDeviceTrigger,
+  //addDeviceTrigger,
   getUserDetails,
   edituser,
   deleteuser,
