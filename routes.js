@@ -121,7 +121,7 @@ router.delete('/delete_user/:userid' , dashboard.delete_user);
 router.delete('/delete_feeder/:feeder_id' , dashboard.delete_feeder);
 router.delete('/delete_alerts/:name' , dashboard.delete_alerts);
 router.delete('/delete_shift/:shift_code' , dashboard.delete_shift);
-router.get('/getReportData', dashboard.getReportData);
+router.post('/getReportData', dashboard.getReportData);
 
 //SA graph route
 router.get('/graph1/', SA.graph1);
