@@ -3308,7 +3308,7 @@ function getReportData(req, res) {
   }
 
   const validParameters = [
-    'voltage_1n', 'voltage_2n', 'voltage_3n', 'voltage_n', 'voltage_12', 'voltage_23', 'voltage_31', 'voltage_l',
+    'device_uid', 'date_time', 'voltage_1n', 'voltage_2n', 'voltage_3n', 'voltage_n', 'voltage_12', 'voltage_23', 'voltage_31', 'voltage_l',
     'current_1', 'current_2', 'current_3', 'current', 'kw_1', 'kw_2', 'kw_3',
     'kvar_1', 'kvar_2', 'kvar_3', 'kva_1', 'kva_2', 'kva_3', 'pf_1', 'pf_2', 'pf_3', 'pf',
     'freq', 'kw', 'kvar', 'kva', 'imp_kwh', 'exp_kwh', 'kwh', 'imp_kvarh', 'exp_kvarh', 'kvarh', 'kvah',
@@ -3322,7 +3322,7 @@ function getReportData(req, res) {
     return res.status(400).json({ message: `Invalid parameters: ${invalidParameters.join(', ')}` });
   }
 
-  const selectedColumns = parameters.map((param, index) => `${param} AS ${param}_value`).join(', ');
+  const selectedColumns = parameters.map((param, index) => `${param} AS ${param}`).join(', ');
 
   try {
     const checkDeviceListQuery = `
@@ -3333,7 +3333,7 @@ function getReportData(req, res) {
     `;
   
     const fetchDevicesQuery = `
-      SELECT device_uid, date_time, ${selectedColumns}
+      SELECT ${selectedColumns}
       FROM ems.ems_live
       WHERE device_uid = $1 AND date_time >= $2 AND date_time <= $3
       ORDER BY date_time DESC;
