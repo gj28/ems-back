@@ -1530,7 +1530,7 @@ function deleteuser(req, res) {
 function getFeederDetails(req, res) {
   try {
     const deviceId = req.params.deviceId;
-    const feederDetailsQuery = 'SELECT * FROM ems.ems_devices WHERE device_uid = $1';
+    const feederDetailsQuery = 'SELECT * FROM ems.ems_feeder WHERE deviceuid = $1';
     db.query(feederDetailsQuery, [deviceId], (error, feederDetail) => {
       if (error) {
         console.error('Error fetching data:', error);
@@ -2637,7 +2637,7 @@ function editfeeder(req, res) {
     (updateError, updateResult) => {
       if (updateError) {
         console.error(updateError);                
-        return res.status(401).json({ message: 'Error Updating user' });
+        return res.status(401).json({ message: 'Error Updating feeder',updateError });
       }
       return res.status(200).json({ message: 'User Updated Successfully' });
     });
