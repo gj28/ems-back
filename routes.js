@@ -47,7 +47,7 @@ router.get('/feederParametrised/:CompanyName', dashboard.feederParametrised);
 router.get('/feederHarmonic/:CompanyName', dashboard.feederHarmonic);
 router.get('/getdata/:meters', dashboard.getdata);
 router.get('/parametersFilter/:deviceid/:parameter/:interval', dashboard.parametersFilter);
-router.post('/addDeviceTrigger', dashboard.addDeviceTrigger);
+//router.post('/addDeviceTrigger', dashboard.addDeviceTrigger);
 router.get('/piechart/:companyName/:interval', dashboard.piechart);
 router.get('/fetchmaxdemand/:companyName', dashboard.fetchmaxdemand);
 // router.put('/setUserOnline/:UserId', authentication.setUserOnline);
@@ -121,7 +121,7 @@ router.delete('/delete_user/:userid' , dashboard.delete_user);
 router.delete('/delete_feeder/:feeder_id' , dashboard.delete_feeder);
 router.delete('/delete_alerts/:name' , dashboard.delete_alerts);
 router.delete('/delete_shift/:shift_code' , dashboard.delete_shift);
-
+router.post('/getReportData', dashboard.getReportData);
 
 //SA graph route
 router.get('/graph1/', SA.graph1);
@@ -130,4 +130,8 @@ router.get('/graph3/', SA.graph3);
 router.get('/graph4/', SA.graph4);
 
 router.get('/getArray' , dashboard.getArray);
+//router.get('/getActualData/:deviceid' , dashboard.getActualData);
+router.get('/getActualData' , dashboard.getActualData);
+
+
 module.exports = router;

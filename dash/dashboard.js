@@ -1424,29 +1424,25 @@ function piechart(req, res) {
 }
 
 
+// function addDeviceTrigger(req, res) {
+//   const { DeviceUID, TriggerValue, CompanyEmail } = req.body;
+//     try {
+//         const insertTriggerQuery = 'INSERT INTO ems.ems_trigger (deviceid, triggervalue, companyemail) VALUES ($1,$2,$3)';
 
+//         db.query(insertTriggerQuery, [DeviceUID, TriggerValue, CompanyEmail], (error, insertResult) => {
+//           if (error) {
+//             console.error('Error while inserting device:', error);
+//             return res.status(500).json({ message: 'Internal server error' });
+//           }
 
+//           return res.json({ message: 'Device Trigger added successfully!' });
+//         });
 
-
-function addDeviceTrigger(req, res) {
-  const { DeviceUID, TriggerValue, CompanyEmail } = req.body;
-    try {
-        const insertTriggerQuery = 'INSERT INTO ems.ems_trigger (deviceid, triggervalue, companyemail) VALUES ($1,$2,$3)';
-
-        db.query(insertTriggerQuery, [DeviceUID, TriggerValue, CompanyEmail], (error, insertResult) => {
-          if (error) {
-            console.error('Error while inserting device:', error);
-            return res.status(500).json({ message: 'Internal server error' });
-          }
-
-          return res.json({ message: 'Device Trigger added successfully!' });
-        });
-
-    } catch (error) {
-      console.error('Error in device check:', error);
-      res.status(500).json({ message: 'Internal server error' });
-    }
-}
+//     } catch (error) {
+//       console.error('Error in device check:', error);
+//       res.status(500).json({ message: 'Internal server error' });
+//     }
+// }
 
 
 //userdetails
@@ -3183,6 +3179,200 @@ function getArray(req, res) {
 }
 
 
+// function getActualData(req, res) {
+//   const deviceid = req.params.deviceid;
+//   const getActualDataQuery = `SELECT * FROM ems.ems_actual_data WHERE deviceid = $1`;
+  
+//   db.query(getActualDataQuery, [deviceid], (getError, getResult) => {
+//     if (getError) {
+      
+//       return res.status(401).json({ message: 'Error while Fetching Data', error: getError });
+//     }
+
+//     if (getResult.rows.length === 0) {
+//       return res.status(404).json({ message: 'No data Found' });
+//     }
+
+//     res.json({ getActualData : getResult.rows });
+//   });
+// }
+
+
+
+
+function getActualData(req, res) {
+  const { column_name ,deviceid, start_time, end_time } = req.body;
+  try {
+    const fetchQuery =` SELECT ${column_name}
+      FROM ems.ems_actual_data 
+      WHERE deviceid = $1 
+      AND timestamp >= $2 
+      AND timestamp <= $3 
+      ORDER BY timestamp DESC`;
+
+    db.query(fetchQuery, [ deviceid, start_time, end_time], (fetchError, fetchResult) => {
+      if (fetchError) {
+        console.error('Error while fetching devices:', fetchError);
+        return res.status(500).json({ message: 'Internal server error' .error });
+      }
+      return res.json({ data: fetchResult });
+    });
+} catch (error) {
+  console.error('Error in device retrieval:', error);
+  return res.status(500).json({ message: 'Internal server error' , error });
+}
+}
+
+// function getReportData(req, res) {
+//   const { device_uid, start_time, end_time, parameters } = req.body;
+
+//   if (!parameters || !Array.isArray(parameters) || parameters.length === 0) {
+//     return res.status(400).json({ message: 'Invalid parameters provided' });
+//   }
+
+//   const validParameters = [
+//     'voltage_1n', 'voltage_2n', 'voltage_3n', 'voltage_n', 'voltage_12', 'voltage_23', 'voltage_31', 'voltage_l',
+//     'current_1', 'current_2', 'current_3', 'current', 'kw_1', 'kw_2', 'kw_3',
+//     'kvar_1', 'kvar_2', 'kvar_3', 'kva_1', 'kva_2', 'kva_3', 'pf_1', 'pf_2', 'pf_3', 'pf',
+//     'freq', 'kw', 'kvar', 'kva', 'imp_kwh', 'exp_kwh', 'kwh', 'imp_kvarh', 'exp_kvarh', 'kvarh', 'kvah',
+//     'thd_v1n', 'thd_v2n', 'thd_v3n', 'thd_v12', 'thd_v23', 'thd_v31', 'thd_i1', 'thd_i2', 'thd_i3',
+//     'max_kw', 'min_kw', 'max_kvar', 'min_kvar', 'max_int_v1n', 'max_int_v2n', 'max_int_v3n', 'max_int_v12',
+//     'max_int_v23', 'max_int_v31', 'max_kva', 'max_int_i1', 'max_int_i2', 'max_int_i3', 'run_h', 'on_h'
+//   ];  
+//   const invalidParameters = parameters.filter(param => !validParameters.includes(param));
+
+//   if (invalidParameters.length > 0) {
+//     return res.status(400).json({ message: `Invalid parameters: ${invalidParameters.join(', ')}` });
+//   }
+
+//   const selectedColumns = parameters.map((param, index) => `${param} AS ${param}_value`).join(', ');
+
+//   try {
+//     const checkDeviceListQuery = `
+//       SELECT 1
+//       FROM ems.ems_live
+//       WHERE device_uid = $1
+//       LIMIT 1;
+//     `;
+  
+//     const fetchDevicesQuery = `
+//       SELECT date_time, ${selectedColumns}
+//       FROM ems.ems_live
+//       WHERE device_uid = $1 AND date_time >= $2 AND date_time <= $3
+//       ORDER BY date_time DESC;
+//     `;
+//   //TEst
+//     // console.log('Check Device Query:', checkDeviceListQuery);
+//     // console.log('Fetch Devices Query:', fetchDevicesQuery);
+  
+//     // Fetch devices fro table
+//     db.query(checkDeviceListQuery, [device_uid], (checkError, checkResult) => {
+//       if (checkError) {
+//         console.error('Error checking device:', checkError);
+//         return res.status(500).json({ message: 'Internal server error' });
+//       }
+  
+//       if (checkResult.rows.length === 0) {
+//         console.log('Device not found in ems_live table for device_uid:', device_uid);
+//         return res.status(404).json({ message: 'Device not found in ems_live table' });
+//       }
+// db.query(fetchDevicesQuery, [device_uid, start_time, end_time], (fetchError, fetchResult) => {
+//   if (fetchError) {
+//     console.error('Error fetching devices:', fetchError);
+//     return res.status(500).json({ message: 'Internal server error' });
+//   }
+
+//   //console.log('Fetched data:', fetchResult.rows);
+
+//   if (fetchResult.rows.length === 0) {
+//     console.log('No data found for the specified time range or parameters.');
+//     // console.log('start_time:', start_time);
+//     // console.log('end_time:', end_time);
+//     // console.log('parameters:', parameters);
+//   }
+
+//   return res.json({ data: fetchResult.rows });
+// });
+//     });
+//   } catch (error) {
+//     console.error('Error in device retrieval:', error);
+//     res.status(500).json({ message: 'Internal server error' });
+//   }
+// }
+
+function getReportData(req, res) {
+  const { device_uid, start_time, end_time, parameters } = req.body;
+
+  if (!parameters || !Array.isArray(parameters) || parameters.length === 0) {
+    return res.status(400).json({ message: 'Invalid parameters provided' });
+  }
+
+  const validParameters = [
+    'device_uid', 'date_time', 'voltage_1n', 'voltage_2n', 'voltage_3n', 'voltage_n', 'voltage_12', 'voltage_23', 'voltage_31', 'voltage_l',
+    'current_1', 'current_2', 'current_3', 'current', 'kw_1', 'kw_2', 'kw_3',
+    'kvar_1', 'kvar_2', 'kvar_3', 'kva_1', 'kva_2', 'kva_3', 'pf_1', 'pf_2', 'pf_3', 'pf',
+    'freq', 'kw', 'kvar', 'kva', 'imp_kwh', 'exp_kwh', 'kwh', 'imp_kvarh', 'exp_kvarh', 'kvarh', 'kvah',
+    'thd_v1n', 'thd_v2n', 'thd_v3n', 'thd_v12', 'thd_v23', 'thd_v31', 'thd_i1', 'thd_i2', 'thd_i3',
+    'max_kw', 'min_kw', 'max_kvar', 'min_kvar', 'max_int_v1n', 'max_int_v2n', 'max_int_v3n', 'max_int_v12',
+    'max_int_v23', 'max_int_v31', 'max_kva', 'max_int_i1', 'max_int_i2', 'max_int_i3', 'run_h', 'on_h'
+  ];  
+  const invalidParameters = parameters.filter(param => !validParameters.includes(param));
+
+  if (invalidParameters.length > 0) {
+    return res.status(400).json({ message: `Invalid parameters: ${invalidParameters.join(', ')}` });
+  }
+
+  const selectedColumns = parameters.map((param, index) => `${param} AS ${param}`).join(', ');
+
+  try {
+    const checkDeviceListQuery = `
+      SELECT 1
+      FROM ems.ems_live
+      WHERE device_uid = $1
+      LIMIT 1;
+    `;
+  
+    const fetchDevicesQuery = `
+      SELECT ${selectedColumns}
+      FROM ems.ems_live
+      WHERE device_uid = $1 AND date_time >= $2 AND date_time <= $3
+      ORDER BY date_time DESC;
+    `;
+  
+    // Fetch devices from ems_live table
+    db.query(checkDeviceListQuery, [device_uid], (checkError, checkResult) => {
+      if (checkError) {
+        console.error('Error checking device:', checkError);
+        return res.status(500).json({ message: 'Internal server error' });
+      }
+  
+      if (checkResult.rows.length === 0) {
+        console.log('Device not found in ems_live table for device_uid:', device_uid);
+        return res.status(404).json({ message: 'Device not found in ems_live table' });
+      }
+  
+      // If the device exists in ems_live table, proceed to fetch devices
+      db.query(fetchDevicesQuery, [device_uid, start_time, end_time], (fetchError, fetchResult) => {
+        if (fetchError) {
+          console.error('Error fetching devices:', fetchError);
+          return res.status(500).json({ message: 'Internal server error' });
+        }
+
+        if (fetchResult.rows.length === 0) {
+          console.log('No data found for the specified time range or parameters.');
+        }
+
+        return res.json({ device_uid, data: fetchResult.rows });
+      });
+    });
+  } catch (error) {
+    console.error('Error in device retrieval:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}
+
+
+
 module.exports = {
 	userDevices,
   editDevice,
@@ -3202,7 +3392,7 @@ module.exports = {
   feederHarmonic,
   getdata,
   parametersFilter,
-  addDeviceTrigger,
+  //addDeviceTrigger,
   getUserDetails,
   edituser,
   deleteuser,
@@ -3229,5 +3419,7 @@ module.exports = {
   delete_shift,
   editfeeders,
   getArray,
+  getActualData,
+  getReportData
 
 };
