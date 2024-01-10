@@ -765,13 +765,13 @@ function feederParametrised(req, res) {
 
     if (Userid && DeviceIds) {
       query = 'SELECT * FROM ems.ems_devices WHERE company = $1 and virtualgroup = $2 and deviceid = ANY($3::varchar[])';
-      parameters = [CompanyName, Userid, DeviceIds];
+      parameters = [CompanyName, Userid, DeviceIds.split(',')];
     } else if (Userid) {
       query = 'SELECT * FROM ems.ems_devices WHERE company = $1 and virtualgroup = $2';
       parameters = [CompanyName, Userid];
     } else if (DeviceIds) {
       query = 'SELECT * FROM ems.ems_devices WHERE company = $1 and deviceid = ANY($2::varchar[])';
-      parameters = [CompanyName, DeviceIds];
+      parameters = [CompanyName, DeviceIds.split(',')];
     } else if (Shift) {  
       query = 'SELECT * FROM ems.ems_devices WHERE company = $1 and shift = $2';
       parameters = [CompanyName, Shift];
@@ -892,13 +892,13 @@ function feederHarmonic(req, res) {
 
     if (Userid && DeviceIds) {
       query = 'SELECT * FROM ems.ems_devices WHERE company = $1 and virtualgroup = $2 and deviceid = ANY($3::varchar[])';
-      parameters = [CompanyName, Userid, DeviceIds];
+      parameters = [CompanyName, Userid, DeviceIds.split(',')];
     } else if (Userid) {
       query = 'SELECT * FROM ems.ems_devices WHERE company = $1 and virtualgroup = $2';
       parameters = [CompanyName, Userid];
     } else if (DeviceIds) {
       query = 'SELECT * FROM ems.ems_devices WHERE company = $1 and deviceid = ANY($2::varchar[])';
-      parameters = [CompanyName, DeviceIds];
+      parameters = [CompanyName, DeviceIds.split(',')];
     } else if (Shift) {  
       query = 'SELECT * FROM ems.ems_devices WHERE company = $1 and shift = $2';
       parameters = [CompanyName, Shift];
